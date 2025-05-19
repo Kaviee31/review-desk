@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  background: linear-gradient(to right, #f3e7fe, #e3d1ff);
+  min-height: 100vh;
+}
+
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  min-height: 100vh;
+  box-sizing: border-box;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
+.login-left {
+  flex: 1;
+  max-width: 500px;
+}
+
+.login-right {
+  flex: 1;
+  max-width: 380px;
+  background: white;
+  padding: 3rem 2rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.login-form h2 {
+  margin-bottom: 1.5rem;
+  color: #6a1b9a;
+  font-size: 2rem;
+  text-align: center;
+}
+
+.login-form label {
+  display: block;
+  margin: 1rem 0 0.3rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.login-form input {
+  width: 90%;
+  padding: 0.8rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  background-color: #e0d3f8;
+  font-size: 1rem;
+  color: #333;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-form input:focus {
+  outline: none;
+  border: 1.5px solid #6a1b9a;
+  box-shadow: 0 0 0 2px rgba(106, 27, 154, 0.2);
+}
+
+.login-form button {
+  width: 100%;
+  padding: 0.9rem;
+  margin-top: 1.5rem;
+  background: #6a1b9a;
+  color: white;
+  font-size: 1rem;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.login-form button:hover {
+  background: #4a0072;
+}
+
+.login-form p {
+  text-align: center;
+  margin-top: 1.2rem;
+  font-size: 0.9rem;
+}
+
+.login-form a {
+  color: #6a1b9a;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-form a:hover {
+  text-decoration: underline;
+}
+
+/* Flex row for links */
+.login-form .link-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .login-page {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .login-left {
+    max-width: 300px;
+  }
+
+  .login-right {
+    width: 90%;
+  }
+}
+.login-form label {
+  display: block;
+  margin: 1rem 0 0.3rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #333; /* or #6a1b9a for purple tone */
+}
+
