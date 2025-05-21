@@ -1,4 +1,3 @@
-// src/layouts/TeacherLayout.jsx
 import React from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { LogOut, Users, LayoutDashboard } from "lucide-react";
@@ -27,14 +26,14 @@ function TeacherLayout() {
         <div className="navbar-logo">📘 ReviewDesk</div>
         <div className="navbar-links">
           <button
-            className={isActive("/teacher-dashboard") ? "active" : ""}
-            onClick={() => navigate("/teacher-dashboard")}
+            className={isActive("/teacher/dashboard") ? "active" : ""}
+            onClick={() => navigate("/teacher/dashboard")}
           >
             <LayoutDashboard size={18} /> Dashboard
           </button>
           <button
-            className={isActive("/enrolled-students") ? "active" : ""}
-            onClick={() => navigate("/enrolled-students")}
+            className={isActive("/teacher/enrolled-students") ? "active" : ""}
+            onClick={() => navigate("/teacher/enrolled-students")}
           >
             <Users size={18} /> Enrolled Students
           </button>

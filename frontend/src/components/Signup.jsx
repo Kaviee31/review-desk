@@ -102,9 +102,9 @@ function Signup() {
 
       // Navigate based on profession
       if (profession === "Teacher") {
-        navigate("/teacher-dashboard", { replace: true });
+        navigate("/teacher/dashboard", { replace: true });
       } else if (profession === "Admin") {
-        navigate("/admin-dashboard", { replace: true });
+        navigate("/admin/dashboard", { replace: true });
       } else {
         navigate("/student-dashboard", { replace: true });
       }
