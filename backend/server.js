@@ -5,6 +5,10 @@ import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import multer from "multer";
 import path from "path";
+import ChatUser from "./models/ChatUser.js";
+import TelegramBot from "node-telegram-bot-api";
+
+
 
 dotenv.config();
 
@@ -80,6 +84,67 @@ app.post("/enroll", async (req, res) => {
     res.status(200).json({ message: "Enrollment successful!" });
   } catch (error) {
     res.status(500).json({ error: "Failed to enroll" });
+  }
+});
+app.post("/api/save-telegram-id", async (req, res) => {
+  const { registerNumber, chatId } = req.body;
+
+  try {
+    const existing = await ChatUser.findOne({ registerNumber });
+
+    if (existing) {
+      existing.chatId = chatId;
+      await existing.save();
+    } else {
+      await ChatUser.create({ registerNumber, chatId });
+    }
+
+    res.json({ success: true, message: "Telegram chat ID saved!" });
+  } catch (error) {
+    console.error("Failed to save Telegram chat ID:", error);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
+app.get("/api/telegram-status/:registerNumber", async (req, res) => {
+  try {
+    const user = await ChatUser.findOne({ registerNumber: req.params.registerNumber });
+    if (user) {
+      res.json({ linked: true });
+    } else {
+      res.json({ linked: false });
+    }
+  } catch (error) {
+    res.status(500).json({ error: "Failed to check Telegram status" });
+  }
+});
+
+app.post("/api/send-telegram", async (req, res) => {
+  const { message, registerNumbers } = req.body;
+
+  if (!message || !Array.isArray(registerNumbers)) {
+    return res.status(400).json({ error: "Invalid request body" });
+  }
+
+  try {
+    const chatUsers = await ChatUser.find({
+      registerNumber: { $in: registerNumbers },
+    });
+
+    if (chatUsers.length === 0) {
+      return res.status(404).json({ error: "No chat IDs found for these register numbers." });
+    }
+
+    const sendPromises = chatUsers.map(user =>
+      bot.sendMessage(user.chatId, `📢 ${message}`)
+    );
+
+    await Promise.all(sendPromises);
+
+    res.json({ success: true, sent: chatUsers.length });
+  } catch (error) {
+    console.error("Error sending Telegram messages:", error);
+    res.status(500).json({ error: "Failed to send Telegram messages" });
   }
 });
 

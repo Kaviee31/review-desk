@@ -13,6 +13,7 @@ function TeacherDashboard() {
   const [announcement, setAnnouncement] = useState('');
   const [teacherEmail, setTeacherEmail] = useState('');
   const navigate = useNavigate();
+  const BASE_URL = "http://localhost:5000";
 
   useEffect(() => {
     document.title = "Guide Dashboard";
@@ -37,8 +38,8 @@ function TeacherDashboard() {
     }
 
     try {
-      // 1. Get enrolled students for this teacher
-      const response = await axios.get(`http://localhost:5000/teacher-courses/${teacherEmail}`);
+      // Step 1: Get enrolled students under this teacher
+      const response = await axios.get(`${BASE_URL}/teacher-courses/${teacherEmail}`);
       const enrolledStudents = response.data;
 
       if (!enrolledStudents.length) {
@@ -46,9 +47,10 @@ function TeacherDashboard() {
         return;
       }
 
-      // 2. Get user records from Firestore
+      // Step 2: Match emails from Firestore users
       const usersSnapshot = await getDocs(collection(db, "users"));
       const bccEmails = [];
+      const registerNumbers = [];
 
       usersSnapshot.forEach(doc => {
         const user = doc.data();
@@ -57,6 +59,7 @@ function TeacherDashboard() {
           enrolledStudents.some(s => s.registerNumber === user.registerNumber)
         ) {
           bccEmails.push(user.email);
+          registerNumbers.push(user.registerNumber);
         }
       });
 
@@ -65,11 +68,11 @@ function TeacherDashboard() {
         return;
       }
 
-      // 3. Send Email via EmailJS
+      // Step 3: Send Email via EmailJS
       const templateParams = {
         message: announcement,
-        to_name: "Student", // EmailJS will personalize per student if needed
-        to_email: "reviewdeskau@gmail.com", // required but not used if BCC
+        to_name: "Student",
+        to_email: "reviewdeskau@gmail.com",
         bcc: bccEmails.join(","),
       };
 
@@ -80,10 +83,17 @@ function TeacherDashboard() {
         'lBI3Htk5CKshSzMFg'
       );
 
-      toast.success("Announcement sent to all enrolled students!");
+      // Step 4: Send Telegram messages
+      const telegramRes = await axios.post(`${BASE_URL}/api/send-telegram`, {
+        message: announcement,
+        registerNumbers: registerNumbers,
+      });
+
+      const successCount = telegramRes.data?.successCount ?? 0;
+      toast.success(`Announcement sent to ${bccEmails.length} students via Email & ${successCount} via Telegram`);
       setAnnouncement('');
     } catch (error) {
-      console.error("Error sending email:", error);
+      console.error("Error sending announcement:", error);
       toast.error("Failed to send announcement.");
     }
   };
@@ -100,7 +110,7 @@ function TeacherDashboard() {
             required
             className="announcement-textarea"
           />
-          <button type="submit" className="send-button">Send Email</button>
+          <button type="submit" className="send-button">Send Email + Telegram</button>
         </form>
       </div>
     </div>

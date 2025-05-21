@@ -36,6 +36,12 @@ function StudentLayout() {
           >
             <User2 size={18} /> My Courses
           </button>
+          <button
+  className="telegram-btn"
+  onClick={() => window.open("https://t.me/NewAnnouncementbot", "_blank")}
+>
+  🔔 Telegram Updates
+</button>
           <button onClick={handleLogout}>
             <LogOut size={18} /> Logout
           </button>

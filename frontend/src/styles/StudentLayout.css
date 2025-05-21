@@ -61,3 +61,19 @@
   padding: 30px;
   box-sizing: border-box;
 }
+
+.telegram-btn {
+  background-color: #34aadf;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: background 0.3s ease;
+}
+
+.telegram-btn:hover {
+  background-color: #249edc;
+}

@@ -14,6 +14,7 @@ function StudentDashboard() {
 
   const [studentName, setStudentName] = useState("Guest");
   const [registerNumber, setRegisterNumber] = useState("");
+  const [telegramLinked, setTelegramLinked] = useState(null);
   const [announcement, setAnnouncement] = useState(null);
   const [deadlines, setDeadlines] = useState({
     zerothReviewDeadline: null,
@@ -25,7 +26,7 @@ function StudentDashboard() {
   const [secondReviewFile, setSecondReviewFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
+const BASE_URL= "http://localhost:5000";
   const zerothInputRef = useRef();
   const firstInputRef = useRef();
   const secondInputRef = useRef();
@@ -39,6 +40,17 @@ function StudentDashboard() {
           const userData = docSnap.data();
           setStudentName(userData?.username ?? user.email);
           setRegisterNumber(userData?.registerNumber ?? "");
+
+          // Telegram status check
+          if (userData?.registerNumber) {
+            try {
+              const res = await axios.get(`${BASE_URL}/api/telegram-status/${userData.registerNumber}`);
+              setTelegramLinked(res.data.linked);
+            } catch (error) {
+              console.error("Failed to check Telegram status:", error);
+              setTelegramLinked(false);
+            }
+          }
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -47,7 +59,7 @@ function StudentDashboard() {
 
     const fetchAnnouncements = async () => {
       try {
-        const response = await axios.get("https://review-dashboard.onrender.com/all-messages");
+        const response = await axios.get(`${BASE_URL}/all-messages`);
         setAnnouncement(response.data);
       } catch (error) {
         console.error("Error fetching announcements:", error);
@@ -56,7 +68,7 @@ function StudentDashboard() {
 
     const fetchReviewDeadlines = async () => {
       try {
-        const response = await axios.get("https://review-dashboard.onrender.com/get-review-dates");
+        const response = await axios.get(`${BASE_URL}/get-review-dates`);
         setDeadlines({
           zerothReviewDeadline: response.data?.zerothReviewDeadline || null,
           firstReviewDeadline: response.data?.firstReviewDeadline || null,
@@ -105,7 +117,7 @@ function StudentDashboard() {
 
     try {
       setLoading(true);
-      const response = await axios.post("https://review-dashboard.onrender.com/upload-review", formData, {
+      const response = await axios.post(`${BASE_URL}/upload-review`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -133,6 +145,24 @@ function StudentDashboard() {
           <div className="profile-card">
             <h2>{studentName}</h2>
             <p>Register Number: {registerNumber}</p>
+
+            {telegramLinked === null ? (
+              <p>Checking Telegram status...</p>
+            ) : telegramLinked ? (
+              <p>✅ Telegram Linked</p>
+            ) : (
+              <p>
+                ❌ Telegram Not Linked.{" "}
+                <a
+                  href="https://t.me/NewAnnouncementbot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#007bff", textDecoration: "underline" }}
+                >
+                  Connect Now
+                </a>
+              </p>
+            )}
           </div>
         </div>
 
