@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { auth, db } from "../firebase";
 import {
   createUserWithEmailAndPassword,
@@ -16,18 +16,22 @@ import {
 import "../styles/Signup.css";
 
 function Signup() {
+  useEffect(() => {
+    document.title = "Signup";
+  }, []);
+
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [profession, setProfession] = useState("Student");
   const [registerNumber, setRegisterNumber] = useState("");
+  const [facultyId, setFacultyId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const professions = ["Student", "Teacher", "Admin"];
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,7 +56,7 @@ function Signup() {
         return;
       }
 
-      // Check duplicate register number for students
+      // Check duplicate register number
       if (profession === "Student") {
         const regQuery = query(usersRef, where("registerNumber", "==", registerNumber));
         const regSnapshot = await getDocs(regQuery);
@@ -61,6 +65,13 @@ function Signup() {
           setLoading(false);
           return;
         }
+      }
+
+      // Faculty ID required for Teacher/Admin
+      if ((profession === "Teacher" || profession === "Admin") && !facultyId) {
+        setError("Faculty ID is required for Teachers and Admins.");
+        setLoading(false);
+        return;
       }
 
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -72,6 +83,7 @@ function Signup() {
         phoneNumber,
         profession,
         ...(profession === "Student" && { registerNumber }),
+        ...((profession === "Teacher" || profession === "Admin") && { facultyId }),
       };
 
       await setDoc(doc(db, "users", user.uid), userData);
@@ -84,13 +96,17 @@ function Signup() {
       setPhoneNumber("");
       setProfession("Student");
       setRegisterNumber("");
+      setFacultyId("");
 
       alert("User registered successfully! Please check your email to verify your account.");
 
+      // Navigate based on profession
       if (profession === "Teacher") {
-        navigate("/teacher-dashboard");
+        navigate("/teacher-dashboard", { replace: true });
+      } else if (profession === "Admin") {
+        navigate("/admin-dashboard", { replace: true });
       } else {
-        navigate("/student-dashboard");
+        navigate("/student-dashboard", { replace: true });
       }
 
     } catch (error) {
@@ -150,12 +166,17 @@ function Signup() {
 
         <label>Profession</label>
         <select
-        placeholder="Enter your password"
           value={profession}
           onChange={(e) => {
-            setProfession(e.target.value);
-            if (e.target.value !== "Student") setRegisterNumber("");
+            const selected = e.target.value;
+            setProfession(selected);
+            if (selected === "Student") {
+              setFacultyId("");
+            } else {
+              setRegisterNumber("");
+            }
           }}
+          required
         >
           {professions.map((prof) => (
             <option key={prof} value={prof}>{prof}</option>
@@ -175,17 +196,30 @@ function Signup() {
           </>
         )}
 
+        {(profession === "Teacher" || profession === "Admin") && (
+          <>
+            <label>Faculty ID</label>
+            <input
+              type="text"
+              placeholder="Enter your faculty ID"
+              value={facultyId}
+              onChange={(e) => setFacultyId(e.target.value)}
+              required
+            />
+          </>
+        )}
+
         <button type="submit" disabled={loading}>
           {loading ? "Registering..." : "Register"}
         </button>
 
-       <p className="login-link">
-  Already have an account? <Link to="/">Log in</Link>
-</p>
-
+        <p className="login-link">
+          Already have an account? <Link to="/">Log in</Link>
+        </p>
       </form>
     </div>
   );
 }
 
 export default Signup;
+

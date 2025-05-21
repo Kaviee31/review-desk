@@ -1,11 +1,11 @@
+// StudentCourses.jsx
 import React, { useState, useEffect } from "react";
-import { ClipLoader } from "react-spinners";
 import axios from "axios";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import ChatWindow from "./ChatWindow";
-import "../styles/StudentCourses.css";
+import '../styles/StudentCourses.css';
 
 const UNSEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/134/134935.png";
 const SEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/2462/2462719.png";
@@ -13,10 +13,13 @@ const SEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/2462/24627
 function StudentCourses() {
   const [courses, setCourses] = useState([]);
   const [registerNumber, setRegisterNumber] = useState("");
-  const [studentName, setStudentName] = useState("");
+  const [studentName, setStudentName] = useState(""); // kept if needed later
   const [selectedTeacherEmail, setSelectedTeacherEmail] = useState(null);
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
-  const [loading, setLoading] = useState(true); // New state for loading
+
+  useEffect(() => {
+    document.title = "Student Courses";
+  }, []);
 
   useEffect(() => {
     const fetchRegisterNumber = async (user) => {
@@ -44,12 +47,10 @@ function StudentCourses() {
     const fetchCourses = async () => {
       if (registerNumber) {
         try {
-          const response = await axios.get(`https://review-dashboard.onrender.com/student-courses/${registerNumber}`);
+          const response = await axios.get(`http://localhost:5000/student-courses/${registerNumber}`);
           setCourses(response.data);
         } catch (error) {
           console.error("Error fetching student courses:", error);
-        } finally {
-          setLoading(false); // Stop loading after fetch
         }
       }
     };
@@ -97,46 +98,58 @@ function StudentCourses() {
 
   const openChatWindow = (teacherEmail) => {
     setSelectedTeacherEmail(teacherEmail);
-    setUnseenMessagesStatus((prevState) => ({
-      ...prevState,
+    setUnseenMessagesStatus(prev => ({
+      ...prev,
       [teacherEmail]: false,
     }));
   };
 
   return (
-    <div className="courses-container">
-      <h2 className="dashboard-title">Welcome, {studentName}!</h2>
-      {loading ? (
-        <div className="loading-spinner">
-          <ClipLoader color="#36d7b7" size={40} />
-          <p>Loading your enrolled courses...</p>
-        </div>
-      ) : courses.length > 0 ? (
-        <div className="course-cards">
-          {courses.map((course, index) => (
-            <div className="course-card" key={index}>
-              <h3>{course.courseName}</h3>
-              <p><strong>Instructor:</strong> {course.teacherName}</p>
-              <p><strong>Assessment 1:</strong> {course.Assessment1}</p>
-              <p><strong>Assessment 2:</strong> {course.Assessment2}</p>
-              <p><strong>Assessment 3:</strong> {course.Assessment3}</p>
-              <p><strong>Average:</strong> {course.Total}</p>
-              <div className="chat-icon" onClick={() => openChatWindow(course.teacherEmail)}>
-                <img
-                  src={
-                    unseenMessagesStatus[course.teacherEmail]
-                      ? UNSEEN_MESSAGE_ICON_URL
-                      : SEEN_MESSAGE_ICON_URL
-                  }
-                  alt="Chat"
-                  width="22"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+    <div>
+      <h2>{registerNumber || "Loading..."}</h2>
+
+      {courses.length > 0 ? (
+        courses.map((course, index) => (
+          <div key={index} style={{ marginBottom: "20px" }}>
+            <h3>Course: {course.courseName} (Instructor: {course.teacherName})</h3>
+            <table border="1">
+              <thead>
+                <tr>
+                  <th>Register Number</th>
+                  <th>Assessment 1</th>
+                  <th>Assessment 2</th>
+                  <th>Assessment 3</th>
+                  <th>Average</th>
+                  <th>Contact</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{registerNumber}</td>
+                  <td>{course.Assessment1}</td>
+                  <td>{course.Assessment2}</td>
+                  <td>{course.Assessment3}</td>
+                  <td>{course.Total}</td>
+                  <td>
+                    <img
+                      src={
+                        unseenMessagesStatus[course.teacherEmail]
+                          ? UNSEEN_MESSAGE_ICON_URL
+                          : SEEN_MESSAGE_ICON_URL
+                      }
+                      alt="Chat"
+                      width="20"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => openChatWindow(course.teacherEmail)}
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        ))
       ) : (
-        <p>No courses found for your account.</p>
+        <p>Loading courses...</p>
       )}
 
       {selectedTeacherEmail && (

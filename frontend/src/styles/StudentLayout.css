@@ -1,0 +1,63 @@
+/* StudentLayout.css */
+
+/* Full width layout container */
+.student-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;         /* Take full viewport width */
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Navbar */
+.student-navbar {
+  background-color: #2c3e50;
+  color: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.navbar-logo {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.navbar-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.navbar-links button {
+  background: transparent;
+  border: 1px solid white;
+  color: white;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 8px 12px;
+  transition: background 0.3s ease;
+  border-radius: 6px;
+}
+
+.navbar-links button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Main content */
+.student-body {
+  flex: 1;
+  width: 100vw;
+  padding: 30px;
+  box-sizing: border-box;
+}

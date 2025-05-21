@@ -1,50 +1,62 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db, doc, getDoc } from "../firebase";
+import { auth, db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import animationData from "../assets/login-animation.json";
 import "../styles/Login.css";
+// Optional: import toast if you're using react-toastify
+// import { toast } from "react-toastify";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    document.title = "Login";
+  }, []);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password.trim());
       const user = userCredential.user;
+
       const userDoc = await getDoc(doc(db, "users", user.uid));
-
       if (userDoc.exists()) {
-        const userData = userDoc.data();
-        const { username, profession, registerNumber } = userData;
+        const { username, profession, registerNumber } = userDoc.data();
 
-
-        if (profession === "Teacher") {
-          alert(`Welcome Teacher ${username}`);
-          navigate("/teacher-dashboard");
-        } else if (profession === "Student") {
-          alert(`Welcome Student ${username} (Reg No: ${registerNumber})`);
-          navigate("/student-dashboard");
-        } else {
-          alert("Unknown profession.");
+        switch (profession) {
+          case "Teacher":
+            alert(`Welcome Teacher ${username}`);
+            navigate("/teacher/dashboard");
+            break;
+          case "Student":
+            alert(`Welcome Student ${username} (Reg No: ${registerNumber})`);
+            navigate("/student-dashboard");
+            break;
+          case "Admin":
+            alert(`Welcome Admin ${username}`);
+            navigate("/admin/dashboard");
+            break;
+          default:
+            alert("Unknown profession.");
         }
       } else {
         alert("User profile not found.");
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert(error.message);
+      alert(error.message); // Or toast.error(error.message);
     }
   };
 
   return (
     <div className="login-page">
       <div className="login-left">
-        <Lottie animationData={animationData} loop={true} />
+        <Lottie animationData={animationData} loop />
       </div>
 
       <div className="login-right">
@@ -58,6 +70,7 @@ function Login() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            style={{ backgroundColor: "#f0e6ff" }}
           />
 
           <label>Password</label>
@@ -67,15 +80,15 @@ function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            style={{ backgroundColor: "#f0e6ff" }}
           />
 
           <button type="submit">Login</button>
 
-          <p style={{ color: "black", fontSize: "14px", marginTop: "10px", textAlign: "center" }}>
-  Don't have an account? <Link to="/signup">Sign up</Link>
-</p>
-
-          <p>
+          <p className="login-footer-text">
+            Don't have an account? <Link to="/signup">Sign up</Link>
+          </p>
+          <p className="login-footer-text">
             <Link to="/forgot-password">Forgot password?</Link>
           </p>
         </form>

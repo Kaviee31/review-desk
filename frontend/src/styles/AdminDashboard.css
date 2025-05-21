@@ -1,0 +1,203 @@
+/* You can copy the entire content of TeacherDashboard.css here */
+
+/* Background with a blurred overlay */
+.app-container {
+    background: url("../assets/teach.webp") no-repeat center center/cover;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding: 10px; /* for safety on small screens */
+    box-sizing: border-box;
+    overflow: hidden;
+    padding-left: 220px;
+}
+
+/* Glassmorphism background overlay */
+.app-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    z-index: 0;
+}
+
+/* Dashboard Container */
+.dashboard-content {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    padding: 25px 30px;
+    border-radius: 16px;
+    width: 360px;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Headings */
+.dashboard-content h1, 
+.dashboard-content h2 {
+    text-align: center;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+/* Labels */
+.dashboard-content label {
+    margin-top: 8px;
+    align-self: flex-start;
+    color: #ddd;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* Inputs & Select */
+.dashboard-content input, 
+.dashboard-content select {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: all 0.3s ease-in-out;
+}
+
+.dashboard-content input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.dashboard-content input:focus, 
+.dashboard-content select:focus {
+    border-color: #00c3ff;
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 195, 255, 0.6);
+}
+
+/* Button */
+.dashboard-content button {
+    margin-top: 12px;
+    padding: 12px;
+    width: 100%;
+    background: linear-gradient(135deg, #00c3ff, #007bff);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.4);
+}
+
+.dashboard-content button:hover {
+    background: linear-gradient(135deg, #007bff, #00c3ff);
+    transform: scale(1.05);
+}
+
+/* Scrollbar for overflow */
+.dashboard-content::-webkit-scrollbar {
+    width: 6px;
+}
+.dashboard-content::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 500px) {
+    .dashboard-content {
+        width: 100%;
+        padding: 20px;
+        max-height: 95vh;
+    }
+}
+
+.dashboard-content textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 8px;
+    font-size: 15px;
+    resize: vertical;
+    min-height: 100px;
+    transition: all 0.3s ease-in-out;
+}
+
+.dashboard-content textarea::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.dashboard-content textarea:focus {
+    border-color: #00c3ff;
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 195, 255, 0.6);
+}
+
+
+.teacher-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 100vh;
+    background: linear-gradient(to bottom, rgba(0, 123, 255, 0.3), rgba(0, 60, 130, 0.4));
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 10px;
+    box-shadow: 4px 0 12px rgba(0,0,0,0.3);
+    z-index: 100;
+}
+
+.sidebar-title {
+    font-size: 28px;
+    color: white;
+    margin-bottom: 30px;
+    font-weight: bold;
+}
+
+.sidebar-links {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.sidebar-links button {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    font-size: 16px;
+    padding: 10px 15px;
+    width: 100%;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease-in-out, transform 0.2s ease;
+}
+
+.sidebar-links button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
