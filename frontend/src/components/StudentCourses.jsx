@@ -111,7 +111,7 @@ function StudentCourses() {
       {courses.length > 0 ? (
         courses.map((course, index) => (
           <div key={index} style={{ marginBottom: "20px" }}>
-            <h3>Course: {course.courseName} (Instructor: {course.teacherName})</h3>
+            <h2>Project Review Marks</h2>
             <table border="1">
               <thead>
                 <tr>

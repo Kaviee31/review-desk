@@ -187,7 +187,7 @@ function EnrolledStudents() {
 
   return (
     <div>
-      <h2>Enrolled Students for {students.length > 0 ? students[0].courseName : "Loading..."}</h2>
+      <h2>Students List</h2>
       <table border="1">
         <thead>
           <tr>

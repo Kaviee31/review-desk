@@ -1,0 +1,70 @@
+/* src/styles/AssignCoordinatorForm.css */
+.assign-coordinator-form-container {
+  max-width: 500px;
+  margin: 40px auto;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  font-family: 'Arial', sans-serif;
+}
+
+.assign-coordinator-form-container h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 1.8em;
+  font-weight: 600;
+}
+
+.assign-coordinator-form .form-group {
+  margin-bottom: 20px;
+}
+
+.assign-coordinator-form .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #555;
+  font-weight: 500;
+}
+
+.assign-coordinator-form .form-group input[type="email"],
+.assign-coordinator-form .form-group input[type="text"] {
+  width: calc(100% - 20px); /* Adjust for padding */
+  padding: 12px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1em;
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+  transition: border-color 0.3s ease;
+}
+
+.assign-coordinator-form .form-group input[type="email"]:focus,
+.assign-coordinator-form .form-group input[type="text"]:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.assign-coordinator-form .submit-button {
+  width: 100%;
+  padding: 14px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.assign-coordinator-form .submit-button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+.assign-coordinator-form .submit-button:active {
+  transform: translateY(0);
+  background-color: #004085;
+}

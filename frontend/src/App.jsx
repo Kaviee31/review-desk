@@ -13,7 +13,8 @@ import TeacherLayout from "./components/TeacherLayout";
 
 import AdminDashboard from "./components/AdminDashboard";
 import ReportPage from "./components/ReportPage";
-import AdminLayout from "./components/AdminLayout"; // ✅ New import
+import AdminLayout from "./components/AdminLayout";
+import AssignCoordinatorForm from "./components/AssignCoordinatorForm";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="report" element={<ReportPage />} />
+          <Route path="assign-coordinator" element={<AssignCoordinatorForm />} />
         </Route>
 
         {/* Student Layout Routes */}
