@@ -1,34 +1,44 @@
-// src/components/AssignCoordinatorForm.jsx
 import React, { useState } from 'react';
-// Import the AdminDashboard.css for consistent styling
-import '../styles/AdminDashboard.css'; 
+import emailjs from '@emailjs/browser';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import '../styles/AdminDashboard.css'; // Assuming basic styles exist
 
 function AssignCoordinatorForm() {
   const [guideEmailId, setGuideEmailId] = useState('');
   const [guideName, setGuideName] = useState('');
   const [branchName, setBranchName] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically send this data to your backend
-    console.log({
-      guideEmailId,
-      guideName,
-      branchName,
-    });
-    alert('Coordinator assignment request submitted! (Check console for data)');
-    // Optionally, reset the form
-    setGuideEmailId('');
-    setGuideName('');
-    setBranchName('');
+    try {
+      const emailParams = {
+        to_email: guideEmailId,
+        to_name: guideName,
+        message: `Hello ${guideName},\n\nYou have been assigned as a coordinator for the ${branchName} branch.`,
+      };
+
+      await emailjs.send(
+        'service_zdkw9wb',
+        'template_j69ex9q',
+        emailParams,
+        'lBI3Htk5CKshSzMFg'
+      );
+
+      toast.success(`📧 Email sent to ${guideName} at ${guideEmailId}`);
+      setGuideEmailId('');
+      setGuideName('');
+      setBranchName('');
+    } catch (error) {
+      console.error(error);
+      toast.error('❌ Failed to send coordinator email.');
+    }
   };
 
   return (
-    // Use app-container to get the background and overlay
-    <div className="app-container"> 
-      {/* Use dashboard-content for the form's glassmorphism style */}
-      <div className="dashboard-content"> 
-        <h1>Assign Coordinator</h1>
+    <div className="cont">
+      <div className="dashboard-content">
+        <h2>Assign Coordinator</h2>
         <form onSubmit={handleSubmit}>
           <label htmlFor="guideEmailId">Guide Email ID:</label>
           <input
@@ -36,7 +46,6 @@ function AssignCoordinatorForm() {
             id="guideEmailId"
             value={guideEmailId}
             onChange={(e) => setGuideEmailId(e.target.value)}
-            placeholder="Enter guide email ID"
             required
           />
 
@@ -46,7 +55,6 @@ function AssignCoordinatorForm() {
             id="guideName"
             value={guideName}
             onChange={(e) => setGuideName(e.target.value)}
-            placeholder="Enter guide name"
             required
           />
 
@@ -56,7 +64,6 @@ function AssignCoordinatorForm() {
             id="branchName"
             value={branchName}
             onChange={(e) => setBranchName(e.target.value)}
-            placeholder="Enter branch name"
             required
           />
 
