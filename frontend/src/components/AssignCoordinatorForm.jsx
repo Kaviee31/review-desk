@@ -1,37 +1,89 @@
 import React, { useState } from 'react';
-import emailjs from '@emailjs/browser';
+import { auth, db } from '../firebase';
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+} from 'firebase/auth';
+import { setDoc, doc } from 'firebase/firestore';
+import emailjs from 'emailjs-com';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import '../styles/AdminDashboard.css'; // Assuming basic styles exist
+import '../styles/AdminDashboard.css';
 
 function AssignCoordinatorForm() {
   const [guideEmailId, setGuideEmailId] = useState('');
   const [guideName, setGuideName] = useState('');
-  const [branchName, setBranchName] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+
+  const generatePassword = () => {
+    const chars =
+      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < 10; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!guideEmailId || !guideName || !selectedDepartment) {
+      toast.error('Please fill all fields');
+      return;
+    }
+
+    const password = generatePassword();
+
     try {
+      // 1. Register in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        guideEmailId,
+        password
+      );
+      const user = userCredential.user;
+
+      // 2. Store details in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        email: guideEmailId,
+        username: guideName,
+        profession: 'Coordinator',
+        department: selectedDepartment,
+      });
+
+      // 3. Send email verification
+      await sendEmailVerification(user);
+
+      // 4. Send credentials via EmailJS
       const emailParams = {
-        to_email: guideEmailId,
         to_name: guideName,
-        message: `Hello ${guideName},\n\nYou have been assigned as a coordinator for the ${branchName} branch.`,
+        to_email: guideEmailId,
+        message: `Hello ${guideName},
+
+You have been assigned as a coordinator for the ${selectedDepartment} department.
+
+Your login credentials are:
+Email: ${guideEmailId}
+Password: ${password}
+
+Please log in and change your password after first login.
+`,
       };
 
-      await emailjs.send(
+        await emailjs.send(
         'service_zdkw9wb',
         'template_j69ex9q',
         emailParams,
         'lBI3Htk5CKshSzMFg'
       );
 
-      toast.success(`📧 Email sent to ${guideName} at ${guideEmailId}`);
+      toast.success(`📧 Email sent successfully to ${guideEmailId}`);
       setGuideEmailId('');
       setGuideName('');
-      setBranchName('');
+      setSelectedDepartment('');
     } catch (error) {
       console.error(error);
-      toast.error('❌ Failed to send coordinator email.');
+      toast.error(`❌ Failed: ${error.message}`);
     }
   };
 
@@ -58,12 +110,12 @@ function AssignCoordinatorForm() {
             required
           />
 
-          <label htmlFor="branchName">Branch Name:</label>
+          <label htmlFor="selectedDepartment">Department:</label>
           <input
             type="text"
-            id="branchName"
-            value={branchName}
-            onChange={(e) => setBranchName(e.target.value)}
+            id="selectedDepartment"
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
             required
           />
 

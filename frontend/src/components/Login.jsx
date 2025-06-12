@@ -6,8 +6,6 @@ import { Link, useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import animationData from "../assets/login-animation.json";
 import "../styles/Login.css";
-// Optional: import toast if you're using react-toastify
-// import { toast } from "react-toastify";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -41,6 +39,10 @@ function Login() {
             alert(`Welcome Admin ${username}`);
             navigate("/admin/dashboard");
             break;
+          case "Coordinator":
+            alert(`Welcome Coordinator ${username}`);
+            navigate("/coordinator/dashboard");
+            break;
           default:
             alert("Unknown profession.");
         }
@@ -49,7 +51,7 @@ function Login() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert(error.message); // Or toast.error(error.message);
+      alert(error.message);
     }
   };
 
