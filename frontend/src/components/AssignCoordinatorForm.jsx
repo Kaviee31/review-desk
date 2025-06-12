@@ -92,7 +92,7 @@ Please log in and change your password after first login.
       <div className="dashboard-content">
         <h2>Assign Coordinator</h2>
         <form onSubmit={handleSubmit}>
-          <label htmlFor="guideEmailId">Guide Email ID:</label>
+          <label htmlFor="guideEmailId">Coordinator Email ID:</label>
           <input
             type="email"
             id="guideEmailId"
@@ -101,7 +101,7 @@ Please log in and change your password after first login.
             required
           />
 
-          <label htmlFor="guideName">Guide Name:</label>
+          <label htmlFor="guideName">Coordinator Name:</label>
           <input
             type="text"
             id="guideName"
