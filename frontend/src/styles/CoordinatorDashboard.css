@@ -37,3 +37,112 @@
   font-size: 1rem;
   color: #666;
 }
+.dynamic-table-container {
+  margin-top: 5cm; /* Adds a 5cm gap above the table */
+  overflow-x: auto; /* Ensures table is scrollable on smaller screens if it overflows */
+}
+/* Previous CSS remains */
+
+.extra-rows-input-section {
+  margin-bottom: 5cm; /* Adds a 5cm gap below this section */
+  display: flex; /* Ensures the label and input are on the same line */
+  align-items: center; /* Vertically aligns them */
+  justify-content: center; /* Centers them horizontally */
+  gap: 10px; /* Adds a small gap between the label and input */
+  margin-top: 20px; /* Optional: Adds some space from the top of the dashboard */
+}
+
+/* Style for textareas that should be resizable */
+.resizable-textarea {
+  resize: vertical; /* Allows vertical resizing only. You can use 'both' for horizontal and vertical. */
+  min-height: 30px; /* Ensures a minimum height */
+  overflow: auto; /* Adds scrollbars if content overflows before resizing */
+  width: 100%; /* Make it fill the available space in the table cell */
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+  padding: 5px; /* Add some padding inside the textarea */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Ensure table cell inputs and textareas have consistent styling */
+.table-cell-input {
+  width: 100%; /* Makes sure it takes up the full width of the cell */
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box; /* Important for consistent sizing */
+  font-size: 0.95rem;
+}
+
+.marks-input {
+  width: 70px; /* Keep marks input small */
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+/* Adjust table cell styles for better appearance with textareas */
+.description-col {
+  width: 30%; /* Allocate more width for descriptions */
+  max-width: 250px; /* Set a max-width to prevent excessively wide cells */
+  word-wrap: break-word; /* Ensures long words break and wrap */
+}
+
+.narrow-col {
+  width: 50px; /* Fixed width for item numbers */
+  text-align: center;
+}
+
+table {
+  width: 90%;
+  border-collapse: collapse;
+  margin: 20px auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  background-color: white;
+}
+
+th,
+td {
+  border: 1px solid #e0e0e0;
+  padding: 10px;
+  text-align: left;
+  vertical-align: top; /* Align content to the top for textareas */
+}
+
+th {
+  background-color: #eef1f8;
+  color: #3b3b98;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.review-header {
+  background-color: #dbe4f0; /* Lighter blue for main review headers */
+  color: #2c2c7a;
+  font-size: 1.1rem;
+  padding: 12px;
+}
+
+.center-text {
+  text-align: center;
+}
+
+.bold-text {
+  font-weight: bold;
+}
+
+.total-cell {
+  background-color: #f0f2f5;
+  text-align: right;
+  padding-right: 15px;
+}
+
+.dynamic-table-container {
+  margin-top: 5cm; /* Adds a 5cm gap above the table */
+  overflow-x: auto; /* Ensures table is scrollable on smaller screens if it overflows */
+}
