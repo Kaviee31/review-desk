@@ -1,167 +1,240 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../styles/CoordinatorDashboard.css";
 
 function CoordinatorDashboard() {
-  const [formData, setFormData] = useState({
-    // Review 1 marks (initial values from image)
-    r1_item1_marks: "",
-    r1_item2_marks: "",
-    r1_item3_marks: "",
-    r1_item4_marks: "",
-    r1_total_marks: "",
-    // Review 2 marks (initial values from image)
-    r2_item1_marks: "",
-    r2_item2_marks: "",
-    r2_item3_marks: "",
-    r2_item4_marks: "",
-    r2_total_marks: "",
-    // Review 3 marks (initial values from image)
-    r3_item1_marks: "",
-    r3_item2_marks: "",
-    r3_item3_marks: "",
-    r3_total_marks: "",
+  const [extraRowsCount, setExtraRowsCount] = useState(0);
+  const [extraRowsData, setExtraRowsData] = useState([]);
+
+  const [totals, setTotals] = useState({
+    r1_total: 0,
+    r2_total: 0,
+    r3_total: 0,
   });
 
-  // State for dynamic extra rows
-  const [extraRowsCount, setExtraRowsCount] = useState(0);
+  useEffect(() => {
+    setExtraRowsData((oldData) => {
+      const newData = [];
+      for (let i = 0; i < extraRowsCount; i++) {
+        newData[i] = oldData[i] || {
+          r1_desc: "",
+          r1_mark: "",
+          r2_desc: "",
+          r2_mark: "",
+          r3_desc: "",
+          r3_mark: "",
+        };
+      }
+      return newData;
+    });
+  }, [extraRowsCount]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+  const handleExtraChange = (index, field, value) => {
+    setExtraRowsData((prev) => {
+      const updatedRow = { ...prev[index], [field]: value };
+      const newData = [...prev];
+      newData[index] = updatedRow;
+      return newData;
+    });
   };
 
-  const handleExtraRowsChange = (e) => {
-    const count = Number(e.target.value);
-    setExtraRowsCount(isNaN(count) ? 0 : Math.max(0, count)); // Ensure non-negative number
-  };
+  useEffect(() => {
+    let r1_total = 0,
+      r2_total = 0,
+      r3_total = 0;
+    extraRowsData.forEach((row) => {
+      const r1_mark = parseFloat(row.r1_mark);
+      const r2_mark = parseFloat(row.r2_mark);
+      const r3_mark = parseFloat(row.r3_mark);
+      r1_total += isNaN(r1_mark) ? 0 : r1_mark;
+      r2_total += isNaN(r2_mark) ? 0 : r2_mark;
+      r3_total += isNaN(r3_mark) ? 0 : r3_mark;
+    });
+    setTotals({
+      r1_total: r1_total.toFixed(2),
+      r2_total: r2_total.toFixed(2),
+      r3_total: r3_total.toFixed(2),
+    });
+  }, [extraRowsData]);
 
-  const renderExtraRows = () => {
-    const rows = [];
-    const fixedRowsReview1 = 4; // Number of fixed items for Review 1
-    const fixedRowsReview2 = 4; // Number of fixed items for Review 2
-    const fixedRowsReview3 = 3; // Number of fixed items for Review 3
-
-    for (let i = 0; i < extraRowsCount; i++) {
-      const currentItemNumberR1 = 1 + i;
-      const currentItemNumberR2 = 1 + i;
-      const currentItemNumberR3 = 1 + i;
-
-      rows.push(
-        <tr key={`extra-row-${i}`}>
-          <td className="narrow-col">{currentItemNumberR1}</td> {/* Global numbering */}
-          <td className="description-col">
-            <input type="text" className="table-cell-input" placeholder="Enter description" />
-          </td>
-          <td className="marks-col">
-            <input type="number" className="marks-input" placeholder="0" />
-          </td>
-          <td className="narrow-col">{currentItemNumberR2}</td>
-          <td className="description-col">
-            <input type="text" className="table-cell-input" placeholder="Enter description" />
-          </td>
-          <td className="marks-col">
-            <input type="number" className="marks-input" placeholder="0" />
-          </td>
-          <td className="narrow-col">{currentItemNumberR3}</td>
-          <td className="description-col">
-            <input type="text" className="table-cell-input" placeholder="Enter description" />
-          </td>
-          <td className="marks-col">
-            <input type="number" className="marks-input" placeholder="0" />
-          </td>
-        </tr>
-      );
+  const handleExtraRowsCountChange = (e) => {
+    const val = e.target.value;
+    const numVal = Number(val);
+    if (!isNaN(numVal) && numVal >= 0) {
+      setExtraRowsCount(numVal);
     }
-    return rows;
   };
+
+  const renderExtraRows = () =>
+    extraRowsData.map((row, index) => (
+      <tr key={index} className="hover-row">
+        {/* Only one '#' column - first review */}
+        <td className="narrow-col">{index + 1}</td>
+
+        <td className="description-col">
+          <input
+            type="text"
+            className="table-cell-input"
+            placeholder="Review 1 description"
+            spellCheck="false"
+            autoComplete="off"
+            value={row.r1_desc}
+            onChange={(e) => handleExtraChange(index, "r1_desc", e.target.value)}
+          />
+        </td>
+        <td className="marks-col">
+          <input
+            type="number"
+            min="0"
+            className="marks-input"
+            placeholder="0"
+            value={row.r1_mark}
+            onChange={(e) => handleExtraChange(index, "r1_mark", e.target.value)}
+          />
+        </td>
+
+        {/* Empty cell in place of # for Review 2 */}
+        <td className="narrow-col" aria-hidden="true"></td>
+        <td className="description-col">
+          <input
+            type="text"
+            className="table-cell-input"
+            placeholder="Review 2 description"
+            spellCheck="false"
+            autoComplete="off"
+            value={row.r2_desc}
+            onChange={(e) => handleExtraChange(index, "r2_desc", e.target.value)}
+          />
+        </td>
+        <td className="marks-col">
+          <input
+            type="number"
+            min="0"
+            className="marks-input"
+            placeholder="0"
+            value={row.r2_mark}
+            onChange={(e) => handleExtraChange(index, "r2_mark", e.target.value)}
+          />
+        </td>
+
+        {/* Empty cell in place of # for Review 3 */}
+        <td className="narrow-col" aria-hidden="true"></td>
+        <td className="description-col">
+          <input
+            type="text"
+            className="table-cell-input"
+            placeholder="Review 3 description"
+            spellCheck="false"
+            autoComplete="off"
+            value={row.r3_desc}
+            onChange={(e) => handleExtraChange(index, "r3_desc", e.target.value)}
+          />
+        </td>
+        <td className="marks-col">
+          <input
+            type="number"
+            min="0"
+            className="marks-input"
+            placeholder="0"
+            value={row.r3_mark}
+            onChange={(e) => handleExtraChange(index, "r3_mark", e.target.value)}
+          />
+        </td>
+      </tr>
+    ));
 
   return (
-    <div className="coordinator-dashboard">
+    <div className="coordinator-dashboard" role="main">
+      <h2>Coordinator Review Mark Entry</h2>
+      <p>Enter number of additional review items and fill out their marks</p>
 
-      {/* Input for number of extra rows */}
       <div className="extra-rows-input-section">
-        <label htmlFor="extraRows">Add extra review items (n): </label>
+        <label htmlFor="extraRows">Add extra review items:</label>
         <input
           type="number"
           id="extraRows"
           value={extraRowsCount}
-          onChange={handleExtraRowsChange}
+          onChange={handleExtraRowsCountChange}
           min="0"
           className="num-rows-input"
+          aria-label="Number of extra review items"
+          step="1"
+          inputMode="numeric"
         />
       </div>
 
-      <div className="dynamic-table-container">
-        <table>
+      <div className="dynamic-table-container" role="region" aria-labelledby="tableLabel">
+        <table aria-describedby="tableDesc" aria-label="Review marks entry table">
           <thead>
-           <tr>
-
-           </tr>
-
-            {/* Main Review Headers */}
             <tr>
-              <th className="narrow-col"></th> {/* Empty cell for global numbering */}
-              <th colSpan="2" className="center-text review-header">
-                REVIEW 1
+              <th colSpan="3" className="review-header">
+                Review 1
               </th>
-              <th colSpan="3" className="center-text review-header">
-                REVIEW 2
+              <th colSpan="3" className="review-header">
+                Review 2
               </th>
-              <th colSpan="3" className="center-text review-header">
-                REVIEW 3
+              <th colSpan="3" className="review-header">
+                Review 3
               </th>
+            </tr>
+            <tr>
+              <th className="narrow-col" aria-label="Item Number">
+                #
+              </th>
+              <th className="description-col">Description</th>
+              <th className="marks-col">Marks</th>
+
+              <th className="narrow-col" aria-hidden="true"></th>
+              <th className="description-col">Description</th>
+              <th className="marks-col">Marks</th>
+
+              <th className="narrow-col" aria-hidden="true"></th>
+              <th className="description-col">Description</th>
+              <th className="marks-col">Marks</th>
             </tr>
           </thead>
           <tbody>
-
-
-            {/* Dynamically generated extra rows */}
             {renderExtraRows()}
 
-            {/* Total Row */}
-            <tr>
-              <td colSpan="2" className="bold-text total-cell">
-                TOTAL
+            <tr className="total-row">
+              <td colSpan="2" className="total-cell">
+                Total
               </td>
-              <td className="bold-text marks-col">
+              <td>
                 <input
-                  type="number" // Changed to number
-                  name="r1_total_marks"
-                  value={formData.r1_total_marks}
-                  onChange={handleInputChange}
+                  type="text"
+                  readOnly
+                  value={totals.r1_total}
                   className="marks-input bold-text"
+                  aria-label="Total marks for review 1"
                 />
               </td>
-              <td colSpan="2" className="bold-text total-cell">
-                TOTAL
+
+              <td colSpan="2" className="total-cell">
+                Total
               </td>
-              <td className="bold-text marks-col">
+              <td>
                 <input
-                  type="number" // Changed to number
-                  name="r2_total_marks"
-                  value={formData.r2_total_marks}
-                  onChange={handleInputChange}
+                  type="text"
+                  readOnly
+                  value={totals.r2_total}
                   className="marks-input bold-text"
+                  aria-label="Total marks for review 2"
                 />
               </td>
-              <td colSpan="2" className="bold-text total-cell">
-                TOTAL
+
+              <td colSpan="2" className="total-cell">
+                Total
               </td>
-              <td className="bold-text marks-col">
+              <td>
                 <input
-                  type="number" // Changed to number
-                  name="r3_total_marks"
-                  value={formData.r3_total_marks}
-                  onChange={handleInputChange}
+                  type="text"
+                  readOnly
+                  value={totals.r3_total}
                   className="marks-input bold-text"
+                  aria-label="Total marks for review 3"
                 />
               </td>
             </tr>
-
-
           </tbody>
         </table>
       </div>

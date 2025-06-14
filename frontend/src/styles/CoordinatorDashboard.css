@@ -1,148 +1,218 @@
+:root {
+  --primary-color: #4a63e7;
+  --secondary-color: #f4f7fb;
+  --accent-color: #ffb347;
+  --border-color: #dce3f0;
+  --text-dark: #2c2f4a;
+  --text-light: #6f7b91;
+  --input-bg: #f9fbfd;
+  --table-header-bg: #e9efff;
+  --table-header-color: #3d4c90;
+  --table-row-hover: #f5f8ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--secondary-color);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  color: var(--text-dark);
+}
+
 .coordinator-dashboard {
-  padding: 40px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f9faff;
+  padding: 40px 20px;
   min-height: 100vh;
+  background-color: var(--secondary-color);
   text-align: center;
 }
 
 .coordinator-dashboard h2 {
-  font-size: 2.2rem;
-  margin-bottom: 10px;
-  color: #3b3b98;
+  margin-bottom: 0.25rem;
 }
 
 .coordinator-dashboard p {
-  font-size: 1.1rem;
-  color: #4d4d4d;
-}
-
-.card {
-  max-width: 600px;
-  margin: 40px auto;
-  padding: 30px;
-  background-color: white;
-  border-radius: 16px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-  text-align: left;
-}
-
-.card h3 {
-  font-size: 1.4rem;
-  margin-bottom: 10px;
-  color: #3b3b98;
-}
-
-.card p {
+  margin-top: 0;
+  margin-bottom: 2rem;
   font-size: 1rem;
-  color: #666;
+  color: var(--text-light);
 }
-.dynamic-table-container {
-  margin-top: 5cm; /* Adds a 5cm gap above the table */
-  overflow-x: auto; /* Ensures table is scrollable on smaller screens if it overflows */
-}
-/* Previous CSS remains */
 
 .extra-rows-input-section {
-  margin-bottom: 5cm; /* Adds a 5cm gap below this section */
-  display: flex; /* Ensures the label and input are on the same line */
-  align-items: center; /* Vertically aligns them */
-  justify-content: center; /* Centers them horizontally */
-  gap: 10px; /* Adds a small gap between the label and input */
-  margin-top: 20px; /* Optional: Adds some space from the top of the dashboard */
+  margin-bottom: 3rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  font-size: 1rem;
 }
 
-/* Style for textareas that should be resizable */
-.resizable-textarea {
-  resize: vertical; /* Allows vertical resizing only. You can use 'both' for horizontal and vertical. */
-  min-height: 30px; /* Ensures a minimum height */
-  overflow: auto; /* Adds scrollbars if content overflows before resizing */
-  width: 100%; /* Make it fill the available space in the table cell */
-  box-sizing: border-box; /* Include padding and border in the element's total width and height */
-  padding: 5px; /* Add some padding inside the textarea */
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.extra-rows-input-section label {
+  font-weight: 600;
+  color: var(--text-dark);
 }
 
-/* Ensure table cell inputs and textareas have consistent styling */
-.table-cell-input {
-  width: 100%; /* Makes sure it takes up the full width of the cell */
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-sizing: border-box; /* Important for consistent sizing */
-  font-size: 0.95rem;
-}
-
-.marks-input {
-  width: 70px; /* Keep marks input small */
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-sizing: border-box;
+.num-rows-input {
+  width: 80px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--input-bg);
+  color: var(--text-dark);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   text-align: center;
-  font-size: 0.95rem;
 }
 
-/* Adjust table cell styles for better appearance with textareas */
-.description-col {
-  width: 30%; /* Allocate more width for descriptions */
-  max-width: 250px; /* Set a max-width to prevent excessively wide cells */
-  word-wrap: break-word; /* Ensures long words break and wrap */
+.num-rows-input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(74, 99, 231, 0.3);
 }
 
-.narrow-col {
-  width: 50px; /* Fixed width for item numbers */
-  text-align: center;
+.dynamic-table-container {
+  overflow-x: auto;
+  padding: 20px 0;
 }
 
 table {
-  width: 90%;
+  width: 98%;
+  margin: auto;
   border-collapse: collapse;
-  margin: 20px auto;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  min-width: 900px;
 }
 
 th,
 td {
-  border: 1px solid #e0e0e0;
-  padding: 10px;
-  text-align: left;
-  vertical-align: top; /* Align content to the top for textareas */
+  padding: 12px 10px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  vertical-align: middle;
+  font-size: 0.95rem;
 }
 
 th {
-  background-color: #eef1f8;
-  color: #3b3b98;
-  font-weight: 600;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  background-color: var(--table-header-bg);
+  color: var(--table-header-color);
+  font-weight: 700;
+  user-select: none;
 }
 
 .review-header {
-  background-color: #dbe4f0; /* Lighter blue for main review headers */
-  color: #2c2c7a;
-  font-size: 1.1rem;
-  padding: 12px;
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
 }
 
-.center-text {
+tr:nth-child(even) {
+  background-color: #fafbff;
+}
+
+tr:hover {
+  background-color: var(--table-row-hover);
+}
+
+.narrow-col {
+  width: 40px;
+  font-weight: 600;
+  color: var(--primary-color);
+  user-select: none;
+}
+
+.description-col {
+  width: 25%;
+  max-width: 300px;
+  padding: 0;
+}
+
+.marks-col {
+  width: 80px;
+  padding: 0;
+}
+
+.table-cell-input,
+.marks-input,
+.num-rows-input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--input-bg);
+  color: var(--text-dark);
+  box-sizing: border-box;
+  text-align: left;
+  font-weight: 600;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.marks-input {
   text-align: center;
 }
 
+.table-cell-input:focus,
+.marks-input:focus,
+.num-rows-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(74, 99, 231, 0.35);
+  outline: none;
+  background-color: #fff;
+}
+
 .bold-text {
-  font-weight: bold;
+  font-weight: 700;
 }
 
 .total-cell {
   background-color: #f0f2f5;
   text-align: right;
-  padding-right: 15px;
+  padding-right: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+  user-select: none;
 }
 
-.dynamic-table-container {
-  margin-top: 5cm; /* Adds a 5cm gap above the table */
-  overflow-x: auto; /* Ensures table is scrollable on smaller screens if it overflows */
+/* Optional: subtle hover for inputs */
+.table-cell-input:hover,
+.marks-input:hover,
+.num-rows-input:hover {
+  border-color: var(--accent-color);
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+  .extra-rows-input-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .num-rows-input {
+    width: 100%;
+    max-width: 140px;
+  }
+
+  .dynamic-table-container {
+    padding: 10px;
+    overflow-x: scroll;
+  }
+
+  table {
+    font-size: 0.85rem;
+    min-width: 800px;
+  }
 }

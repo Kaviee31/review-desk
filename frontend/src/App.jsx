@@ -18,7 +18,12 @@ import AdminDashboard from "./components/AdminDashboard";
 import ReportPage from "./components/ReportPage";
 import AdminLayout from "./components/AdminLayout";
 import AssignCoordinatorForm from "./components/AssignCoordinatorForm";
+
+
 import CoordinatorDashboard from './components/CoordinatorDashboard';
+import CoordinatorLayout from "./components/CoordinatorLayout";
+import ChangePassword from "./components/ChangePassword";
+
 
 function App() {
   return (
@@ -50,7 +55,10 @@ function App() {
           <Route path="dashboard" element={<TeacherDashboard />} />
           <Route path="enrolled-students" element={<EnrolledStudents />} />
         </Route>
-        <Route path="/coordinator/dashboard" element={<CoordinatorDashboard />} />
+        <Route path="/coordinator" element={<CoordinatorLayout />}>
+  <Route path="dashboard" element={<CoordinatorDashboard />} />
+  <Route path="change-password" element={<ChangePassword />} />
+</Route>
       </Routes>
     </Router>
   );

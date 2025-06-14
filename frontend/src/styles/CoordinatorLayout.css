@@ -1,0 +1,70 @@
+/* src/styles/CoordinatorLayout.css */
+
+.coordinator-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.coordinator-navbar {
+  background-color: #34495e;
+  color: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.navbar-logo {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 15px;
+  flex-wrap: nowrap;
+}
+
+.navbar-links button {
+  background: transparent;
+  border: 1px solid white;
+  color: white;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background 0.3s ease;
+  white-space: nowrap;
+}
+
+.navbar-links button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.navbar-links .active {
+  background-color: #1abc9c;
+  border-color: #1abc9c;
+}
+
+.coordinator-body {
+  flex: 1;
+  padding: 30px;
+  background-color: #f9f9f9;
+  box-sizing: border-box;
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
