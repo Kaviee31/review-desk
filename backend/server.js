@@ -51,10 +51,25 @@ const reviewDeadlineSchema = new mongoose.Schema({
   secondReviewDeadline: Date,
 }, { timestamps: true });
 
+// NEW SCHEMA for Coordinator Review Data
+const coordinatorReviewSchema = new mongoose.Schema({
+  coordinatorId: { type: String, required: true }, // Firebase UID of the coordinator
+  program: { type: String, required: true }, // e.g., MCA(R), MTECH(SS)
+  reviewData: {
+    type: Array, // Array of review item objects
+    default: []
+  },
+  lastUpdated: { type: Date, default: Date.now } // Timestamp of last update
+}, { timestamps: true });
+
+
 // === MODELS ===
 const Enrollment = mongoose.model("Enrollment", enrollmentSchema);
 const Message = mongoose.model("Message", messageSchema);
 const ReviewDeadline = mongoose.model("ReviewDeadline", reviewDeadlineSchema);
+// NEW MODEL for Coordinator Review Data
+const CoordinatorReview = mongoose.model("CoordinatorReview", coordinatorReviewSchema);
+
 
 // === MULTER CONFIG ===
 const storage = multer.diskStorage({
@@ -278,6 +293,45 @@ app.get("/get-review-dates", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch review dates" });
   }
 });
+
+// NEW API ENDPOINTS FOR COORDINATOR REVIEW DATA
+// Save coordinator review data
+app.post("/coordinator-reviews", async (req, res) => {
+  const { coordinatorId, program, reviewData } = req.body;
+  if (!coordinatorId || !program || !reviewData) {
+    return res.status(400).json({ error: "Missing required fields: coordinatorId, program, reviewData." });
+  }
+
+  try {
+    // Find and update the existing review entry or create a new one
+    const updatedReview = await CoordinatorReview.findOneAndUpdate(
+      { coordinatorId, program }, // Find by coordinator ID and program
+      { reviewData, lastUpdated: new Date() }, // Set new review data and update timestamp
+      { upsert: true, new: true, setDefaultsOnInsert: true } // Create if not exists, return new document
+    );
+    res.status(200).json({ message: "Coordinator review data saved successfully!", data: updatedReview });
+  } catch (error) {
+    console.error("Error saving coordinator review data:", error);
+    res.status(500).json({ error: "Failed to save coordinator review data." });
+  }
+});
+
+// Get coordinator review data
+app.get("/coordinator-reviews/:coordinatorId/:program", async (req, res) => {
+  const { coordinatorId, program } = req.params;
+  try {
+    const review = await CoordinatorReview.findOne({ coordinatorId, program });
+    if (!review) {
+      // If no data found, return an empty array for reviewData
+      return res.status(200).json({ reviewData: [] });
+    }
+    res.status(200).json(review);
+  } catch (error) {
+    console.error("Error fetching coordinator review data:", error);
+    res.status(500).json({ error: "Failed to fetch coordinator review data." });
+  }
+});
+
 
 // Start server
 const PORT = process.env.PORT || 5000;

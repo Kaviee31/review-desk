@@ -8,13 +8,18 @@ import { setDoc, doc } from 'firebase/firestore';
 import emailjs from 'emailjs-com';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import '../styles/AdminDashboard.css';
+import '../styles/AdminDashboard.css'; // Assuming this CSS provides styling
 
 function AssignCoordinatorForm() {
   const [guideEmailId, setGuideEmailId] = useState('');
   const [guideName, setGuideName] = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState('');
+  // Changed from selectedDepartment to selectedCourse to be more explicit
+  const [selectedCourse, setSelectedCourse] = useState(''); 
 
+  // Define the available courses for coordinators
+  const courses = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
+
+  // Function to generate a random password for new coordinator accounts
   const generatePassword = () => {
     const chars =
       'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
@@ -25,17 +30,20 @@ function AssignCoordinatorForm() {
     return password;
   };
 
+  // Handler for form submission
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!guideEmailId || !guideName || !selectedDepartment) {
+    e.preventDefault(); // Prevent default form submission behavior
+
+    // Basic validation to ensure all fields are filled
+    if (!guideEmailId || !guideName || !selectedCourse) {
       toast.error('Please fill all fields');
       return;
     }
 
-    const password = generatePassword();
+    const password = generatePassword(); // Generate a password for the new coordinator
 
     try {
-      // 1. Register in Firebase Auth
+      // 1. Register the coordinator in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         guideEmailId,
@@ -43,47 +51,50 @@ function AssignCoordinatorForm() {
       );
       const user = userCredential.user;
 
-      // 2. Store details in Firestore
+      // 2. Store coordinator details in Firestore
+      // The 'department' field now stores the specific course
       await setDoc(doc(db, 'users', user.uid), {
         email: guideEmailId,
         username: guideName,
-        profession: 'Coordinator',
-        department: selectedDepartment,
+        profession: 'Coordinator', // Assign the 'Coordinator' profession
+        department: selectedCourse, // Store the assigned course here
       });
 
-      // 3. Send email verification
+      // 3. Send email verification to the newly created user
       await sendEmailVerification(user);
 
-      // 4. Send credentials via EmailJS
+      // 4. Send login credentials to the coordinator via EmailJS
       const emailParams = {
         to_name: guideName,
         to_email: guideEmailId,
         message: `Hello ${guideName},
 
-You have been assigned as a coordinator for the ${selectedDepartment} department.
+You have been assigned as a coordinator for the ${selectedCourse} program.
 
 Your login credentials are:
 Email: ${guideEmailId}
 Password: ${password}
 
-Please log in and change your password after first login.
+Please log in and change your password after your first login for security.
 `,
       };
 
-        await emailjs.send(
-        'service_zdkw9wb',
-        'template_j69ex9q',
+      // Ensure 'emailjs.send' parameters are correctly configured for your EmailJS service
+      await emailjs.send(
+        'service_zdkw9wb', // Replace with your EmailJS service ID
+        'template_j69ex9q', // Replace with your EmailJS template ID
         emailParams,
-        'lBI3Htk5CKshSzMFg'
+        'lBI3Htk5CKshSzMFg' // Replace with your EmailJS user ID (public key)
       );
 
       toast.success(`📧 Email sent successfully to ${guideEmailId}`);
+      // Clear form fields after successful submission
       setGuideEmailId('');
       setGuideName('');
-      setSelectedDepartment('');
+      setSelectedCourse('');
     } catch (error) {
-      console.error(error);
-      toast.error(`❌ Failed: ${error.message}`);
+      console.error("Error assigning coordinator:", error);
+      toast.error(`❌ Failed to assign coordinator: ${error.message}`);
     }
   };
 
@@ -110,14 +121,18 @@ Please log in and change your password after first login.
             required
           />
 
-          <label htmlFor="selectedDepartment">Department:</label>
-          <input
-            type="text"
-            id="selectedDepartment"
-            value={selectedDepartment}
-            onChange={(e) => setSelectedDepartment(e.target.value)}
+          <label htmlFor="selectedCourse">Course Assigned:</label>
+          <select
+            id="selectedCourse"
+            value={selectedCourse}
+            onChange={(e) => setSelectedCourse(e.target.value)}
             required
-          />
+          >
+            <option value="">Select a Course</option> {/* Default empty option */}
+            {courses.map((course) => (
+              <option key={course} value={course}>{course}</option>
+            ))}
+          </select>
 
           <button type="submit">Assign Coordinator</button>
         </form>

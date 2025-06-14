@@ -13,31 +13,40 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
-import "../styles/Signup.css";
+import "../styles/Signup.css"; // Assuming you have this CSS file for styling
 
 function Signup() {
+  // Set document title when the component mounts
   useEffect(() => {
     document.title = "Signup";
   }, []);
 
+  // State variables for form fields
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [profession, setProfession] = useState("Student");
+  const [profession, setProfession] = useState("Student"); // Default profession
   const [registerNumber, setRegisterNumber] = useState("");
   const [facultyId, setFacultyId] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const [courseType, setCourseType] = useState(""); // New state for course type
+  const [loading, setLoading] = useState(false); // Loading state for async operations
+  const [error, setError] = useState(null); // Error message state
 
+  const navigate = useNavigate(); // Hook for navigation
+
+  // Options for profession dropdown
   const professions = ["Student", "Teacher", "Admin"];
+  // Options for course type dropdown (for students)
+  const studentCourses = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
+
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+    e.preventDefault(); // Prevent default form submission
+    setLoading(true); // Set loading to true during submission
+    setError(null); // Clear any previous errors
 
+    // Basic password length validation
     if (password.length < 6) {
       setError("Password must be at least 6 characters long.");
       setLoading(false);
@@ -47,7 +56,7 @@ function Signup() {
     try {
       const usersRef = collection(db, "users");
 
-      // Check duplicate username
+      // Check for duplicate username
       const usernameQuery = query(usersRef, where("username", "==", username));
       const usernameSnapshot = await getDocs(usernameQuery);
       if (!usernameSnapshot.empty) {
@@ -56,7 +65,7 @@ function Signup() {
         return;
       }
 
-      // Check duplicate register number
+      // Check duplicate register number for students
       if (profession === "Student") {
         const regQuery = query(usersRef, where("registerNumber", "==", registerNumber));
         const regSnapshot = await getDocs(regQuery);
@@ -64,6 +73,12 @@ function Signup() {
           setError("Register number already exists.");
           setLoading(false);
           return;
+        }
+        // Validate if courseType is selected for students
+        if (!courseType) {
+            setError("Please select your course type.");
+            setLoading(false);
+            return;
         }
       }
 
@@ -74,31 +89,42 @@ function Signup() {
         return;
       }
 
+      // Create user with email and password using Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Prepare user data to be stored in Firestore
       const userData = {
         username,
         email,
         phoneNumber,
         profession,
-        ...(profession === "Student" && { registerNumber }),
+        // Conditionally add registerNumber and courseType if profession is Student
+        ...(profession === "Student" && { registerNumber, courseType }),
+        // Conditionally add facultyId if profession is Teacher or Admin
         ...((profession === "Teacher" || profession === "Admin") && { facultyId }),
       };
 
+      // Store user data in Firestore under a document named after the user's UID
       await setDoc(doc(db, "users", user.uid), userData);
+      // Send email verification to the registered user
       await sendEmailVerification(user);
 
-      // Reset form
+      // Reset form fields after successful registration
       setUsername("");
       setEmail("");
       setPassword("");
       setPhoneNumber("");
-      setProfession("Student");
+      setProfession("Student"); // Reset to default
       setRegisterNumber("");
       setFacultyId("");
+      setCourseType(""); // Reset course type
 
-      alert("User registered successfully! Please check your email to verify your account.");
+      // Show success message (using a custom modal or message box would be better than alert)
+      // Note: alert() is generally avoided in production React apps for better UX.
+      console.log("User registered successfully! Please check your email to verify your account.");
+      // You might want to implement a custom modal for this message
+      // Example: showCustomMessage("User registered successfully! Please check your email to verify your account.");
 
       // Navigate based on profession
       if (profession === "Teacher") {
@@ -110,15 +136,16 @@ function Signup() {
       }
 
     } catch (error) {
+      // Handle various Firebase authentication errors
       if (error.code === "auth/email-already-in-use") {
         setError("The email is already registered.");
       } else if (error.code === "auth/weak-password") {
         setError("Password should be at least 6 characters.");
       } else {
-        setError(error.message);
+        setError(error.message); // Catch any other errors
       }
     } finally {
-      setLoading(false);
+      setLoading(false); // Always set loading to false after operation completes
     }
   };
 
@@ -126,10 +153,11 @@ function Signup() {
     <div className="signup-page">
       <form className="signup-form" onSubmit={handleSubmit}>
         <h2>Create Account</h2>
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="error-message">{error}</div>} {/* Display error messages */}
 
-        <label>Username</label>
+        <label htmlFor="username">Username</label>
         <input
+          id="username"
           type="text"
           placeholder="Enter your username"
           value={username}
@@ -137,8 +165,9 @@ function Signup() {
           required
         />
 
-        <label>Email</label>
+        <label htmlFor="email">Email</label>
         <input
+          id="email"
           type="email"
           placeholder="Enter your email"
           value={email}
@@ -146,8 +175,9 @@ function Signup() {
           required
         />
 
-        <label>Phone Number</label>
+        <label htmlFor="phoneNumber">Phone Number</label>
         <input
+          id="phoneNumber"
           type="tel"
           placeholder="Enter your phone number"
           value={phoneNumber}
@@ -155,8 +185,9 @@ function Signup() {
           required
         />
 
-        <label>Password</label>
+        <label htmlFor="password">Password</label>
         <input
+          id="password"
           type="password"
           placeholder="Enter your password"
           value={password}
@@ -164,16 +195,19 @@ function Signup() {
           required
         />
 
-        <label>Profession</label>
+        <label htmlFor="profession">Profession</label>
         <select
+          id="profession"
           value={profession}
           onChange={(e) => {
             const selected = e.target.value;
             setProfession(selected);
+            // Clear relevant fields when profession changes
             if (selected === "Student") {
-              setFacultyId("");
+              setFacultyId(""); // Clear faculty ID if switching to Student
             } else {
-              setRegisterNumber("");
+              setRegisterNumber(""); // Clear register number if not Student
+              setCourseType(""); // Clear course type if not Student
             }
           }}
           required
@@ -185,21 +219,36 @@ function Signup() {
 
         {profession === "Student" && (
           <>
-            <label>Register Number</label>
+            <label htmlFor="registerNumber">Register Number</label>
             <input
+              id="registerNumber"
               type="text"
               placeholder="Enter your register number"
               value={registerNumber}
               onChange={(e) => setRegisterNumber(e.target.value)}
               required
             />
+
+            <label htmlFor="courseType">Course Type</label>
+            <select
+              id="courseType"
+              value={courseType}
+              onChange={(e) => setCourseType(e.target.value)}
+              required
+            >
+              <option value="">Select a Course</option> {/* Placeholder option */}
+              {studentCourses.map((course) => (
+                <option key={course} value={course}>{course}</option>
+              ))}
+            </select>
           </>
         )}
 
         {(profession === "Teacher" || profession === "Admin") && (
           <>
-            <label>Faculty ID</label>
+            <label htmlFor="facultyId">Faculty ID</label>
             <input
+              id="facultyId"
               type="text"
               placeholder="Enter your faculty ID"
               value={facultyId}
@@ -222,4 +271,3 @@ function Signup() {
 }
 
 export default Signup;
-
