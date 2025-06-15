@@ -26,7 +26,7 @@ mongoose.connect(process.env.MONGO_URI)
 const enrollmentSchema = new mongoose.Schema({
   studentName: String,
   registerNumber: String,
-  courseName: String,
+  courseName: String, // This field is crucial for filtering by program
   teacherName: String,
   teacherEmail: String,
   Assessment1: { type: Number, default: 0 },
@@ -51,7 +51,7 @@ const reviewDeadlineSchema = new mongoose.Schema({
   secondReviewDeadline: Date,
 }, { timestamps: true });
 
-// NEW SCHEMA for Coordinator Review Data
+// SCHEMA for Coordinator Review Data
 const coordinatorReviewSchema = new mongoose.Schema({
   coordinatorId: { type: String, required: true }, // Firebase UID of the coordinator
   program: { type: String, required: true }, // e.g., MCA(R), MTECH(SS)
@@ -67,7 +67,6 @@ const coordinatorReviewSchema = new mongoose.Schema({
 const Enrollment = mongoose.model("Enrollment", enrollmentSchema);
 const Message = mongoose.model("Message", messageSchema);
 const ReviewDeadline = mongoose.model("ReviewDeadline", reviewDeadlineSchema);
-// NEW MODEL for Coordinator Review Data
 const CoordinatorReview = mongoose.model("CoordinatorReview", coordinatorReviewSchema);
 
 
@@ -87,18 +86,22 @@ const upload = multer({
 
 // === ROUTES ===
 
-// Enroll a student
+// Enroll a student - Now expects courseName from AdminDashboard
 app.post("/enroll", async (req, res) => {
+  // Ensure courseName is received from the request body
   const { studentName, registerNumber, courseName, teacherName, teacherEmail } = req.body;
   try {
+    // Check for existing enrollment with same registerNumber AND courseName
     const exists = await Enrollment.findOne({ registerNumber, courseName });
-    if (exists) return res.status(400).json({ error: "Already enrolled!" });
+    if (exists) return res.status(400).json({ error: `Student ${registerNumber} already enrolled in ${courseName}!` });
 
+    // Create new enrollment with all details including courseName
     const newEnrollment = new Enrollment({ studentName, registerNumber, courseName, teacherName, teacherEmail });
     await newEnrollment.save();
     res.status(200).json({ message: "Enrollment successful!" });
   } catch (error) {
-    res.status(500).json({ error: "Failed to enroll" });
+    console.error("Error during student enrollment:", error);
+    res.status(500).json({ error: "Failed to enroll student." });
   }
 });
 app.post("/api/save-telegram-id", async (req, res) => {
@@ -186,12 +189,22 @@ app.get("/all-students", async (req, res) => {
   }
 });
 
-// Get all students for a teacher's course
-app.get("/teacher-courses/:teacherEmail", async (req, res) => {
+// MODIFIED: Get students for a teacher, now with optional courseName filter
+app.get("/teacher-students/:teacherEmail", async (req, res) => {
+  const { teacherEmail } = req.params;
+  const { courseName } = req.query; // Get courseName from query parameter
+
+  let query = { teacherEmail }; // Start with teacherEmail filter
+
+  if (courseName) {
+    query.courseName = courseName; // Add courseName filter if provided
+  }
+
   try {
-    const students = await Enrollment.find({ teacherEmail: req.params.teacherEmail });
+    const students = await Enrollment.find(query);
     res.json(students);
   } catch (error) {
+    console.error("Error fetching teacher's students:", error);
     res.status(500).json({ error: "Failed to fetch teacher's students" });
   }
 });
@@ -294,7 +307,7 @@ app.get("/get-review-dates", async (req, res) => {
   }
 });
 
-// NEW API ENDPOINTS FOR COORDINATOR REVIEW DATA
+// API ENDPOINTS FOR COORDINATOR REVIEW DATA
 // Save coordinator review data
 app.post("/coordinator-reviews", async (req, res) => {
   const { coordinatorId, program, reviewData } = req.body;

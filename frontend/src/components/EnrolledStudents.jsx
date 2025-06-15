@@ -22,6 +22,12 @@ function EnrolledStudents() {
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
   const [latestReviewFiles, setLatestReviewFiles] = useState({});
 
+  // Define all possible programs to display as buttons
+  const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
+
+  // Base URL for your backend API
+  const API_BASE_URL = "http://localhost:5000"; // Ensure this matches your backend server URL
+
   // Effect to set teacher email on auth state change
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
@@ -36,33 +42,31 @@ function EnrolledStudents() {
     document.title = "Enrolled Students";
   }, []);
 
-  // Function to fetch students from the backend
-  const fetchStudents = () => {
-    // Only fetch if a program is selected and teacher email is available
+  // Function to fetch students from the backend based on teacherEmail and selectedProgram
+  const fetchStudents = async () => {
     if (teacherEmail && selectedProgram) {
-      axios
-        .get(`http://localhost:5000/teacher-courses/${teacherEmail}`) // Assuming this endpoint returns all students for the teacher
-        .then((res) => {
-          // You might want to filter students here based on selectedProgram
-          // if your backend doesn't filter by program.
-          // For now, we'll assume the UI simply displays all fetched students
-          // after a program is selected. If your backend supports filtering
-          // by program, you'd modify the axios call to include `selectedProgram`.
-          const updatedStudents = res.data.map((student) => ({
-            ...student,
-            marks1: student.Assessment1 || "",
-            marks2: student.Assessment2 || "",
-            marks3: student.Assessment3 || "",
-            marks4: Math.ceil((student.Assessment1 + student.Assessment2 + student.Assessment3) / 3),
-            extraColumn: student.Contact || "",
-            registerNumber: student.registerNumber,
-          }));
-          updatedStudents.sort((a, b) => a.registerNumber.localeCompare(b.registerNumber));
-          setStudents(updatedStudents);
-        })
-        .catch((err) => console.error("Error fetching students:", err));
+      try {
+        // Now, pass the selectedProgram as a query parameter
+        const response = await axios.get(`${API_BASE_URL}/teacher-students/${teacherEmail}?courseName=${selectedProgram}`);
+        
+        const updatedStudents = response.data.map((student) => ({
+          ...student,
+          marks1: student.Assessment1 || "",
+          marks2: student.Assessment2 || "",
+          marks3: student.Assessment3 || "",
+          marks4: Math.ceil((student.Assessment1 + student.Assessment2 + student.Assessment3) / 3),
+          extraColumn: student.Contact || "", // Assuming student.Contact might exist for this field
+          registerNumber: student.registerNumber,
+          courseName: student.courseName, // Ensure courseName is part of the student object
+        }));
+        updatedStudents.sort((a, b) => a.registerNumber.localeCompare(b.registerNumber));
+        setStudents(updatedStudents);
+      } catch (err) {
+        console.error(`Error fetching students for ${selectedProgram}:`, err);
+        setStudents([]); // Clear students on error or no data
+      }
     } else {
-        setStudents([]); // Clear students if no program is selected
+      setStudents([]); // Clear students if no program is selected
     }
   };
 
@@ -72,12 +76,13 @@ function EnrolledStudents() {
     for (const student of students) {
       for (const reviewType of ["zeroth", "first", "second"]) {
         try {
-          const response = await axios.get(`http://localhost:5000/get-latest-review/${student.registerNumber}/${reviewType}`);
-          if (response.data.filePath) {
+          const response = await axios.get(`${API_BASE_URL}/get-latest-review/${student.registerNumber}/${reviewType}`);
+          if (response.data && response.data.filePath) {
             files[`${student.registerNumber}_${reviewType}`] = response.data.filePath;
           }
         } catch (error) {
-          console.error(`Error fetching ${reviewType} review for ${student.registerNumber}:`, error);
+          // Log specific errors for reviews, but don't stop the process
+          // console.error(`Error fetching ${reviewType} review for ${student.registerNumber}:`, error);
         }
       }
     }
@@ -87,57 +92,68 @@ function EnrolledStudents() {
   // Fetch students when teacherEmail or selectedProgram changes
   useEffect(() => {
     fetchStudents();
-  }, [teacherEmail, selectedProgram]); // Added selectedProgram to dependency array
+  }, [teacherEmail, selectedProgram]); // Dependencies: teacherEmail and selectedProgram
 
   // Fetch latest review files when students data changes
   useEffect(() => {
     if (students.length > 0) {
       fetchLatestReviewFiles();
+    } else {
+      setLatestReviewFiles({}); // Clear files if no students are displayed
     }
   }, [students]);
 
-  // Set up an interval to periodically fetch students
+  // Set up an interval to periodically fetch students and their unseen message statuses
   useEffect(() => {
     const interval = setInterval(() => {
       fetchStudents();
-    }, 5000);
+      // fetchUnseenStatuses is called indirectly via the students effect
+    }, 5000); // Poll every 5 seconds
     return () => clearInterval(interval);
-  }, [teacherEmail, selectedProgram]); // Added selectedProgram to dependency array
+  }, [teacherEmail, selectedProgram]);
+
 
   // Handler to close the chat window
   const handleCloseChat = () => {
     setSelectedStudentRegisterNumber(null);
+    // Re-fetch unseen messages status after closing chat, to update the icon
+    // This is handled by the polling interval, but could be a direct call here if needed
   };
 
   // Handler for changes in student marks
   const handleMarkChange = (index, field, value) => {
     const updatedStudents = [...students];
     updatedStudents[index][field] = value;
+    // Recalculate average immediately for better UX
+    updatedStudents[index].marks4 = Math.ceil((Number(updatedStudents[index].marks1) + Number(updatedStudents[index].marks2) + Number(updatedStudents[index].marks3)) / 3);
     setStudents(updatedStudents);
   };
 
   // Handler to save all marks to the backend
-  const handleSaveAllMarks = () => {
-    const payload = {
-      students: students.map((student) => ({
-        registerNumber: student.registerNumber,
-        courseName: student.courseName,
-        Assessment1: Number(student.marks1) || 0,
-        Assessment2: Number(student.marks2) || 0,
-        Assessment3: Number(student.marks3) || 0,
-        Total: Number(student.marks4) || 0,
-      })),
-    };
-    axios
-      .post("http://localhost:5000/update-marks", payload)
-      .then(() => alert("Marks saved successfully!")) // Using alert as per original code, consider custom modal for better UX
-      .catch((err) => console.error("Error saving marks:", err));
+  const handleSaveAllMarks = async () => {
+    try {
+      const payload = {
+        students: students.map((student) => ({
+          registerNumber: student.registerNumber,
+          courseName: student.courseName, // Ensure courseName is sent with updates
+          Assessment1: Number(student.marks1) || 0,
+          Assessment2: Number(student.marks2) || 0,
+          Assessment3: Number(student.marks3) || 0,
+          Total: Number(student.marks4) || 0,
+        })),
+      };
+      await axios.post(`${API_BASE_URL}/update-marks`, payload);
+      alert("Marks saved successfully!"); // Consider using toast notifications
+    } catch (err) {
+      console.error("Error saving marks:", err);
+      alert(err.response?.data?.error || "Error saving marks"); // Consider using toast notifications
+    }
   };
 
   // Handler to download student marks as PDF
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
-    const courseName = students.length > 0 ? students[0].courseName : "Course Name Not Available";
+    const courseName = selectedProgram || "Students"; // Use selectedProgram for report title
     doc.setFontSize(18);
     doc.text(`${courseName} Marks Report`, 14, 22);
     doc.setFontSize(11);
@@ -169,19 +185,25 @@ function EnrolledStudents() {
     })));
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Student Marks");
-    XLSX.writeFile(workbook, "Student_Marks_Report.xlsx");
+    XLSX.writeFile(workbook, `${selectedProgram ? selectedProgram + '_' : ''}Student_Marks_Report.xlsx`);
   };
 
   // Function to check for unseen messages
   const hasUnseenMessages = async (studentRegisterNumber) => {
     if (!teacherEmail || !studentRegisterNumber) return false;
+    // Construct chatKey consistent with your ChatWindow logic
     const chatKey = teacherEmail < studentRegisterNumber ? `${teacherEmail}_${studentRegisterNumber}` : `${studentRegisterNumber}_${teacherEmail}`;
     const messagesRef = collection(db, "chats", chatKey, "messages");
     const q = query(messagesRef, orderBy("timestamp", "desc"), limit(1));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      const lastMessage = querySnapshot.docs[0].data();
-      return lastMessage.senderId === studentRegisterNumber;
+    try {
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const lastMessage = querySnapshot.docs[0].data();
+        // Check if the last message was sent by the student
+        return lastMessage.senderId === studentRegisterNumber;
+      }
+    } catch (error) {
+      console.error("Error checking unseen messages:", error);
     }
     return false;
   };
@@ -190,24 +212,29 @@ function EnrolledStudents() {
   useEffect(() => {
     const fetchUnseenStatuses = async () => {
       const statuses = {};
-      for (const student of students) {
-        const hasUnseen = await hasUnseenMessages(student.registerNumber);
-        statuses[student.registerNumber] = hasUnseen;
+      // Ensure students data is available before fetching statuses
+      if (students.length > 0) {
+        for (const student of students) {
+          const hasUnseen = await hasUnseenMessages(student.registerNumber);
+          statuses[student.registerNumber] = hasUnseen;
+        }
       }
       setUnseenMessagesStatus(statuses);
     };
-    if (students.length > 0) {
-      fetchUnseenStatuses();
-    }
-  }, [students, teacherEmail]);
+    fetchUnseenStatuses();
+  }, [students, teacherEmail]); // Re-run when students or teacherEmail changes
 
   // Handler to open chat window and mark messages as seen
   const openChatWindow = (studentRegisterNumber) => {
     setSelectedStudentRegisterNumber(studentRegisterNumber);
+    // Optimistically update the UI to show messages as seen
     setUnseenMessagesStatus(prevState => ({
       ...prevState,
       [studentRegisterNumber]: false,
     }));
+    // Note: The actual marking of messages as "seen" in Firestore
+    // would typically happen within the ChatWindow component itself
+    // when messages are read, or via a specific backend call.
   };
 
   return (
@@ -219,30 +246,22 @@ function EnrolledStudents() {
       {/* Program Selection Buttons - Visible only if no program is selected */}
       {!selectedProgram && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 w-full max-w-4xl">
-          <button
-            onClick={() => setSelectedProgram("MCA(R)")}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
-          >
-            MCA(R)
-          </button>
-          <button
-            onClick={() => setSelectedProgram("MCA(SS)")}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75"
-          >
-            MCA(SS)
-          </button>
-          <button
-            onClick={() => setSelectedProgram("MTECH(R)")}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75"
-          >
-            MTECH(R)
-          </button>
-          <button
-            onClick={() => setSelectedProgram("MTECH(SS)")}
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
-          >
-            MTECH(SS)
-          </button>
+          {allPrograms.map((program) => (
+            <button
+              key={program}
+              onClick={() => setSelectedProgram(program)}
+              className={`font-semibold py-4 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-75
+                ${program === "MCA(R)" ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500" :
+                  program === "MCA(SS)" ? "bg-green-600 hover:bg-green-700 focus:ring-green-500" :
+                    program === "MTECH(R)" ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" :
+                      "bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                }
+                text-white
+              `}
+            >
+              {program}
+            </button>
+          ))}
         </div>
       )}
 
@@ -257,6 +276,7 @@ function EnrolledStudents() {
               <thead className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
                 <tr>
                   <th className="py-3 px-6 text-left border-b border-gray-300">Register Number</th>
+                  <th className="py-3 px-6 text-left border-b border-gray-300">Student Name</th> {/* Added Student Name */}
                   <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
                   <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
                   <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
@@ -270,8 +290,9 @@ function EnrolledStudents() {
               <tbody className="text-gray-600 text-sm font-light">
                 {students.length > 0 ? (
                   students.map((student, index) => (
-                    <tr key={index} className="border-b border-gray-200 hover:bg-gray-100">
+                    <tr key={student.registerNumber} className="border-b border-gray-200 hover:bg-gray-100">
                       <td className="py-3 px-6 text-left whitespace-nowrap">{student.registerNumber}</td>
+                      <td className="py-3 px-6 text-left whitespace-nowrap">{student.studentName}</td> {/* Display Student Name */}
                       <td className="py-3 px-6 text-center">
                         <input
                           type="number"
@@ -306,7 +327,7 @@ function EnrolledStudents() {
                       <td className="py-3 px-6 text-center">
                         {latestReviewFiles[`${student.registerNumber}_zeroth`] ? (
                           <a
-                            href={`http://localhost:5000/${latestReviewFiles[`${student.registerNumber}_zeroth`]}`}
+                            href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`]}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-500 hover:underline"
@@ -320,7 +341,7 @@ function EnrolledStudents() {
                       <td className="py-3 px-6 text-center">
                         {latestReviewFiles[`${student.registerNumber}_first`] ? (
                           <a
-                            href={`http://localhost:5000/${latestReviewFiles[`${student.registerNumber}_first`]}`}
+                            href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`]}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-500 hover:underline"
@@ -334,7 +355,7 @@ function EnrolledStudents() {
                       <td className="py-3 px-6 text-center">
                         {latestReviewFiles[`${student.registerNumber}_second`] ? (
                           <a
-                            href={`http://localhost:5000/${latestReviewFiles[`${student.registerNumber}_second`]}`}
+                            href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`]}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-500 hover:underline"
@@ -359,8 +380,8 @@ function EnrolledStudents() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="9" className="py-4 text-center text-gray-500">
-                      No students enrolled yet for this program.
+                    <td colSpan="10" className="py-4 text-center text-gray-500">
+                      No students enrolled yet for this program or your assigned program.
                     </td>
                   </tr>
                 )}
