@@ -29,14 +29,22 @@ const enrollmentSchema = new mongoose.Schema({
   courseName: String, // This field is crucial for filtering by program
   teacherName: String,
   teacherEmail: String,
+  // Existing fixed assessments - can be kept or removed if replaced by reviewsAssessment
   Assessment1: { type: Number, default: 0 },
   Assessment2: { type: Number, default: 0 },
   Assessment3: { type: Number, default: 0 },
   Total: { type: Number, default: 0 },
-  reviews: [{
+  reviews: [{ // For uploaded review documents (PDFs)
     reviewType: String,
     filePath: String,
     uploadedAt: { type: Date, default: Date.now },
+  }],
+  // NEW: Flexible structure for review item marks set by coordinator
+  reviewsAssessment: [{
+    description: String, // Description of the review item from coordinator's setup
+    r1_mark: { type: Number, default: 0 },
+    r2_mark: { type: Number, default: 0 },
+    r3_mark: { type: Number, default: 0 },
   }],
 });
 
@@ -51,12 +59,12 @@ const reviewDeadlineSchema = new mongoose.Schema({
   secondReviewDeadline: Date,
 }, { timestamps: true });
 
-// SCHEMA for Coordinator Review Data
+// SCHEMA for Coordinator Review Data (defines the structure of review items)
 const coordinatorReviewSchema = new mongoose.Schema({
   coordinatorId: { type: String, required: true }, // Firebase UID of the coordinator
   program: { type: String, required: true }, // e.g., MCA(R), MTECH(SS)
   reviewData: {
-    type: Array, // Array of review item objects
+    type: Array, // Array of review item objects { r1_desc, r1_mark, r2_desc, r2_mark, r3_desc, r3_mark }
     default: []
   },
   lastUpdated: { type: Date, default: Date.now } // Timestamp of last update
@@ -88,15 +96,22 @@ const upload = multer({
 
 // Enroll a student - Now expects courseName from AdminDashboard
 app.post("/enroll", async (req, res) => {
-  // Ensure courseName is received from the request body
   const { studentName, registerNumber, courseName, teacherName, teacherEmail } = req.body;
   try {
-    // Check for existing enrollment with same registerNumber AND courseName
     const exists = await Enrollment.findOne({ registerNumber, courseName });
     if (exists) return res.status(400).json({ error: `Student ${registerNumber} already enrolled in ${courseName}!` });
 
-    // Create new enrollment with all details including courseName
-    const newEnrollment = new Enrollment({ studentName, registerNumber, courseName, teacherName, teacherEmail });
+    // When enrolling, also initialize reviewsAssessment with empty data based on coordinator's setup
+    // This part will need refinement if coordinator data is not available yet.
+    // For simplicity, we initialize it as empty and let the teacher populate.
+    const newEnrollment = new Enrollment({
+      studentName,
+      registerNumber,
+      courseName,
+      teacherName,
+      teacherEmail,
+      reviewsAssessment: [] // Initialize as empty, will be populated by teacher
+    });
     await newEnrollment.save();
     res.status(200).json({ message: "Enrollment successful!" });
   } catch (error) {
@@ -104,6 +119,7 @@ app.post("/enroll", async (req, res) => {
     res.status(500).json({ error: "Failed to enroll student." });
   }
 });
+
 app.post("/api/save-telegram-id", async (req, res) => {
   const { registerNumber, chatId } = req.body;
 
@@ -209,19 +225,30 @@ app.get("/teacher-students/:teacherEmail", async (req, res) => {
   }
 });
 
-// Update assessment marks
+// Update assessment marks (can be extended to update reviewsAssessment)
 app.post("/update-marks", async (req, res) => {
   try {
     const { students } = req.body;
     for (const student of students) {
-      await Enrollment.findOneAndUpdate(
+      // Find the existing enrollment by registerNumber and courseName
+      const existingEnrollment = await Enrollment.findOneAndUpdate(
         { registerNumber: student.registerNumber, courseName: student.courseName },
-        { $set: student },
+        {
+          $set: {
+            Assessment1: Number(student.Assessment1) || 0,
+            Assessment2: Number(student.Assessment2) || 0,
+            Assessment3: Number(student.Assessment3) || 0,
+            Total: Number(student.Total) || 0,
+            // Only set reviewsAssessment if it's explicitly provided and valid
+            ...(Array.isArray(student.reviewsAssessment) && { reviewsAssessment: student.reviewsAssessment })
+          }
+        },
         { new: true, upsert: true }
       );
     }
     res.json({ message: "Marks updated successfully!" });
   } catch (error) {
+    console.error("Error saving marks:", error);
     res.status(500).json({ error: "Failed to update marks" });
   }
 });
@@ -307,7 +334,7 @@ app.get("/get-review-dates", async (req, res) => {
   }
 });
 
-// API ENDPOINTS FOR COORDINATOR REVIEW DATA
+// API ENDPOINTS FOR COORDINATOR REVIEW DATA (defines review item structure)
 // Save coordinator review data
 app.post("/coordinator-reviews", async (req, res) => {
   const { coordinatorId, program, reviewData } = req.body;
@@ -316,11 +343,10 @@ app.post("/coordinator-reviews", async (req, res) => {
   }
 
   try {
-    // Find and update the existing review entry or create a new one
     const updatedReview = await CoordinatorReview.findOneAndUpdate(
-      { coordinatorId, program }, // Find by coordinator ID and program
-      { reviewData, lastUpdated: new Date() }, // Set new review data and update timestamp
-      { upsert: true, new: true, setDefaultsOnInsert: true } // Create if not exists, return new document
+      { coordinatorId, program },
+      { reviewData, lastUpdated: new Date() },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
     );
     res.status(200).json({ message: "Coordinator review data saved successfully!", data: updatedReview });
   } catch (error) {
@@ -329,19 +355,61 @@ app.post("/coordinator-reviews", async (req, res) => {
   }
 });
 
-// Get coordinator review data
+// Get coordinator review data (used by CoordinatorDashboard & EnrolledStudents)
 app.get("/coordinator-reviews/:coordinatorId/:program", async (req, res) => {
   const { coordinatorId, program } = req.params;
   try {
     const review = await CoordinatorReview.findOne({ coordinatorId, program });
     if (!review) {
-      // If no data found, return an empty array for reviewData
-      return res.status(200).json({ reviewData: [] });
+      return res.status(200).json({ reviewData: [] }); // Return empty array if no coordinator data
     }
     res.status(200).json(review);
   } catch (error) {
     console.error("Error fetching coordinator review data:", error);
     res.status(500).json({ error: "Failed to fetch coordinator review data." });
+  }
+});
+
+
+// NEW API ENDPOINTS for student review marks (teacher's side)
+
+// GET student's review marks for a specific program
+app.get("/student-review-marks/:registerNumber/:courseName", async (req, res) => {
+  const { registerNumber, courseName } = req.params;
+  try {
+    const enrollment = await Enrollment.findOne({ registerNumber, courseName });
+    if (!enrollment) {
+      return res.status(404).json({ error: "Student enrollment not found for this course." });
+    }
+    res.status(200).json({ reviewsAssessment: enrollment.reviewsAssessment || [] });
+  } catch (error) {
+    console.error("Error fetching student review marks:", error);
+    res.status(500).json({ error: "Failed to fetch student review marks." });
+  }
+});
+
+// POST/PUT student's review marks for a specific program
+app.post("/student-review-marks", async (req, res) => {
+  const { registerNumber, courseName, reviewsAssessment } = req.body;
+  if (!registerNumber || !courseName || !Array.isArray(reviewsAssessment)) {
+    return res.status(400).json({ error: "Missing required fields or invalid format." });
+  }
+
+  try {
+    const updatedEnrollment = await Enrollment.findOneAndUpdate(
+      { registerNumber, courseName },
+      { $set: { reviewsAssessment: reviewsAssessment } },
+      { new: true, upsert: false } // upsert: false because enrollment should already exist
+    );
+
+    if (!updatedEnrollment) {
+      return res.status(404).json({ error: "Student enrollment not found for this course." });
+    }
+
+    res.status(200).json({ message: "Student review marks saved successfully!", data: updatedEnrollment.reviewsAssessment });
+  } catch (error) {
+    console.error("Error saving student review marks:", error);
+    res.status(500).json({ error: "Failed to save student review marks." });
   }
 });
 
