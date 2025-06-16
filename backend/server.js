@@ -225,6 +225,19 @@ app.get("/teacher-students/:teacherEmail", async (req, res) => {
   }
 });
 
+// NEW ENDPOINT: Get all students for a specific program (courseName) - for HOD Dashboard
+app.get("/students-by-program/:programName", async (req, res) => {
+  const { programName } = req.params;
+  try {
+    const students = await Enrollment.find({ courseName: programName });
+    res.json(students);
+  } catch (error) {
+    console.error(`Error fetching students for program ${programName}:`, error);
+    res.status(500).json({ error: `Failed to fetch students for program ${programName}.` });
+  }
+});
+
+
 // Update assessment marks (can be extended to update reviewsAssessment)
 app.post("/update-marks", async (req, res) => {
   try {

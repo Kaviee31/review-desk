@@ -24,6 +24,8 @@ import CoordinatorDashboard from './components/CoordinatorDashboard';
 import CoordinatorLayout from "./components/CoordinatorLayout";
 import ChangePassword from "./components/ChangePassword";
 
+import HODDashboard  from "./components/HODDashboard";
+
 
 function App() {
   return (
@@ -58,7 +60,9 @@ function App() {
         <Route path="/coordinator" element={<CoordinatorLayout />}>
   <Route path="dashboard" element={<CoordinatorDashboard />} />
   <Route path="change-password" element={<ChangePassword />} />
-</Route>
+   </Route>
+
+   <Route path="/hod/dashboard" element={<HODDashboard />} />
       </Routes>
     </Router>
   );

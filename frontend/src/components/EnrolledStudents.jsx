@@ -411,6 +411,83 @@ function EnrolledStudents() {
 
   const { totalAwardedR1, totalAwardedR2, totalAwardedR3 } = calculateModalTotals();
 
+  // NEW: Function to download the specific student's review marks as PDF
+  const handleDownloadStudentReviewPDF = () => {
+    if (!currentStudentForReview || studentReviewMarks.length === 0) {
+      toast.error("No review data available to download for this student.");
+      return;
+    }
+
+    const doc = new jsPDF();
+    const studentName = currentStudentForReview.studentName;
+    const registerNumber = currentStudentForReview.registerNumber;
+    const programName = selectedProgram;
+    const currentDate = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY format
+
+    // Resembling the "Semester Fee Receipt" structure
+    doc.setFont('helvetica'); // Use a standard font
+    doc.setFontSize(10);
+    doc.text('PROGRESS THROUGH KNOWLEDGE', 14, 15);
+
+    doc.setFontSize(14);
+    doc.text('ANNA UNIVERSITY', 14, 25);
+    doc.text('STUDENT REVIEW MARKS REPORT', 14, 32);
+
+    doc.setFontSize(10);
+    doc.text(`Roll.No: ${registerNumber}`, 14, 45);
+    doc.text(`Name: ${studentName}`, 14, 55);
+    doc.text(`Program: ${programName}`, 14, 50);
+    doc.text(`Report Generated On: ${currentDate}`, 14, 60);
+
+    const tableColumn = [
+      "Review Item (R1)", "R1 Max", "R1 Awarded",
+      "Review Item (R2)", "R2 Max", "R2 Awarded",
+      "Review Item (R3)", "R3 Max", "R3 Awarded"
+    ];
+
+    const tableRows = studentReviewMarks.map(item => [
+      item.r1_item_desc || '', // Ensure no 'undefined' in PDF
+      item.coord_r1_max.toString(),
+      item.r1_mark.toString(),
+      item.r2_item_desc || '',
+      item.coord_r2_max.toString(),
+      item.r2_mark.toString(),
+      item.r3_item_desc || '',
+      item.coord_r3_max.toString(),
+      item.r3_mark.toString()
+    ]);
+
+    // Add totals row to the tableRows for PDF
+    tableRows.push([
+      { content: "Total Awarded Marks (R1):", colSpan: 2, styles: { fontStyle: 'bold', halign: 'right' } },
+      { content: totalAwardedR1.toString(), styles: { fontStyle: 'bold', halign: 'center' } },
+      { content: "Total Awarded Marks (R2):", colSpan: 2, styles: { fontStyle: 'bold', halign: 'right' } },
+      { content: totalAwardedR2.toString(), styles: { fontStyle: 'bold', halign: 'center' } },
+      { content: "Total Awarded Marks (R3):", colSpan: 2, styles: { fontStyle: 'bold', halign: 'right' } },
+      { content: totalAwardedR3.toString(), styles: { fontStyle: 'bold', halign: 'center' } }
+    ]);
+
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 70, // Adjust start position based on new header info
+      theme: 'grid', // Add grid theme for better visual separation
+      styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+      headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0], fontStyle: 'bold' },
+      footStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold' },
+      didDrawPage: function (data) {
+        // Footer (optional: add page numbers or custom text)
+        let str = "Page " + doc.internal.getNumberOfPages();
+        doc.setFontSize(10);
+        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
+      }
+    });
+
+    doc.save(`${studentName.replace(/[^a-zA-Z0-9]/g, '_')}_${registerNumber}_Review_Marks.pdf`);
+    toast.success("Student review marks PDF downloaded successfully!");
+  };
+
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 bg-gray-100 font-inter">
@@ -638,15 +715,15 @@ function EnrolledStudents() {
                       <thead className="bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
                         <tr>
                           {/* Reordered and clarified headers */}
-                          <th className="py-2 px-4 text-left border-b border-gray-300">Review 1</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">Max Marks</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">Awarded Marks</th>
-                          <th className="py-2 px-4 text-left border-b border-gray-300">Review 2</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">Max Marks</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">Awarded Marks</th>
-                          <th className="py-2 px-4 text-left border-b border-gray-300">Review 3</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">Max Marks</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">Awarded Marks</th>
+                          <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R1)</th>
+                          <th className="py-2 px-4 text-center border-b border-gray-300">R1 Max</th>
+                          <th className="py-2 px-4 text-center border-b border-gray-300">R1 Awarded</th>
+                          <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R2)</th>
+                          <th className="py-2 px-4 text-center border-b border-gray-300">R2 Max</th>
+                          <th className="py-2 px-4 text-center border-b border-gray-300">R2 Awarded</th>
+                          <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R3)</th>
+                          <th className="py-2 px-4 text-center border-b border-gray-300">R3 Max</th>
+                          <th className="py-2 px-4 text-center border-b border-gray-300">R3 Awarded</th>
                         </tr>
                       </thead>
                       <tbody className="text-gray-700 text-sm">
@@ -695,7 +772,7 @@ function EnrolledStudents() {
                       {/* NEW: Total Row in Modal Footer */}
                       <tfoot className="bg-gray-100 text-gray-800 uppercase text-sm leading-normal font-semibold">
                         <tr>
-                          <td></td><td>Total Awarded Marks (R1): </td>
+                          <td className="py-2 px-4 text-right border-t border-gray-300" colSpan="2">Total Awarded Marks (R1):</td>
                           <td className="py-2 px-4 text-center border-t border-gray-300">{totalAwardedR1}</td>
                           <td className="py-2 px-4 text-right border-t border-gray-300" colSpan="2">Total Awarded Marks (R2):</td>
                           <td className="py-2 px-4 text-center border-t border-gray-300">{totalAwardedR2}</td>
@@ -730,6 +807,12 @@ function EnrolledStudents() {
                 className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {savingReviewMarks ? "Saving..." : "Save Marks"}
+              </button>
+              <button
+                onClick={handleDownloadStudentReviewPDF}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75"
+              >
+                Download as PDF
               </button>
             </div>
           </div>

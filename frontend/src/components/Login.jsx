@@ -5,6 +5,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import animationData from "../assets/login-animation.json";
+import { toast } from 'react-toastify'; // Import toast for notifications
+import 'react-toastify/dist/ReactToastify.css'; // Import toast CSS
 import "../styles/Login.css";
 
 function Login() {
@@ -24,34 +26,40 @@ function Login() {
 
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
-        const { username, profession, registerNumber } = userDoc.data();
+        const userData = userDoc.data();
+        const { username, profession, registerNumber } = userData; // 'profession' now holds the specific role (Student, Guide, Admin, HOD)
 
         switch (profession) {
-          case "Teacher":
-            alert(`Welcome Teacher ${username}`);
-            navigate("/teacher/dashboard");
+          case "Guide": // Renamed Teacher to Guide
+            toast.success(`Welcome Guide ${username}`); // Use toast
+            navigate("/teacher/dashboard"); // Route remains /teacher/dashboard
             break;
           case "Student":
-            alert(`Welcome Student ${username} (Reg No: ${registerNumber})`);
+            toast.success(`Welcome Student ${username} (Reg No: ${registerNumber})`); // Use toast
             navigate("/student-dashboard");
             break;
           case "Admin":
-            alert(`Welcome Admin ${username}`);
+            toast.success(`Welcome Admin ${username}`); // Use toast
             navigate("/admin/dashboard");
+            break;
+          case "HOD": // New case for HOD
+            toast.success(`Welcome HOD ${username}`); // Use toast
+            navigate("/hod/dashboard"); // New route for HOD dashboard
             break;
           case "Coordinator":
             alert(`Welcome Coordinator ${username}`);
             navigate("/coordinator/dashboard");
             break;
           default:
-            alert("Unknown profession.");
+            toast.error("Unknown profession."); // Use toast
+            navigate("/"); // Navigate to root or a general fallback
         }
       } else {
-        alert("User profile not found.");
+        toast.error("User profile not found in database."); // Use toast
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert(error.message);
+      toast.error(`Login failed: ${error.message}`); // Use toast
     }
   };
 

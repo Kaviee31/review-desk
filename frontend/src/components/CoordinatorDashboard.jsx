@@ -25,7 +25,9 @@ function CoordinatorDashboard() {
 
   // Base URL for your backend API
   const API_BASE_URL = "http://localhost:5000"; // Ensure this matches your backend server URL
-
+useEffect(() => {
+    document.title = "Coordinator Dashboard";
+  }, []);
   // Effect to fetch coordinator's assigned course on component mount
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {

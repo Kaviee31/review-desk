@@ -13,6 +13,8 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
+import { toast } from 'react-toastify'; // Import toast for notifications
+import 'react-toastify/dist/ReactToastify.css'; // Import toast CSS
 import "../styles/Signup.css"; // Assuming you have this CSS file for styling
 
 function Signup() {
@@ -26,7 +28,8 @@ function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [profession, setProfession] = useState("Student"); // Default profession
+  const [userType, setUserType] = useState("Student"); // Changed from 'profession' to 'userType'
+  const [facultyRole, setFacultyRole] = useState(""); // New state for faculty role (Guide, Admin, HOD)
   const [registerNumber, setRegisterNumber] = useState("");
   const [facultyId, setFacultyId] = useState("");
   const [courseType, setCourseType] = useState(""); // New state for course type
@@ -35,8 +38,10 @@ function Signup() {
 
   const navigate = useNavigate(); // Hook for navigation
 
-  // Options for profession dropdown
-  const professions = ["Student", "Teacher", "Admin"];
+  // Options for user type dropdown
+  const userTypes = ["Student", "Faculty"];
+  // Options for faculty roles dropdown
+  const facultyRoles = ["Guide", "Admin", "HOD"]; // Renamed Teacher to Guide
   // Options for course type dropdown (for students)
   const studentCourses = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
 
@@ -65,8 +70,9 @@ function Signup() {
         return;
       }
 
-      // Check duplicate register number for students
-      if (profession === "Student") {
+      // Logic based on userType
+      if (userType === "Student") {
+        // Check duplicate register number for students
         const regQuery = query(usersRef, where("registerNumber", "==", registerNumber));
         const regSnapshot = await getDocs(regQuery);
         if (!regSnapshot.empty) {
@@ -80,14 +86,21 @@ function Signup() {
             setLoading(false);
             return;
         }
+      } else if (userType === "Faculty") { // If userType is Faculty
+        // Faculty ID is required
+        if (!facultyId) {
+          setError("Faculty ID is required.");
+          setLoading(false);
+          return;
+        }
+        // Faculty Role is required
+        if (!facultyRole) {
+          setError("Please select your faculty role (Guide, Admin, or HOD).");
+          setLoading(false);
+          return;
+        }
       }
 
-      // Faculty ID required for Teacher/Admin
-      if ((profession === "Teacher" || profession === "Admin") && !facultyId) {
-        setError("Faculty ID is required for Teachers and Admins.");
-        setLoading(false);
-        return;
-      }
 
       // Create user with email and password using Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -98,12 +111,20 @@ function Signup() {
         username,
         email,
         phoneNumber,
-        profession,
-        // Conditionally add registerNumber and courseType if profession is Student
-        ...(profession === "Student" && { registerNumber, courseType }),
-        // Conditionally add facultyId if profession is Teacher or Admin
-        ...((profession === "Teacher" || profession === "Admin") && { facultyId }),
+        userType, // Store 'Student' or 'Faculty'
       };
+
+      // Conditionally add student-specific fields
+      if (userType === "Student") {
+        userData.registerNumber = registerNumber;
+        userData.courseType = courseType;
+        userData.profession = "Student"; // Keep profession for backward compatibility/clarity
+      }
+      // Conditionally add faculty-specific fields
+      else if (userType === "Faculty") {
+        userData.facultyId = facultyId;
+        userData.profession = facultyRole; // Store the specific role (Guide, Admin, HOD) as 'profession'
+      }
 
       // Store user data in Firestore under a document named after the user's UID
       await setDoc(doc(db, "users", user.uid), userData);
@@ -115,24 +136,28 @@ function Signup() {
       setEmail("");
       setPassword("");
       setPhoneNumber("");
-      setProfession("Student"); // Reset to default
+      setUserType("Student"); // Reset to default
+      setFacultyRole(""); // Reset faculty role
       setRegisterNumber("");
       setFacultyId("");
       setCourseType(""); // Reset course type
 
-      // Show success message (using a custom modal or message box would be better than alert)
-      // Note: alert() is generally avoided in production React apps for better UX.
-      console.log("User registered successfully! Please check your email to verify your account.");
-      // You might want to implement a custom modal for this message
-      // Example: showCustomMessage("User registered successfully! Please check your email to verify your account.");
+      toast.success("Account created successfully! Please check your email to verify your account.");
 
-      // Navigate based on profession
-      if (profession === "Teacher") {
-        navigate("/teacher/dashboard", { replace: true });
-      } else if (profession === "Admin") {
+      // Navigate based on profession (which is now derived from userType/facultyRole)
+      if (userData.profession === "Guide") {
+        navigate("/teacher/dashboard", { replace: true }); // Renamed Teacher to Guide
+      } else if (userData.profession === "Admin") {
         navigate("/admin/dashboard", { replace: true });
-      } else {
+      } else if (userData.profession === "HOD") { // New HOD route
+        navigate("/hod/dashboard", { replace: true });
+      }
+      else if (userData.profession === "Student") {
         navigate("/student-dashboard", { replace: true });
+      } else {
+        // Fallback for unexpected profession
+        console.warn("Unknown profession, navigating to root.");
+        navigate("/", { replace: true });
       }
 
     } catch (error) {
@@ -144,6 +169,7 @@ function Signup() {
       } else {
         setError(error.message); // Catch any other errors
       }
+      toast.error(`Error: ${error.message}`); // Display error using toast
     } finally {
       setLoading(false); // Always set loading to false after operation completes
     }
@@ -195,29 +221,30 @@ function Signup() {
           required
         />
 
-        <label htmlFor="profession">Profession</label>
+        <label htmlFor="userType">User Type</label>
         <select
-          id="profession"
-          value={profession}
+          id="userType"
+          value={userType}
           onChange={(e) => {
             const selected = e.target.value;
-            setProfession(selected);
-            // Clear relevant fields when profession changes
+            setUserType(selected);
+            // Clear relevant fields when userType changes
             if (selected === "Student") {
-              setFacultyId(""); // Clear faculty ID if switching to Student
-            } else {
-              setRegisterNumber(""); // Clear register number if not Student
-              setCourseType(""); // Clear course type if not Student
+              setFacultyId("");
+              setFacultyRole(""); // Clear faculty role
+            } else { // If "Faculty" is selected
+              setRegisterNumber("");
+              setCourseType("");
             }
           }}
           required
         >
-          {professions.map((prof) => (
-            <option key={prof} value={prof}>{prof}</option>
+          {userTypes.map((type) => (
+            <option key={type} value={type}>{type}</option>
           ))}
         </select>
 
-        {profession === "Student" && (
+        {userType === "Student" && (
           <>
             <label htmlFor="registerNumber">Register Number</label>
             <input
@@ -244,7 +271,7 @@ function Signup() {
           </>
         )}
 
-        {(profession === "Teacher" || profession === "Admin") && (
+        {userType === "Faculty" && (
           <>
             <label htmlFor="facultyId">Faculty ID</label>
             <input
@@ -255,6 +282,18 @@ function Signup() {
               onChange={(e) => setFacultyId(e.target.value)}
               required
             />
+            <label htmlFor="facultyRole">Faculty Role</label>
+            <select
+              id="facultyRole"
+              value={facultyRole}
+              onChange={(e) => setFacultyRole(e.target.value)}
+              required
+            >
+              <option value="">Select a Role</option> {/* Placeholder option */}
+              {facultyRoles.map((role) => (
+                <option key={role} value={role}>{role}</option>
+              ))}
+            </select>
           </>
         )}
 
