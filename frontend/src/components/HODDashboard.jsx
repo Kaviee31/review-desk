@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { auth, db } from '../firebase';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'; // Import Firestore functions for querying users
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -14,6 +14,8 @@ function HODDashboard() {
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const navigate = useNavigate();
+
+  const firstRender = useRef(true); // ✅ Prevent multiple toasts
 
   const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
   const API_BASE_URL = "http://localhost:5000";
@@ -31,13 +33,16 @@ function HODDashboard() {
             const userData = userDocSnap.data();
             if (userData.profession === "HOD") {
               setUsername(userData.username || 'HOD');
-              toast.success(`Welcome, HOD ${userData.username}!`);
+              if (firstRender.current) {
+                
+                firstRender.current = false;
+              }
             } else {
-              toast.error("Access Denied: You are not authorized to view the HOD Dashboard.");
+              toast.error("Access Denied: You are not authorized.");
               navigate("/");
             }
           } else {
-            toast.error("User profile not found. Please re-login.");
+            toast.error("User profile not found.");
             navigate("/");
           }
         } catch (error) {
@@ -56,7 +61,6 @@ function HODDashboard() {
     return () => unsubscribe();
   }, [navigate]);
 
-  // Function to fetch students for the selected program and enrich with teacher's username
   const fetchStudentsByProgram = async (programName) => {
     setLoadingStudents(true);
     setStudents([]);
@@ -64,40 +68,34 @@ function HODDashboard() {
       const response = await axios.get(`${API_BASE_URL}/students-by-program/${programName}`);
       let fetchedStudents = response.data;
 
-      // Create a map to store teacher usernames by email to avoid duplicate Firestore reads
       const teacherUsernamesCache = new Map();
 
-      // Iterate through students and fetch teacher's username from Firestore
       const studentsWithTeacherNames = await Promise.all(fetchedStudents.map(async (student) => {
         let teacherDisplayName = 'N/A';
         if (student.teacherEmail) {
-          // Check cache first
           if (teacherUsernamesCache.has(student.teacherEmail)) {
             teacherDisplayName = teacherUsernamesCache.get(student.teacherEmail);
           } else {
-            // Fetch teacher's username from Firestore 'users' collection
             const usersRef = collection(db, "users");
-            const q = query(usersRef, where("email", "==", student.teacherEmail), where("profession", "in", ["Guide", "Admin", "HOD"])); // Include all faculty types
+            const q = query(usersRef, where("email", "==", student.teacherEmail), where("profession", "in", ["Guide", "Admin", "HOD"]));
             const querySnapshot = await getDocs(q);
 
             if (!querySnapshot.empty) {
               const teacherData = querySnapshot.docs[0].data();
-              teacherDisplayName = teacherData.username || student.teacherEmail; // Fallback to email if username not set
-              teacherUsernamesCache.set(student.teacherEmail, teacherDisplayName); // Cache it
+              teacherDisplayName = teacherData.username || student.teacherEmail;
+              teacherUsernamesCache.set(student.teacherEmail, teacherDisplayName);
             } else {
-              console.warn(`Teacher user not found for email: ${student.teacherEmail}`);
-              teacherDisplayName = student.teacherEmail; // Display email if user not found in Firestore
+              teacherDisplayName = student.teacherEmail;
             }
           }
         }
-
         return {
           ...student,
           marks1: student.Assessment1 || 0,
           marks2: student.Assessment2 || 0,
           marks3: student.Assessment3 || 0,
           marks4: student.Total || 0,
-          teacherDisplayName: teacherDisplayName, // Add the fetched teacher's username
+          teacherDisplayName,
         };
       }));
 
@@ -110,13 +108,11 @@ function HODDashboard() {
     } catch (error) {
       console.error(`Error fetching students for ${programName}:`, error);
       toast.error(`Failed to load students for ${programName}.`);
-      setStudents([]);
     } finally {
       setLoadingStudents(false);
     }
   };
 
-  // Handle program button click
   const handleProgramClick = (program) => {
     setSelectedProgram(program);
     fetchStudentsByProgram(program);
@@ -137,26 +133,18 @@ function HODDashboard() {
         <p className="text-2xl text-gray-700 mb-4">
           Welcome, <span className="font-semibold text-blue-600">{username}</span>!
         </p>
-        <p className="text-lg text-gray-600 mb-6">
-          Select a program to view enrolled students and their assessment marks.
-        </p>
+        <p className="text-lg text-gray-600 mb-6">Select a program to view enrolled students and their assessment marks.</p>
 
-        {/* Program Selection Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {allPrograms.map((program) => (
-            <button
-              key={program}
-              onClick={() => handleProgramClick(program)}
-              className={`font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-75
-                ${selectedProgram === program ? "bg-indigo-700 text-white" : "bg-indigo-500 hover:bg-indigo-600 text-white"}
-              `}
-            >
+            <button key={program} onClick={() => handleProgramClick(program)}
+              className={`font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 transform hover:scale-105 
+                ${selectedProgram === program ? "bg-indigo-700 text-white" : "bg-indigo-500 hover:bg-indigo-600 text-white"}`}>
               {program}
             </button>
           ))}
         </div>
 
-        {/* Student List Display */}
         {selectedProgram && (
           <div className="mt-8">
             <h3 className="text-2xl font-bold text-gray-800 mb-4">Students for {selectedProgram}</h3>
@@ -169,33 +157,29 @@ function HODDashboard() {
                 <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
                   <thead className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
                     <tr>
-                      <th className="py-3 px-6 text-left border-b border-gray-300">Register Number</th>
-                      <th className="py-3 px-6 text-left border-b border-gray-300">Student Name</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Overall Average</th>
-                      <th className="py-3 px-6 text-left border-b border-gray-300">Assigned Teacher</th>
+                      <th className="py-3 px-6 text-left">Register Number</th>
+                      <th className="py-3 px-6 text-left">Student Name</th>
+                      <th className="py-3 px-6 text-center">Assessment 1</th>
+                      <th className="py-3 px-6 text-center">Assessment 2</th>
+                      <th className="py-3 px-6 text-center">Assessment 3</th>
+                      <th className="py-3 px-6 text-center">Total</th>
+                      <th className="py-3 px-6 text-left">Assigned Teacher</th>
                     </tr>
                   </thead>
                   <tbody className="text-gray-600 text-sm font-light">
-                    {students.length > 0 ? (
-                      students.map((student) => (
-                        <tr key={student.registerNumber} className="border-b border-gray-200 hover:bg-gray-100">
-                          <td className="py-3 px-6 text-left whitespace-nowrap">{student.registerNumber}</td>
-                          <td className="py-3 px-6 text-left whitespace-nowrap">{student.studentName}</td>
-                          <td className="py-3 px-6 text-center">{student.marks1}</td>
-                          <td className="py-3 px-6 text-center">{student.marks2}</td>
-                          <td className="py-3 px-6 text-center">{student.marks3}</td>
-                          <td className="py-3 px-6 text-center">{student.marks4}</td>
-                          <td className="py-3 px-6 text-left">{student.teacherDisplayName}</td> {/* Display teacher's actual username */}
-                        </tr>
-                      ))
-                    ) : (
+                    {students.length > 0 ? students.map((student) => (
+                      <tr key={student.registerNumber} className="border-b hover:bg-gray-100">
+                        <td className="py-3 px-6">{student.registerNumber}</td>
+                        <td className="py-3 px-6">{student.studentName}</td>
+                        <td className="py-3 px-6 text-center">{student.marks1}</td>
+                        <td className="py-3 px-6 text-center">{student.marks2}</td>
+                        <td className="py-3 px-6 text-center">{student.marks3}</td>
+                        <td className="py-3 px-6 text-center">{student.marks4}</td>
+                        <td className="py-3 px-6">{student.teacherDisplayName}</td>
+                      </tr>
+                    )) : (
                       <tr>
-                        <td colSpan="7" className="py-4 text-center text-gray-500">
-                          No students found for this program.
-                        </td>
+                        <td colSpan="7" className="py-4 text-center text-gray-500">No students found.</td>
                       </tr>
                     )}
                   </tbody>
@@ -203,19 +187,13 @@ function HODDashboard() {
               </div>
             )}
             <div className="flex justify-center mt-6">
-              <button
-                onClick={() => {
-                  setSelectedProgram(null);
-                  setStudents([]);
-                }}
-                className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"
-              >
+              <button onClick={() => { setSelectedProgram(null); setStudents([]); }}
+                className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">
                 Select Another Program
               </button>
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

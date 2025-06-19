@@ -1,70 +1,71 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { ToastContainer } from 'react-toastify'; // ✅ Import toast container
-import 'react-toastify/dist/ReactToastify.css'; // ✅ Toastify styles
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import ForgotPassword from "./components/ForgotPassword";
 
+import AdminDashboard from "./components/AdminDashboard";
+import ReportPage from "./components/ReportPage";
+import AssignCoordinator from "./components/AssignCoordinatorForm";
+
 import StudentDashboard from "./components/StudentDashboard";
 import StudentCourses from "./components/StudentCourses";
-import StudentLayout from "./components/StudentLayout";
 
 import TeacherDashboard from "./components/TeacherDashboard";
 import EnrolledStudents from "./components/EnrolledStudents";
-import TeacherLayout from "./components/TeacherLayout";
 
-import AdminDashboard from "./components/AdminDashboard";
-import ReportPage from "./components/ReportPage";
-import AdminLayout from "./components/AdminLayout";
-import AssignCoordinatorForm from "./components/AssignCoordinatorForm";
-
-
-import CoordinatorDashboard from './components/CoordinatorDashboard';
-import CoordinatorLayout from "./components/CoordinatorLayout";
+import CoordinatorDashboard from "./components/CoordinatorDashboard";
 import ChangePassword from "./components/ChangePassword";
 
-import HODDashboard  from "./components/HODDashboard";
+import HODDashboard from "./components/HODDashboard";
 
+import AdminLayout from "./components/AdminLayout";
+import TeacherLayout from "./components/TeacherLayout";
+import StudentLayout from "./components/StudentLayout";
+import HODLayout from "./components/HODLayout";
+
+import RoleProtectedRoute from "./components/RoleProtectedRoute";
+import { RoleProvider } from "./contexts/RoleContext";
 
 function App() {
   return (
-    <Router>
-      {/* Toast Container - Global Placement */}
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+    <RoleProvider>
+      <Router>
+        <ToastContainer position="top-right" autoClose={3000} />
+        <Routes>
 
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* Admin Layout Routes */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="report" element={<ReportPage />} />
-          <Route path="assign-coordinator" element={<AssignCoordinatorForm />} />
-        </Route>
+          <Route path="/admin" element={<RoleProtectedRoute allowedRoles={["Admin"]}><AdminLayout /></RoleProtectedRoute>}>
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="report" element={<ReportPage />} />
+            <Route path="assign-coordinator" element={<AssignCoordinator />} />
+          </Route>
 
-        {/* Student Layout Routes */}
-        <Route path="/student-dashboard" element={<StudentLayout />}>
-          <Route index element={<StudentDashboard />} />
-          <Route path="courses" element={<StudentCourses />} />
-        </Route>
+          <Route path="/student" element={<RoleProtectedRoute allowedRoles={["Student"]}><StudentLayout /></RoleProtectedRoute>}>
+            <Route path="dashboard" element={<StudentDashboard />} />
+            <Route path="courses" element={<StudentCourses />} />
+          </Route>
 
-        {/* Teacher Layout Routes */}
-        <Route path="/teacher" element={<TeacherLayout />}>
-          <Route path="dashboard" element={<TeacherDashboard />} />
-          <Route path="enrolled-students" element={<EnrolledStudents />} />
-        </Route>
-        <Route path="/coordinator" element={<CoordinatorLayout />}>
-  <Route path="dashboard" element={<CoordinatorDashboard />} />
-  <Route path="change-password" element={<ChangePassword />} />
-   </Route>
+          <Route path="/teacher" element={<RoleProtectedRoute allowedRoles={["Teacher", "Coordinator"]}><TeacherLayout /></RoleProtectedRoute>}>
+            <Route path="dashboard" element={<TeacherDashboard />} />
+            <Route path="enrolled-students" element={<EnrolledStudents />} />
+            <Route path="coordinator-dashboard" element={<CoordinatorDashboard />} />
+            <Route path="change-password" element={<ChangePassword />} />
+          </Route>
 
-   <Route path="/hod/dashboard" element={<HODDashboard />} />
-      </Routes>
-    </Router>
+          <Route path="/hod" element={<RoleProtectedRoute allowedRoles={["HOD"]}><HODLayout /></RoleProtectedRoute>}>
+            <Route path="dashboard" element={<HODDashboard />} />
+            <Route path="enrolled-students" element={<EnrolledStudents />} />
+          </Route>
+
+        </Routes>
+      </Router>
+    </RoleProvider>
   );
 }
 
