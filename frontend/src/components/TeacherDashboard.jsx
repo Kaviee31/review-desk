@@ -71,6 +71,7 @@ function TeacherDashboard() {
         to_name: "Student",
         to_email: "reviewdeskau@gmail.com",
         bcc: bccEmails.join(","),
+        subject: "New Announcement from your Guide"
       };
 
       await emailjs.send(
