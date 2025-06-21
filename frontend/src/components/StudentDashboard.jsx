@@ -140,7 +140,7 @@ const BASE_URL= "http://localhost:5000";
 
   return (
     <>
-      <div className="cont">
+      <div className="contain">
         <div className="box">
           <div className="profile-card">
             <h2>{studentName}</h2>
