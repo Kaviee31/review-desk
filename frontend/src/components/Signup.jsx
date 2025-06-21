@@ -111,7 +111,7 @@ function Signup() {
         <label>Password</label>
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
 
-        <label>User Type</label>
+        <label>Choose Your Role</label>
         <select value={userType} onChange={(e) => setUserType(e.target.value)}>
           <option value="Student">Student</option>
           <option value="Faculty">Faculty</option>
@@ -128,6 +128,8 @@ function Signup() {
               <option value="MCA(SS)">MCA(SS)</option>
               <option value="MTECH(R)">MTECH(R)</option>
               <option value="MTECH(SS)">MTECH(SS)</option>
+              <option value="B.TECH(IT)">B.TECH(IT)</option>
+              <option value="B.TECH(IT) SS">B.TECH(IT) SS</option>
             </select>
           </>
         )}

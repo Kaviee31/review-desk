@@ -29,7 +29,6 @@ const enrollmentSchema = new mongoose.Schema({
   courseName: String, // This field is crucial for filtering by program
   teacherName: String,
   teacherEmail: String,
-  // Existing fixed assessments - can be kept or removed if replaced by reviewsAssessment
   Assessment1: { type: Number, default: 0 },
   Assessment2: { type: Number, default: 0 },
   Assessment3: { type: Number, default: 0 },
@@ -39,13 +38,15 @@ const enrollmentSchema = new mongoose.Schema({
     filePath: String,
     uploadedAt: { type: Date, default: Date.now },
   }],
-  // NEW: Flexible structure for review item marks set by coordinator
   reviewsAssessment: [{
     description: String, // Description of the review item from coordinator's setup
     r1_mark: { type: Number, default: 0 },
     r2_mark: { type: Number, default: 0 },
     r3_mark: { type: Number, default: 0 },
   }],
+  // NEW FIELDS FOR UG STUDENTS' PROJECT DATA
+  projectName: { type: String }, // Stores the project name for the group
+  groupRegisterNumbers: { type: [String], default: [] } // Stores all register numbers in the UG group
 });
 
 const messageSchema = new mongoose.Schema({
@@ -94,23 +95,25 @@ const upload = multer({
 
 // === ROUTES ===
 
-// Enroll a student - Now expects courseName from AdminDashboard
+// Enroll a student - Now expects courseName, and optionally projectName, groupRegisterNumbers
 app.post("/enroll", async (req, res) => {
-  const { studentName, registerNumber, courseName, teacherName, teacherEmail } = req.body;
+  // Destructure new fields: projectName and groupRegisterNumbers
+  const { studentName, registerNumber, courseName, teacherName, teacherEmail, projectName, groupRegisterNumbers } = req.body;
   try {
+    // Check if the student is already enrolled in this specific course
     const exists = await Enrollment.findOne({ registerNumber, courseName });
     if (exists) return res.status(400).json({ error: `Student ${registerNumber} already enrolled in ${courseName}!` });
 
-    // When enrolling, also initialize reviewsAssessment with empty data based on coordinator's setup
-    // This part will need refinement if coordinator data is not available yet.
-    // For simplicity, we initialize it as empty and let the teacher populate.
+    // Create a new enrollment document including the new fields
     const newEnrollment = new Enrollment({
       studentName,
       registerNumber,
       courseName,
       teacherName,
       teacherEmail,
-      reviewsAssessment: [] // Initialize as empty, will be populated by teacher
+      reviewsAssessment: [], // Initialize as empty, will be populated by teacher
+      projectName: projectName || null, // Store project name (null if not provided)
+      groupRegisterNumbers: groupRegisterNumbers || [] // Store group register numbers (empty array if not provided)
     });
     await newEnrollment.save();
     res.status(200).json({ message: "Enrollment successful!" });
@@ -430,3 +433,4 @@ app.post("/student-review-marks", async (req, res) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+

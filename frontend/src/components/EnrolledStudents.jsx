@@ -31,7 +31,7 @@ function EnrolledStudents() {
   const [loadingReviewData, setLoadingReviewData] = useState(false); // Loading state for review modal data
   const [savingReviewMarks, setSavingReviewMarks] = useState(false); // Saving state for review marks
 
-  const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
+  const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)","B.TECH(IT)","B.TECH(IT) SS"];
   const API_BASE_URL = "http://localhost:5000";
 
   // Effect to set teacher email and UID on auth state change
