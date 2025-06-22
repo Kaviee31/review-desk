@@ -39,7 +39,7 @@ function AdminDashboard() {
       const usersRef = collection(db, "users");
       const q = query(usersRef, 
         where("email", "==", teacherEmailToSearch), 
-        where("profession", "==", "Teacher")
+        where("userType", "==", "Faculty")
       );
       const querySnapshot = await getDocs(q);
 

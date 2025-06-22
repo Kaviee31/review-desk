@@ -16,7 +16,8 @@ const SEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/2462/24627
 
 function EnrolledStudents() {
   const [selectedProgram, setSelectedProgram] = useState(null);
-  const [students, setStudents] = useState([]);
+  const [students, setStudents] = useState([]); // For PG students
+  const [ugProjects, setUgProjects] = useState([]); // State for UG projects (main table)
   const [teacherEmail, setTeacherEmail] = useState("");
   const [teacherUid, setTeacherUid] = useState(null);
   const [selectedStudentRegisterNumber, setSelectedStudentRegisterNumber] = useState(null);
@@ -31,7 +32,24 @@ function EnrolledStudents() {
   const [loadingReviewData, setLoadingReviewData] = useState(false); // Loading state for review modal data
   const [savingReviewMarks, setSavingReviewMarks] = useState(false); // Saving state for review marks
 
-  const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)","B.TECH(IT)","B.TECH(IT) SS"];
+  // NEW: State for managing different views in UG programs
+  // 'projects': shows the list of projects
+  // 'students_in_project': shows students within a selected project
+  const [ugCurrentView, setUgCurrentView] = useState('projects');
+  const [selectedProject, setSelectedProject] = useState(null); // The project object selected from the projects table
+  const [studentsInSelectedProject, setStudentsInSelectedProject] = useState([]); // Students belonging to the selected project
+
+  // Review Deadlines State
+  const [reviewDeadlines, setReviewDeadlines] = useState({
+    zerothReviewDeadline: null,
+    firstReviewDeadline: null,
+    secondReviewDeadline: null,
+  });
+
+
+  const pgPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
+  const ugPrograms = ["B.TECH(IT)", "B.TECH(IT) SS"];
+  const allPrograms = [...pgPrograms, ...ugPrograms];
   const API_BASE_URL = "http://localhost:5000";
 
   // Effect to set teacher email and UID on auth state change
@@ -48,23 +66,33 @@ function EnrolledStudents() {
     document.title = "Enrolled Students";
   }, []);
 
-  // Function to fetch students from the backend
-  const fetchStudents = async () => {
+  // Function to fetch review deadlines
+  const fetchReviewDeadlines = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/get-review-dates`);
+      setReviewDeadlines(response.data);
+    } catch (error) {
+      console.error("Error fetching review deadlines:", error);
+      toast.error("Failed to fetch review deadlines.");
+    }
+  };
+
+  useEffect(() => {
+    fetchReviewDeadlines(); // Fetch deadlines on component mount
+  }, []);
+
+  // Function to fetch students from the backend (for PG courses)
+  const fetchPgStudents = async () => {
     if (teacherEmail && selectedProgram) {
       try {
         const response = await axios.get(`${API_BASE_URL}/teacher-students/${teacherEmail}?courseName=${selectedProgram}`);
-        
-        // Map data from backend to frontend state structure
         const updatedStudents = response.data.map((student) => ({
           ...student,
-          // Ensure Assessment fields are numeric, default to 0 if null/undefined
           marks1: student.Assessment1 || 0,
           marks2: student.Assessment2 || 0,
           marks3: student.Assessment3 || 0,
           marks4: student.Total || 0,
-          extraColumn: student.Contact || "",
-          registerNumber: student.registerNumber,
-          courseName: student.courseName,
+          contact: student.contact || "",
           reviewsAssessment: student.reviewsAssessment || [],
         }));
         updatedStudents.sort((a, b) => a.registerNumber.localeCompare(b.registerNumber));
@@ -78,10 +106,39 @@ function EnrolledStudents() {
     }
   };
 
-  // Function to fetch the latest review files for students (PDFs etc.)
-  const fetchLatestReviewFiles = async () => {
+  // NEW: Function to fetch UG projects from the backend
+  const fetchUgProjects = async () => {
+    if (teacherEmail && selectedProgram) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/teacher-ug-projects/${teacherEmail}/${selectedProgram}`);
+        // Projects fetched from backend already contain project-level aggregated assessments
+        setUgProjects(response.data);
+      } catch (err) {
+        console.error(`Error fetching UG projects for ${selectedProgram}:`, err);
+        setUgProjects([]);
+      }
+    } else {
+      setUgProjects([]);
+    }
+  };
+
+  useEffect(() => {
+    if (pgPrograms.includes(selectedProgram)) {
+      fetchPgStudents();
+      setUgProjects([]); // Clear UG projects if PG is selected
+    } else if (ugPrograms.includes(selectedProgram)) {
+      fetchUgProjects();
+      setStudents([]); // Clear PG students if UG is selected
+      setUgCurrentView('projects'); // Default to projects view for UG
+    } else {
+      setStudents([]);
+      setUgProjects([]);
+    }
+  }, [teacherEmail, selectedProgram]);
+
+  const fetchLatestReviewFiles = async (studentList) => {
     const files = {};
-    for (const student of students) {
+    for (const student of studentList) {
       for (const reviewType of ["zeroth", "first", "second"]) {
         try {
           const response = await axios.get(`${API_BASE_URL}/get-latest-review/${student.registerNumber}/${reviewType}`);
@@ -96,35 +153,42 @@ function EnrolledStudents() {
     setLatestReviewFiles(files);
   };
 
+  // Update latest review files when students or ugProjects change
   useEffect(() => {
-    fetchStudents();
-  }, [teacherEmail, selectedProgram]);
-
-  useEffect(() => {
-    if (students.length > 0) {
-      fetchLatestReviewFiles();
+    if (pgPrograms.includes(selectedProgram) && students.length > 0) {
+      fetchLatestReviewFiles(students);
+    } else if (ugPrograms.includes(selectedProgram) && ugProjects.length > 0) {
+      // For UG projects, fetch files for all members in all projects to populate links
+      const allUgStudents = ugProjects.flatMap(project => project.projectMembers);
+      fetchLatestReviewFiles(allUgStudents);
     } else {
       setLatestReviewFiles({});
     }
-  }, [students]);
+  }, [students, ugProjects, selectedProgram]);
 
-  // Polling for students and messages (consider using Firestore real-time listeners for chat for better efficiency)
+
+  // Polling for students/projects (consider using Firestore real-time listeners for chat for better efficiency)
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchStudents();
-    }, 5000);
+      if (pgPrograms.includes(selectedProgram)) {
+        fetchPgStudents();
+      } else if (ugPrograms.includes(selectedProgram)) {
+        fetchUgProjects();
+      }
+    }, 5000); // Poll every 5 seconds
     return () => clearInterval(interval);
-  }, [teacherEmail, selectedProgram]);
+  }, [teacherEmail, selectedProgram, ugCurrentView]);
+
 
   const handleCloseChat = () => {
     setSelectedStudentRegisterNumber(null);
   };
 
-  // This handles changes in the main table's Assessment fields directly
+  // This handles changes in the main table's Assessment fields directly (for PG programs only)
   const handleMarkChange = (index, field, value) => {
     const updatedStudents = [...students];
     const numericValue = Number(value);
-    updatedStudents[index][field] = isNaN(numericValue) ? 0 : numericValue; // Ensure numeric value
+    updatedStudents[index][field] = isNaN(numericValue) ? 0 : numericValue;
     updatedStudents[index].marks4 = Math.ceil((
         (Number(updatedStudents[index].marks1) || 0) +
         (Number(updatedStudents[index].marks2) || 0) +
@@ -134,6 +198,7 @@ function EnrolledStudents() {
   };
 
   // Handler to save all marks to the backend (for Assessment1,2,3 from main table)
+  // This currently applies to PG students. For UG, marks are saved via the review modal.
   const handleSaveAllMarks = async () => {
     try {
       const payload = {
@@ -178,16 +243,35 @@ function EnrolledStudents() {
   };
 
   const handleDownloadSpreadsheet = () => {
-    const worksheet = XLSX.utils.json_to_sheet(students.map(student => ({
-      "Register Number": student.registerNumber,
-      "Assessment 1": student.marks1,
-      "Assessment 2": student.marks2,
-      "Assessment 3": student.marks3,
-      "Total": student.marks4,
-    })));
+    let dataToExport = [];
+    if (pgPrograms.includes(selectedProgram)) {
+      dataToExport = students.map(student => ({
+        "Register Number": student.registerNumber,
+        "Assessment 1": student.marks1,
+        "Assessment 2": student.marks2,
+        "Assessment 3": student.marks3,
+        "Total": student.marks4,
+      }));
+    } else if (ugPrograms.includes(selectedProgram)) {
+      dataToExport = ugProjects.map(project => ({
+        "Project Name": project.projectName,
+        "Register Numbers": project.groupRegisterNumbers.join(', '), // Display all register numbers
+        "Assessment 1": project.Assessment1,
+        "Assessment 2": project.Assessment2,
+        "Assessment 3": project.Assessment3,
+        "Total": project.Total, // Added back total for excel consistency
+      }));
+    }
+
+    if (dataToExport.length === 0) {
+      toast.warn("No data to download for the selected program.");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Student Marks");
-    XLSX.writeFile(workbook, `${selectedProgram ? selectedProgram + '_' : ''}Student_Marks_Report.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, selectedProgram ? `${selectedProgram} Data` : "Data");
+    XLSX.writeFile(workbook, `${selectedProgram ? selectedProgram + '_' : ''}Data_Report.xlsx`);
   };
 
   const hasUnseenMessages = async (studentRegisterNumber) => {
@@ -207,11 +291,20 @@ function EnrolledStudents() {
     return false;
   };
 
+  // Re-run unseen message status fetch whenever students or selectedProject (for UG) changes
   useEffect(() => {
     const fetchUnseenStatuses = async () => {
       const statuses = {};
-      if (students.length > 0) {
-        for (const student of students) {
+      let studentsToCheck = [];
+
+      if (pgPrograms.includes(selectedProgram)) {
+        studentsToCheck = students;
+      } else if (ugPrograms.includes(selectedProgram) && ugCurrentView === 'students_in_project' && selectedProject) {
+        studentsToCheck = selectedProject.projectMembers;
+      }
+
+      if (studentsToCheck.length > 0) {
+        for (const student of studentsToCheck) {
           const hasUnseen = await hasUnseenMessages(student.registerNumber);
           statuses[student.registerNumber] = hasUnseen;
         }
@@ -219,7 +312,8 @@ function EnrolledStudents() {
       setUnseenMessagesStatus(statuses);
     };
     fetchUnseenStatuses();
-  }, [students, teacherEmail]);
+  }, [students, selectedProject, ugCurrentView, teacherEmail, selectedProgram]);
+
 
   const openChatWindow = (studentRegNo) => {
     setSelectedStudentRegisterNumber(studentRegNo);
@@ -239,7 +333,8 @@ function EnrolledStudents() {
     try {
       // 1. Find the UID of the coordinator for the selectedProgram
       const usersRef = collection(db, "users");
-      const coordinatorQuery = query(usersRef, where("profession", "==", "Coordinator"), where("department", "==", selectedProgram));
+      // MODIFIED: Query by 'roles' array-contains "Coordinator" instead of 'profession'
+      const coordinatorQuery = query(usersRef, where("roles", "array-contains", "Coordinator"), where("department", "==", selectedProgram));
       const coordinatorSnapshot = await getDocs(coordinatorQuery);
 
       let programCoordinatorUid = null;
@@ -257,6 +352,8 @@ function EnrolledStudents() {
       setCoordinatorReviewStructure(coordinatorData);
 
       // 3. Fetch the student's existing marks for these review items
+      // For UG projects, we need to fetch the marks that are common to the project.
+      // The server.js endpoint has been updated to handle this logic.
       const studentMarksResponse = await axios.get(`${API_BASE_URL}/student-review-marks/${student.registerNumber}/${student.courseName}`);
       const existingStudentMarks = studentMarksResponse.data.reviewsAssessment || [];
 
@@ -308,21 +405,19 @@ function EnrolledStudents() {
     }
     setSavingReviewMarks(true);
     try {
-      const payload = {
-        registerNumber: currentStudentForReview.registerNumber,
-        courseName: selectedProgram,
-        reviewsAssessment: studentReviewMarks.map((item, index) => ({
-            // When saving, use the original r1_desc from coordinatorReviewStructure as identifier for backend,
-            // as 'description' in the database is based on that.
-            description: coordinatorReviewStructure[index]?.r1_desc || item.r1_item_desc,
-            r1_mark: item.r1_mark,
-            r2_mark: item.r2_mark,
-            r3_mark: item.r3_mark,
-        }))
-      };
-
-      // 1. Save the detailed review marks to the student's enrollment
-      await axios.post(`${API_BASE_URL}/student-review-marks`, payload);
+      // Determine the list of students whose assessments need to be updated.
+      // For PG, it's just the current student. For UG, it's all students in the project.
+      let studentsToUpdate = [];
+      if (pgPrograms.includes(selectedProgram)) {
+        studentsToUpdate.push(currentStudentForReview);
+      } else if (ugPrograms.includes(selectedProgram) && selectedProject) {
+        // For UG, we update all members of the selected project
+        studentsToUpdate = selectedProject.projectMembers;
+      } else {
+        toast.error("Invalid state for saving marks. No project selected for UG.");
+        setSavingReviewMarks(false);
+        return;
+      }
 
       // --- Calculations for Assessment1, Assessment2, Assessment3 (normalized to 100) ---
       let totalAwardedR1Marks = 0;
@@ -337,54 +432,101 @@ function EnrolledStudents() {
         totalAwardedR2Marks += Number(item.r2_mark) || 0;
         totalAwardedR3Marks += Number(item.r3_mark) || 0;
 
-        // Use coordinatorReviewStructure for max marks as it contains the original structure
         const coordMaxItem = coordinatorReviewStructure[index];
         totalPossibleR1Marks += Number(coordMaxItem?.r1_mark) || 0;
         totalPossibleR2Marks += Number(coordMaxItem?.r2_mark) || 0;
         totalPossibleR3Marks += Number(coordMaxItem?.r3_mark) || 0;
       });
 
-      // Normalize Assessment 1
       let normalizedAssessment1 = 0;
       if (totalPossibleR1Marks > 0) {
         normalizedAssessment1 = (totalAwardedR1Marks / totalPossibleR1Marks) * 100;
       }
       normalizedAssessment1 = Math.round(normalizedAssessment1);
 
-      // Normalize Assessment 2
       let normalizedAssessment2 = 0;
       if (totalPossibleR2Marks > 0) {
         normalizedAssessment2 = (totalAwardedR2Marks / totalPossibleR2Marks) * 100;
       }
       normalizedAssessment2 = Math.round(normalizedAssessment2);
 
-      // Normalize Assessment 3
       let normalizedAssessment3 = 0;
       if (totalPossibleR3Marks > 0) {
         normalizedAssessment3 = (totalAwardedR3Marks / totalPossibleR3Marks) * 100;
       }
       normalizedAssessment3 = Math.round(normalizedAssessment3);
 
-      // 2. Prepare payload to update main Assessment1, 2, 3 and Total in the student's enrollment
       const newTotalAverage = Math.ceil((normalizedAssessment1 + normalizedAssessment2 + normalizedAssessment3) / 3);
 
-      const assessmentUpdatePayload = {
-        students: [{
-          registerNumber: currentStudentForReview.registerNumber,
-          courseName: selectedProgram,
-          Assessment1: normalizedAssessment1,
-          Assessment2: normalizedAssessment2,
-          Assessment3: normalizedAssessment3,
-          Total: newTotalAverage,
-        }]
-      };
+      // Array to hold all individual update promises
+      const updatePromises = studentsToUpdate.map(async (student) => {
+          // 1. Save the detailed review marks for each student in the group
+          // This ensures that each student's document has the latest detailed review marks.
+          const reviewPayload = {
+              registerNumber: student.registerNumber,
+              courseName: selectedProgram,
+              reviewsAssessment: studentReviewMarks.map((item, index) => ({
+                  description: coordinatorReviewStructure[index]?.r1_desc || item.r1_item_desc,
+                  r1_mark: item.r1_mark,
+                  r2_mark: item.r2_mark,
+                  r3_mark: item.r3_mark,
+              }))
+          };
+          await axios.post(`${API_BASE_URL}/student-review-marks`, reviewPayload);
 
-      // 3. Send update for Assessment1, 2, 3 and Total to the backend
-      await axios.post(`${API_BASE_URL}/update-marks`, assessmentUpdatePayload);
+          // 2. Prepare payload for main Assessment1, 2, 3 and Total
+          const assessmentUpdatePayload = {
+              students: [{
+                  registerNumber: student.registerNumber,
+                  courseName: selectedProgram,
+                  Assessment1: normalizedAssessment1,
+                  Assessment2: normalizedAssessment2,
+                  Assessment3: normalizedAssessment3,
+                  Total: newTotalAverage,
+              }]
+          };
+          // 3. Send update for Assessment1, 2, 3 and Total to the backend for this student
+          await axios.post(`${API_BASE_URL}/update-marks`, assessmentUpdatePayload);
+      });
+
+      await Promise.all(updatePromises); // Wait for all updates to complete
 
       toast.success("Student review marks and Assessments updated successfully!");
       setShowReviewModal(false); // Close modal on successful save
-      fetchStudents(); // Re-fetch the student list to update the main table
+
+      // Re-fetch data based on current program type to ensure UI is updated
+      if (pgPrograms.includes(selectedProgram)) {
+        fetchPgStudents();
+      } else if (ugPrograms.includes(selectedProgram)) {
+        // Re-fetch projects to update aggregated marks and individual student data
+        fetchUgProjects();
+        // If currently in 'students_in_project' view, update the specific project's students directly
+        if (ugCurrentView === 'students_in_project' && selectedProject) {
+          // Manually update the selected project's members for immediate UI reflection
+          const updatedSelectedProjectMembers = selectedProject.projectMembers.map(member => {
+            const updatedStudent = studentsToUpdate.find(s => s.registerNumber === member.registerNumber);
+            return updatedStudent ? {
+              ...member,
+              Assessment1: normalizedAssessment1,
+              Assessment2: normalizedAssessment2,
+              Assessment3: normalizedAssessment3,
+              Total: newTotalAverage,
+              reviewsAssessment: studentReviewMarks.map(item => ({
+                description: item.r1_item_desc, // Use r1_item_desc for description as it's the identifier
+                r1_mark: item.r1_mark,
+                r2_mark: item.r2_mark,
+                r3_mark: item.r3_mark,
+              }))
+            } : member;
+          });
+
+          setSelectedProject(prevProject => ({
+            ...prevProject,
+            projectMembers: updatedSelectedProjectMembers
+          }));
+          setStudentsInSelectedProject(updatedSelectedProjectMembers); // Update the state for the table
+        }
+      }
     } catch (error) {
       console.error("Error saving student review marks:", error);
       toast.error(`Failed to save student review marks: ${error.response?.data?.error || error.message}`);
@@ -488,6 +630,27 @@ function EnrolledStudents() {
     toast.success("Student review marks PDF downloaded successfully!");
   };
 
+  // NEW: Handler to view students within a selected project
+  const handleViewProjectStudents = (project) => {
+    setSelectedProject(project);
+    setStudentsInSelectedProject(project.projectMembers.sort((a,b) => a.registerNumber.localeCompare(b.registerNumber)));
+    setUgCurrentView('students_in_project');
+  };
+
+  // NEW: Handler to go back from student list to project list
+  const handleBackToProjects = () => {
+    setUgCurrentView('projects');
+    setSelectedProject(null);
+    setStudentsInSelectedProject([]);
+  };
+
+  // Helper to format deadline dates
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 bg-gray-100 font-inter">
@@ -502,10 +665,13 @@ function EnrolledStudents() {
               key={program}
               onClick={() => setSelectedProgram(program)}
               className={`font-semibold py-4 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-75
-                ${program === "MCA(R)" ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500" :
-                  program === "MCA(SS)" ? "bg-green-600 hover:bg-green-700 focus:ring-green-500" :
-                    program === "MTECH(R)" ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" :
-                      "bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                ${pgPrograms.includes(program) ?
+                  (program === "MCA(R)" ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500" :
+                    program === "MCA(SS)" ? "bg-green-600 hover:bg-green-700 focus:ring-green-500" :
+                      program === "MTECH(R)" ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" :
+                        "bg-red-600 hover:bg-red-700 focus:ring-red-500") :
+                  (ugPrograms.includes(program) ?
+                    "bg-orange-500 hover:bg-orange-600 focus:ring-orange-400" : "") // Distinct color for UG programs
                 }
                 text-white
               `}
@@ -518,169 +684,357 @@ function EnrolledStudents() {
 
       {selectedProgram && (
         <div className="w-full max-w-6xl bg-white p-6 rounded-lg shadow-xl" role="main">
-          <h2 className="text-2xl font-bold mb-4 text-gray-700">
-            Students List for {selectedProgram}
-          </h2>
-          <div className="overflow-x-auto mb-6">
-            <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
-              <thead className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
-                <tr>
-                  <th className="py-3 px-6 text-left border-b border-gray-300">Register Number</th>
-                  <th className="py-3 px-6 text-left border-b border-gray-300">Student Name</th>
-                  <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
-                  <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
-                  <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
-                  <th className="py-3 px-6 text-center border-b border-gray-300">Average</th>
-                  <th className="py-3 px-6 text-center border-b border-gray-300">Zeroth Review</th>
-                  <th className="py-3 px-6 text-center border-b border-gray-300">First Review</th>
-                  <th className="py-3 px-6 text-center border-b border-gray-300">Second Review</th>
-                  <th className="py-3 px-6 text-center border-b border-gray-300">Contact</th>
-                </tr>
-              </thead>
-              <tbody className="text-gray-600 text-sm font-light">
-                {students.length > 0 ? (
-                  students.map((student, index) => (
-                    <tr key={student.registerNumber} className="border-b border-gray-200 hover:bg-gray-100">
-                      <td className="py-3 px-6 text-left whitespace-nowrap">
-                        <span
-                          className="text-blue-600 hover:underline cursor-pointer font-medium"
-                          onClick={() => handleOpenReviewModal(student)}
-                        >
-                          {student.registerNumber}
-                        </span>
-                      </td>
-                      <td className="py-3 px-6 text-left whitespace-nowrap">{student.studentName}</td>
-                      <td className="py-3 px-6 text-center">
-                        <input
-                          type="number"
-                          value={student.marks1}
-                          onChange={(e) => handleMarkChange(index, "marks1", e.target.value)}
-                          className="w-20 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
-                        />
-                      </td>
-                      <td className="py-3 px-6 text-center">
-                        <input
-                          type="number"
-                          value={student.marks2}
-                          onChange={(e) => handleMarkChange(index, "marks2", e.target.value)}
-                          className="w-20 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
-                        />
-                      </td>
-                      <td className="py-3 px-6 text-center">
-                        <input
-                          type="number"
-                          value={student.marks3}
-                          onChange={(e) => handleMarkChange(index, "marks3", e.target.value)}
-                          className="w-20 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
-                        />
-                      </td>
-                      <td className="py-3 px-6 text-center">
-                        <input
-                          value={student.marks4}
-                          readOnly
-                          className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed"
-                        />
-                      </td>
-                      <td className="py-3 px-6 text-center">
-                        {latestReviewFiles[`${student.registerNumber}_zeroth`] ? (
-                          <a
-                            href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`]}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                          >
-                            Download
-                          </a>
-                        ) : (
-                          "No File"
-                        )}
-                      </td>
-                      <td className="py-3 px-6 text-center">
-                        {latestReviewFiles[`${student.registerNumber}_first`] ? (
-                          <a
-                            href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`]}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                          >
-                            Download
-                          </a>
-                        ) : (
-                          "No File"
-                        )}
-                      </td>
-                      <td className="py-3 px-6 text-center">
-                        {latestReviewFiles[`${student.registerNumber}_second`] ? (
-                          <a
-                            href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`]}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                          >
-                            Download
-                          </a>
-                        ) : (
-                          "No File"
-                        )}
-                      </td>
-                      <td className="py-3 px-6 text-center">
-                        <img
-                          src={unseenMessagesStatus[student.registerNumber] ? UNSEEN_MESSAGE_ICON_URL : SEEN_MESSAGE_ICON_URL}
-                          alt="Chat Bubble"
-                          width="24"
-                          height="24"
-                          className="cursor-pointer mx-auto"
-                          onClick={() => openChatWindow(student.registerNumber)}
-                        />
-                      </td>
+          {/* Display for PG Students (Existing Table) */}
+          {pgPrograms.includes(selectedProgram) && (
+            <>
+              <h2 className="text-2xl font-bold mb-4 text-gray-700">
+                Students List for {selectedProgram}
+              </h2>
+              <div className="overflow-x-auto mb-6">
+                <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                  <thead className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
+                    <tr>
+                      <th className="py-3 px-6 text-left border-b border-gray-300">Register Number</th>
+                      <th className="py-3 px-6 text-left border-b border-gray-300">Student Name</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Average</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Zeroth Review</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">First Review</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Second Review</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Contact</th>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="10" className="py-4 text-center text-gray-500">
-                      No students enrolled yet for this program or your assigned program.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody className="text-gray-600 text-sm font-light">
+                    {students.length > 0 ? (
+                      students.map((student, index) => (
+                        <tr key={student.registerNumber} className="border-b border-gray-200 hover:bg-gray-100">
+                          <td className="py-3 px-6 text-left whitespace-nowrap">
+                            <span
+                              className="text-blue-600 hover:underline cursor-pointer font-medium"
+                              onClick={() => handleOpenReviewModal(student)}
+                            >
+                              {student.registerNumber}
+                            </span>
+                          </td>
+                          <td className="py-3 px-6 text-left whitespace-nowrap">{student.studentName}</td>
+                          <td className="py-3 px-6 text-center">
+                            <input
+                              type="number"
+                              value={student.marks1}
+                              onChange={(e) => handleMarkChange(index, "marks1", e.target.value)}
+                              className="w-20 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
+                            />
+                          </td>
+                          <td className="py-3 px-6 text-center">
+                            <input
+                              type="number"
+                              value={student.marks2}
+                              onChange={(e) => handleMarkChange(index, "marks2", e.target.value)}
+                              className="w-20 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
+                            />
+                          </td>
+                          <td className="py-3 px-6 text-center">
+                            <input
+                              type="number"
+                              value={student.marks3}
+                              onChange={(e) => handleMarkChange(index, "marks3", e.target.value)}
+                              className="w-20 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
+                            />
+                          </td>
+                          <td className="py-3 px-6 text-center">
+                            <input
+                              value={student.marks4}
+                              readOnly
+                              className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed"
+                            />
+                          </td>
+                          <td className="py-3 px-6 text-center">
+                            {latestReviewFiles[`${student.registerNumber}_zeroth`] ? (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`]}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                              >
+                                Download
+                              </a>
+                            ) : (
+                              "No File"
+                            )}
+                          </td>
+                          <td className="py-3 px-6 text-center">
+                            {latestReviewFiles[`${student.registerNumber}_first`] ? (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`]}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                              >
+                                Download
+                              </a>
+                            ) : (
+                              "No File"
+                            )}
+                          </td>
+                          <td className="py-3 px-6 text-center">
+                            {latestReviewFiles[`${student.registerNumber}_second`] ? (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`]}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                              >
+                                Download
+                              </a>
+                            ) : (
+                              "No File"
+                            )}
+                          </td>
+                          <td className="py-3 px-6 text-center">
+                            <img
+                              src={unseenMessagesStatus[student.registerNumber] ? UNSEEN_MESSAGE_ICON_URL : SEEN_MESSAGE_ICON_URL}
+                              alt="Chat Bubble"
+                              width="24"
+                              height="24"
+                              className="cursor-pointer mx-auto"
+                              onClick={() => openChatWindow(student.registerNumber)}
+                            />
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="10" className="py-4 text-center text-gray-500">
+                          No students enrolled yet for this program or your assigned program.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
 
-          <div className="flex flex-wrap justify-center gap-4 mt-6">
-            <button
-              onClick={handleSaveAllMarks}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
-            >
-              Save All Marks
-            </button>
-            <button
-              onClick={handleDownloadPDF}
-              className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75"
-            >
-              Download PDF
-            </button>
-            <button
-              onClick={handleDownloadSpreadsheet}
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
-            >
-              Download Excel Sheet
-            </button>
-          </div>
+              <div className="flex flex-wrap justify-center gap-4 mt-6">
+                <button
+                  onClick={handleSaveAllMarks}
+                  className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
+                >
+                  Save All Marks
+                </button>
+                <button
+                  onClick={handleDownloadPDF}
+                  className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75"
+                >
+                  Download PDF
+                </button>
+                <button
+                  onClick={handleDownloadSpreadsheet}
+                  className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
+                >
+                  Download Excel Sheet
+                </button>
+              </div>
+            </>
+          )}
 
-          {/* Back button to go back to program selection */}
-          <div className="flex justify-center mt-8">
-            <button
-              onClick={() => {
-                setSelectedProgram(null);
-                setStudents([]);
-                setUnseenMessagesStatus({});
-                setLatestReviewFiles({});
-              }}
-              className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"
-            >
-              Select Another Program
-            </button>
-          </div>
+          {/* Display for UG Students (Project-based View) */}
+          {ugPrograms.includes(selectedProgram) && ugCurrentView === 'projects' && (
+            <>
+              <h2 className="text-2xl font-bold mb-4 text-gray-700">
+                Projects List for {selectedProgram}
+              </h2>
+              <div className="overflow-x-auto mb-6">
+                <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                  <thead className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
+                    <tr>
+                      <th className="py-3 px-6 text-left border-b border-gray-300">Project Name</th>
+                      <th className="py-3 px-6 text-left border-b border-gray-300">Register Numbers</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-600 text-sm font-light">
+                    {ugProjects.length > 0 ? (
+                      ugProjects.map((project, index) => (
+                        <tr key={project.projectName} className="border-b border-gray-200 hover:bg-gray-100">
+                          <td className="py-3 px-6 text-left whitespace-nowrap">
+                            <span
+                              className="text-blue-600 hover:underline cursor-pointer font-medium"
+                              onClick={() => handleViewProjectStudents(project)}
+                            >
+                              {project.projectName}
+                            </span>
+                          </td>
+                          <td className="py-3 px-6 text-left">
+                            {/* Display all register numbers in one cell */}
+                            {project.groupRegisterNumbers.join(', ')}
+                          </td>
+                          {/* Display project-level assessments */}
+                          <td className="py-3 px-6 text-center">{project.Assessment1 || 0}</td>
+                          <td className="py-3 px-6 text-center">{project.Assessment2 || 0}</td>
+                          <td className="py-3 px-6 text-center">{project.Assessment3 || 0}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="py-4 text-center text-gray-500"> {/* Adjusted colspan */}
+                          No UG projects found for this program.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex flex-wrap justify-center gap-4 mt-6">
+                {/* Download buttons for UG projects table */}
+                <button
+                  onClick={handleDownloadSpreadsheet}
+                  className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
+                >
+                  Download Project Data (Excel)
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Display for Students within a Selected UG Project */}
+          {ugPrograms.includes(selectedProgram) && ugCurrentView === 'students_in_project' && selectedProject && (
+            <>
+              <h2 className="text-2xl font-bold mb-4 text-gray-700">
+                Students in Project: {selectedProject.projectName}
+              </h2>
+              <div className="overflow-x-auto mb-6">
+                <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                  <thead className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
+                    <tr>
+                      <th className="py-3 px-6 text-left border-b border-gray-300">Register Number</th>
+                      <th className="py-3 px-6 text-left border-b border-gray-300">Student Name</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Average</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Zeroth Review</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">First Review</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Second Review</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Contact</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-600 text-sm font-light">
+                    {studentsInSelectedProject.length > 0 ? (
+                      studentsInSelectedProject.map((student) => (
+                        <tr key={student.registerNumber} className="border-b border-gray-200 hover:bg-gray-100">
+                          <td className="py-3 px-6 text-left whitespace-nowrap">
+                            <span
+                              className="text-blue-600 hover:underline cursor-pointer font-medium"
+                              onClick={() => handleOpenReviewModal(student)}
+                            >
+                              {student.registerNumber}
+                            </span>
+                          </td>
+                          <td className="py-3 px-6 text-left whitespace-nowrap">{student.studentName}</td>
+                          {/* Display current individual assessment marks (should reflect project-wide marks) */}
+                          <td className="py-3 px-6 text-center">{student.Assessment1 || 0}</td>
+                          <td className="py-3 px-6 text-center">{student.Assessment2 || 0}</td>
+                          <td className="py-3 px-6 text-center">{student.Assessment3 || 0}</td>
+                          <td className="py-3 px-6 text-center">{student.Total || 0}</td>
+                           <td className="py-3 px-6 text-center">
+                            {latestReviewFiles[`${student.registerNumber}_zeroth`] ? (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`]}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                              >
+                                Download
+                              </a>
+                            ) : (
+                              "No File"
+                            )}
+                          </td>
+                          <td className="py-3 px-6 text-center">
+                            {latestReviewFiles[`${student.registerNumber}_first`] ? (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`]}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                              >
+                                Download
+                              </a>
+                            ) : (
+                              "No File"
+                            )}
+                          </td>
+                          <td className="py-3 px-6 text-center">
+                            {latestReviewFiles[`${student.registerNumber}_second`] ? (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`]}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                              >
+                                Download
+                              </a>
+                            ) : (
+                              "No File"
+                            )}
+                          </td>
+                          <td className="py-3 px-6 text-center">
+                            <img
+                              src={unseenMessagesStatus[student.registerNumber] ? UNSEEN_MESSAGE_ICON_URL : SEEN_MESSAGE_ICON_URL}
+                              alt="Chat Bubble"
+                              width="24"
+                              height="24"
+                              className="cursor-pointer mx-auto"
+                              onClick={() => openChatWindow(student.registerNumber)}
+                            />
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="10" className="py-4 text-center text-gray-500">
+                          No students found in this project.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={handleBackToProjects}
+                  className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"
+                >
+                  Back to Projects
+                </button>
+              </div>
+            </>
+          )}
+
+
+          {/* Back button to go back to program selection (for both UG/PG main views) */}
+          {(!ugPrograms.includes(selectedProgram) || (ugPrograms.includes(selectedProgram) && ugCurrentView === 'projects')) && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={() => {
+                  setSelectedProgram(null);
+                  setStudents([]);
+                  setUgProjects([]);
+                  setUnseenMessagesStatus({});
+                  setLatestReviewFiles({});
+                  setUgCurrentView('projects'); // Reset UG view
+                  setSelectedProject(null); // Clear selected project
+                  setStudentsInSelectedProject([]); // Clear students in project
+                }}
+                className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"
+              >
+                Select Another Program
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -692,10 +1046,10 @@ function EnrolledStudents() {
         />
       )}
 
-      {/* Review Marks Modal */}
+      {/* Review Marks Modal (Remains the same, but now callable from UG project student list) */}
       {showReviewModal && currentStudentForReview && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative"> {/* Increased max-w-4xl */}
+          <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
             <h3 className="text-2xl font-bold mb-4 text-gray-800">
               Review Marks for {currentStudentForReview.studentName} ({currentStudentForReview.registerNumber})
             </h3>
@@ -714,7 +1068,6 @@ function EnrolledStudents() {
                     <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-sm">
                       <thead className="bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
                         <tr>
-                          {/* Reordered and clarified headers */}
                           <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R1)</th>
                           <th className="py-2 px-4 text-center border-b border-gray-300">R1 Max</th>
                           <th className="py-2 px-4 text-center border-b border-gray-300">R1 Awarded</th>
@@ -729,7 +1082,6 @@ function EnrolledStudents() {
                       <tbody className="text-gray-700 text-sm">
                         {studentReviewMarks.map((item, index) => (
                           <tr key={index} className="border-b border-gray-200">
-                            {/* Display individual review item descriptions and marks */}
                             <td className="py-2 px-4 text-left">{item.r1_item_desc}</td>
                             <td className="py-2 px-4 text-center font-bold text-gray-800">{item.coord_r1_max}</td>
                             <td className="py-2 px-4 text-center">
@@ -769,7 +1121,6 @@ function EnrolledStudents() {
                           </tr>
                         ))}
                       </tbody>
-                      {/* NEW: Total Row in Modal Footer */}
                       <tfoot className="bg-gray-100 text-gray-800 uppercase text-sm leading-normal font-semibold">
                         <tr>
                           <td className="py-2 px-4 text-right border-t border-gray-300" colSpan="2">Total Awarded Marks (R1):</td>

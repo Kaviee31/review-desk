@@ -240,14 +240,74 @@ app.get("/students-by-program/:programName", async (req, res) => {
   }
 });
 
+// NEW ENDPOINT: Get UG projects for a teacher by courseName
+app.get("/teacher-ug-projects/:teacherEmail/:courseName", async (req, res) => {
+  const { teacherEmail, courseName } = req.params;
+
+  try {
+    const projects = await Enrollment.aggregate([
+      {
+        $match: {
+          teacherEmail: teacherEmail,
+          courseName: courseName,
+          projectName: { $ne: null, $exists: true, $ne: '' } // Only consider entries with a project name
+        }
+      },
+      {
+        $group: {
+          _id: "$projectName", // Group by project name
+          projectMembers: { $addToSet: { // Collect unique student details for the group
+            registerNumber: "$registerNumber",
+            studentName: "$studentName",
+            teacherEmail: "$teacherEmail", // Include teacherEmail for consistency
+            courseName: "$courseName",
+            Assessment1: "$Assessment1",
+            Assessment2: "$Assessment2",
+            Assessment3: "$Assessment3",
+            Total: "$Total",
+            // Assuming Contact is not directly in Enrollment, but adding a placeholder
+            // You might need to fetch this from Firebase 'users' collection or join later
+            Contact: null // Placeholder, you might want to fetch this
+          }},
+          // Get the Assessment values from one of the members.
+          // This implicitly assumes all members of a project will have the same assessment values
+          // if the frontend updates them collectively.
+          Assessment1: { $first: "$Assessment1" },
+          Assessment2: { $first: "$Assessment2" },
+          Assessment3: { $first: "$Assessment3" },
+          Total: { $first: "$Total" }, // Include Total as per request for consistency
+          groupRegisterNumbers: { $addToSet: "$registerNumber" },
+          reviewsAssessment: { $first: "$reviewsAssessment" } // Get the first reviewsAssessment found for the project
+        }
+      },
+      {
+        $project: {
+          projectName: "$_id",
+          projectMembers: 1, // Array of { registerNumber, studentName, ... }
+          Assessment1: 1, // Use the fetched Assessment1
+          Assessment2: 1, // Use the fetched Assessment2
+          Assessment3: 1, // Use the fetched Assessment3
+          Total: 1,
+          groupRegisterNumbers: 1,
+          reviewsAssessment: 1 // Pass through the first found reviewsAssessment
+        }
+      }
+    ]);
+    res.json(projects);
+  } catch (error) {
+    console.error(`Error fetching UG projects for teacher ${teacherEmail} in ${courseName}:`, error);
+    res.status(500).json({ error: `Failed to fetch UG projects for ${courseName}.` });
+  }
+});
+
 
 // Update assessment marks (can be extended to update reviewsAssessment)
 app.post("/update-marks", async (req, res) => {
   try {
-    const { students } = req.body;
+    const { students } = req.body; // 'students' is an array of student objects to update
     for (const student of students) {
       // Find the existing enrollment by registerNumber and courseName
-      const existingEnrollment = await Enrollment.findOneAndUpdate(
+      await Enrollment.findOneAndUpdate(
         { registerNumber: student.registerNumber, courseName: student.courseName },
         {
           $set: {
@@ -259,7 +319,7 @@ app.post("/update-marks", async (req, res) => {
             ...(Array.isArray(student.reviewsAssessment) && { reviewsAssessment: student.reviewsAssessment })
           }
         },
-        { new: true, upsert: true }
+        { new: true, upsert: false } // upsert: false because enrollment should already exist
       );
     }
     res.json({ message: "Marks updated successfully!" });
@@ -389,15 +449,38 @@ app.get("/coordinator-reviews/:coordinatorId/:program", async (req, res) => {
 
 // NEW API ENDPOINTS for student review marks (teacher's side)
 
-// GET student's review marks for a specific program
+// GET student's review marks for a specific program (modified for UG project reflection)
 app.get("/student-review-marks/:registerNumber/:courseName", async (req, res) => {
   const { registerNumber, courseName } = req.params;
   try {
-    const enrollment = await Enrollment.findOne({ registerNumber, courseName });
-    if (!enrollment) {
+    // First, find the current student's enrollment
+    const currentStudentEnrollment = await Enrollment.findOne({ registerNumber, courseName });
+
+    if (!currentStudentEnrollment) {
       return res.status(404).json({ error: "Student enrollment not found for this course." });
     }
-    res.status(200).json({ reviewsAssessment: enrollment.reviewsAssessment || [] });
+
+    // If it's a UG project student and has a project name and group members
+    if (currentStudentEnrollment.projectName && currentStudentEnrollment.groupRegisterNumbers && currentStudentEnrollment.groupRegisterNumbers.length > 0) {
+      // Find one student from the same project with reviewAssessment data to ensure consistency
+      // This assumes that reviewAssessment data will be the same for all members of a project.
+      const projectMemberWithReview = await Enrollment.findOne({
+        projectName: currentStudentEnrollment.projectName,
+        courseName: courseName,
+        reviewsAssessment: { $exists: true, $not: { $size: 0 } } // Find one with non-empty reviewsAssessment
+      });
+
+      if (projectMemberWithReview) {
+        return res.status(200).json({ reviewsAssessment: projectMemberWithReview.reviewsAssessment || [] });
+      }
+      // If no member of the project has reviewsAssessment, return empty
+      return res.status(200).json({ reviewsAssessment: [] });
+
+    } else {
+      // For PG students or UG students not part of a group/project
+      return res.status(200).json({ reviewsAssessment: currentStudentEnrollment.reviewsAssessment || [] });
+    }
+
   } catch (error) {
     console.error("Error fetching student review marks:", error);
     res.status(500).json({ error: "Failed to fetch student review marks." });

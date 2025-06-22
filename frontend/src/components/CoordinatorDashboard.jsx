@@ -21,7 +21,7 @@ function CoordinatorDashboard() {
   const [loadingReviews, setLoadingReviews] = useState(false); // New loading state for reviews
   const [savingReviews, setSavingReviews] = useState(false); // New saving state for reviews
 
-  const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
+  const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)","B.TECH(IT)","B.TECH(IT) SS"];
 
   // Base URL for your backend API
   const API_BASE_URL = "http://localhost:5000"; // Ensure this matches your backend server URL

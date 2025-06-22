@@ -20,7 +20,7 @@ function AssignCoordinatorForm() {
   const [selectedCourse, setSelectedCourse] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const courses = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
+  const courses = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)","B.TECH(IT)","B.TECH(IT) SS"];
 
   const generatePassword = () => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
