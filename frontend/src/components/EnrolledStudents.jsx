@@ -32,7 +32,7 @@ function EnrolledStudents() {
   const [loadingReviewData, setLoadingReviewData] = useState(false); // Loading state for review modal data
   const [savingReviewMarks, setSavingReviewMarks] = useState(false); // Saving state for review marks
 
-  // NEW: State for managing different views in UG programs
+  // State for managing different views in UG programs
   // 'projects': shows the list of projects
   // 'students_in_project': shows students within a selected project
   const [ugCurrentView, setUgCurrentView] = useState('projects');
@@ -46,7 +46,7 @@ function EnrolledStudents() {
     secondReviewDeadline: null,
   });
 
-
+  // Ensure these program names are consistent across AdminDashboard and CoordinatorDashboard
   const pgPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
   const ugPrograms = ["B.TECH(IT)", "B.TECH(IT) SS"];
   const allPrograms = [...pgPrograms, ...ugPrograms];
@@ -54,12 +54,16 @@ function EnrolledStudents() {
 
   // Effect to set teacher email and UID on auth state change
   useEffect(() => {
-    onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setTeacherEmail(user.email);
         setTeacherUid(user.uid);
+      } else {
+        setTeacherEmail("");
+        setTeacherUid(null);
       }
     });
+    return () => unsubscribe(); // Cleanup subscription
   }, []);
 
   useEffect(() => {
@@ -93,10 +97,12 @@ function EnrolledStudents() {
           marks3: student.Assessment3 || 0,
           marks4: student.Total || 0,
           contact: student.contact || "",
+          // Ensure reviewsAssessment is always an array, even if null/undefined from backend
           reviewsAssessment: student.reviewsAssessment || [],
         }));
         updatedStudents.sort((a, b) => a.registerNumber.localeCompare(b.registerNumber));
         setStudents(updatedStudents);
+        console.log("Fetched PG Students:", updatedStudents);
       } catch (err) {
         console.error(`Error fetching students for ${selectedProgram}:`, err);
         setStudents([]);
@@ -106,13 +112,13 @@ function EnrolledStudents() {
     }
   };
 
-  // NEW: Function to fetch UG projects from the backend
+  // Function to fetch UG projects from the backend
   const fetchUgProjects = async () => {
     if (teacherEmail && selectedProgram) {
       try {
         const response = await axios.get(`${API_BASE_URL}/teacher-ug-projects/${teacherEmail}/${selectedProgram}`);
-        // Projects fetched from backend already contain project-level aggregated assessments
         setUgProjects(response.data);
+        console.log("Fetched UG Projects:", response.data);
       } catch (err) {
         console.error(`Error fetching UG projects for ${selectedProgram}:`, err);
         setUgProjects([]);
@@ -123,18 +129,21 @@ function EnrolledStudents() {
   };
 
   useEffect(() => {
-    if (pgPrograms.includes(selectedProgram)) {
-      fetchPgStudents();
-      setUgProjects([]); // Clear UG projects if PG is selected
-    } else if (ugPrograms.includes(selectedProgram)) {
-      fetchUgProjects();
-      setStudents([]); // Clear PG students if UG is selected
-      setUgCurrentView('projects'); // Default to projects view for UG
+    if (teacherEmail && selectedProgram) { // Only fetch if teacherEmail is available
+      if (pgPrograms.includes(selectedProgram)) {
+        fetchPgStudents();
+        setUgProjects([]); // Clear UG projects if PG is selected
+      } else if (ugPrograms.includes(selectedProgram)) {
+        fetchUgProjects();
+        setStudents([]); // Clear PG students if UG is selected
+        setUgCurrentView('projects'); // Default to projects view for UG
+      }
     } else {
       setStudents([]);
       setUgProjects([]);
     }
   }, [teacherEmail, selectedProgram]);
+
 
   const fetchLatestReviewFiles = async (studentList) => {
     const files = {};
@@ -146,7 +155,7 @@ function EnrolledStudents() {
             files[`${student.registerNumber}_${reviewType}`] = response.data.filePath;
           }
         } catch (error) {
-          // console.error(`Error fetching ${reviewType} review for ${student.registerNumber}:`, error);
+          // console.error(`Error fetching ${reviewType} review for ${student.registerNumber}:`, error); // Suppress frequent errors
         }
       }
     }
@@ -158,7 +167,6 @@ function EnrolledStudents() {
     if (pgPrograms.includes(selectedProgram) && students.length > 0) {
       fetchLatestReviewFiles(students);
     } else if (ugPrograms.includes(selectedProgram) && ugProjects.length > 0) {
-      // For UG projects, fetch files for all members in all projects to populate links
       const allUgStudents = ugProjects.flatMap(project => project.projectMembers);
       fetchLatestReviewFiles(allUgStudents);
     } else {
@@ -170,14 +178,16 @@ function EnrolledStudents() {
   // Polling for students/projects (consider using Firestore real-time listeners for chat for better efficiency)
   useEffect(() => {
     const interval = setInterval(() => {
-      if (pgPrograms.includes(selectedProgram)) {
-        fetchPgStudents();
-      } else if (ugPrograms.includes(selectedProgram)) {
-        fetchUgProjects();
+      if (selectedProgram) { // Only poll if a program is selected
+        if (pgPrograms.includes(selectedProgram)) {
+          fetchPgStudents();
+        } else if (ugPrograms.includes(selectedProgram)) {
+          fetchUgProjects();
+        }
       }
     }, 5000); // Poll every 5 seconds
     return () => clearInterval(interval);
-  }, [teacherEmail, selectedProgram, ugCurrentView]);
+  }, [selectedProgram, teacherEmail]); // Depend on selectedProgram and teacherEmail
 
 
   const handleCloseChat = () => {
@@ -333,54 +343,71 @@ function EnrolledStudents() {
     try {
       // 1. Find the UID of the coordinator for the selectedProgram
       const usersRef = collection(db, "users");
-      // MODIFIED: Query by 'roles' array-contains "Coordinator" instead of 'profession'
-      const coordinatorQuery = query(usersRef, where("roles", "array-contains", "Coordinator"), where("department", "==", selectedProgram));
+      // Use the 'department' field for filtering coordinator, which should match the program name
+      const coordinatorQuery = query(
+        usersRef,
+        where("roles", "array-contains", "Coordinator"),
+        where("department", "==", selectedProgram) // This 'selectedProgram' must match the coordinator's 'department'
+      );
       const coordinatorSnapshot = await getDocs(coordinatorQuery);
 
       let programCoordinatorUid = null;
       if (!coordinatorSnapshot.empty) {
         programCoordinatorUid = coordinatorSnapshot.docs[0].id;
+        console.log(`Found coordinator for ${selectedProgram} with UID:`, programCoordinatorUid);
       } else {
-        toast.warn(`No coordinator found for ${selectedProgram}. Cannot load review items.`);
+        toast.warn(`No coordinator found for ${selectedProgram} in Firebase. Please ensure a coordinator is assigned to this program and their 'department' field in Firestore matches '${selectedProgram}'.`);
         setLoadingReviewData(false);
+        console.warn(`No coordinator found for ${selectedProgram} in Firebase. Double check roles and department fields for this coordinator.`);
         return; // Exit early if no coordinator is found
       }
 
       // 2. Fetch the coordinator's defined review structure for this program
       const coordinatorReviewResponse = await axios.get(`${API_BASE_URL}/coordinator-reviews/${programCoordinatorUid}/${selectedProgram}`);
-      const coordinatorData = coordinatorReviewResponse.data.reviewData || [];
+      const coordinatorData = coordinatorReviewResponse.data.reviewData ;
       setCoordinatorReviewStructure(coordinatorData);
+      console.log(`Coordinator review data from backend for ${selectedProgram}:`, coordinatorData);
+      if (coordinatorData.length === 0) {
+        toast.warn(`Coordinator for ${selectedProgram} has not defined any review items. Please ask them to set it up in their dashboard.`);
+        setLoadingReviewData(false);
+        return;
+      }
+
 
       // 3. Fetch the student's existing marks for these review items
-      // For UG projects, we need to fetch the marks that are common to the project.
-      // The server.js endpoint has been updated to handle this logic.
+      // The server.js endpoint has been updated to handle UG project reflection.
       const studentMarksResponse = await axios.get(`${API_BASE_URL}/student-review-marks/${student.registerNumber}/${student.courseName}`);
-      const existingStudentMarks = studentMarksResponse.data.reviewsAssessment || [];
+      const existingStudentMarks = studentMarksResponse.data.reviewsAssessment || []; // Ensure this is always an array
+      console.log(`Existing student marks from backend for ${student.registerNumber} in ${student.courseName}:`, existingStudentMarks);
+
 
       // Combine coordinator's structure with student's existing marks
       const combinedReviewData = coordinatorData.map(coordItem => {
+        // Find existing mark by matching the first description field (r1_desc)
         const existingMark = existingStudentMarks.find(studentItem =>
-          // Use original r1_desc for matching, assuming it's the primary identifier for a review row
           studentItem.description === coordItem.r1_desc
         );
 
         return {
-          r1_item_desc: coordItem.r1_desc, // Specific description for R1 item
-          r2_item_desc: coordItem.r2_desc, // Specific description for R2 item
-          r3_item_desc: coordItem.r3_desc, // Specific description for R3 item
-          coord_r1_max: Number(coordItem.r1_mark) || 0, // Coordinator's set max mark for R1
-          coord_r2_max: Number(coordItem.r2_mark) || 0, // Coordinator's set max mark for R2
-          coord_r3_max: Number(coordItem.r3_mark) || 0, // Coordinator's set max mark for R3
-          r1_mark: existingMark ? existingMark.r1_mark : 0,
-          r2_mark: existingMark ? existingMark.r2_mark : 0,
-          r3_mark: existingMark ? existingMark.r3_mark : 0,
+          r1_item_desc: coordItem.r1_desc,
+          r2_item_desc: coordItem.r2_desc,
+          r3_item_desc: coordItem.r3_desc,
+          coord_r1_max: Number(coordItem.r1_mark) || 0,
+          coord_r2_max: Number(coordItem.r2_mark) || 0,
+          coord_r3_max: Number(coordItem.r3_mark) || 0,
+          // If existingMark is found, use its value; otherwise, default to 0
+          r1_mark: existingMark ? Number(existingMark.r1_mark) || 0 : 0,
+          r2_mark: existingMark ? Number(existingMark.r2_mark) || 0 : 0,
+          r3_mark: existingMark ? Number(existingMark.r3_mark) || 0 : 0,
         };
       });
       setStudentReviewMarks(combinedReviewData);
+      console.log("Combined review data for modal display (after merging with existing marks):", combinedReviewData);
+
 
     } catch (error) {
       console.error("Error loading review data for student:", error);
-      toast.error(`Failed to load review details: ${error.message}`);
+      toast.error(`Failed to load review details: ${error.response?.data?.error || error.message}`);
       setCoordinatorReviewStructure([]);
       setStudentReviewMarks([]);
     } finally {
@@ -392,7 +419,17 @@ function EnrolledStudents() {
   const handleStudentReviewMarkChange = (index, reviewType, value) => {
     setStudentReviewMarks(prevMarks => {
       const updatedMarks = [...prevMarks];
+      // Ensure the value is treated as a number
       updatedMarks[index][reviewType] = Number(value);
+
+      // Validation: Ensure awarded mark does not exceed max mark
+      const coordMaxKey = reviewType.replace('mark', 'max'); // e.g., r1_mark -> coord_r1_max
+      const maxAllowed = updatedMarks[index][coordMaxKey];
+      if (updatedMarks[index][reviewType] > maxAllowed) {
+        updatedMarks[index][reviewType] = maxAllowed;
+        toast.warn(`Mark for ${reviewType.replace('_mark', '').toUpperCase()} cannot exceed ${maxAllowed}. Value adjusted.`);
+      }
+
       return updatedMarks;
     });
   };
@@ -461,12 +498,11 @@ function EnrolledStudents() {
       // Array to hold all individual update promises
       const updatePromises = studentsToUpdate.map(async (student) => {
           // 1. Save the detailed review marks for each student in the group
-          // This ensures that each student's document has the latest detailed review marks.
           const reviewPayload = {
               registerNumber: student.registerNumber,
               courseName: selectedProgram,
               reviewsAssessment: studentReviewMarks.map((item, index) => ({
-                  description: coordinatorReviewStructure[index]?.r1_desc || item.r1_item_desc,
+                  description: coordinatorReviewStructure[index]?.r1_desc || item.r1_item_desc, // Use coordinator's original description
                   r1_mark: item.r1_mark,
                   r2_mark: item.r2_mark,
                   r3_mark: item.r3_mark,
@@ -504,15 +540,18 @@ function EnrolledStudents() {
         if (ugCurrentView === 'students_in_project' && selectedProject) {
           // Manually update the selected project's members for immediate UI reflection
           const updatedSelectedProjectMembers = selectedProject.projectMembers.map(member => {
-            const updatedStudent = studentsToUpdate.find(s => s.registerNumber === member.registerNumber);
-            return updatedStudent ? {
+            // Find the student in the group that matches the current member
+            // This is crucial to ensure the correct student object is updated with new marks
+            const updatedStudentInGroup = studentsToUpdate.find(s => s.registerNumber === member.registerNumber);
+            return updatedStudentInGroup ? {
               ...member,
               Assessment1: normalizedAssessment1,
               Assessment2: normalizedAssessment2,
               Assessment3: normalizedAssessment3,
               Total: newTotalAverage,
+              // Update the reviewsAssessment for immediate display in the student's review modal if reopened
               reviewsAssessment: studentReviewMarks.map(item => ({
-                description: item.r1_item_desc, // Use r1_item_desc for description as it's the identifier
+                description: item.r1_item_desc, // Ensure description is consistent
                 r1_mark: item.r1_mark,
                 r2_mark: item.r2_mark,
                 r3_mark: item.r3_mark,
@@ -553,7 +592,7 @@ function EnrolledStudents() {
 
   const { totalAwardedR1, totalAwardedR2, totalAwardedR3 } = calculateModalTotals();
 
-  // NEW: Function to download the specific student's review marks as PDF
+  // Function to download the specific student's review marks as PDF
   const handleDownloadStudentReviewPDF = () => {
     if (!currentStudentForReview || studentReviewMarks.length === 0) {
       toast.error("No review data available to download for this student.");
@@ -564,7 +603,7 @@ function EnrolledStudents() {
     const studentName = currentStudentForReview.studentName;
     const registerNumber = currentStudentForReview.registerNumber;
     const programName = selectedProgram;
-    const currentDate = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY format
+    const currentDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }); // DD/MM/YYYY format
 
     // Resembling the "Semester Fee Receipt" structure
     doc.setFont('helvetica'); // Use a standard font
@@ -630,14 +669,14 @@ function EnrolledStudents() {
     toast.success("Student review marks PDF downloaded successfully!");
   };
 
-  // NEW: Handler to view students within a selected project
+  // Handler to view students within a selected project
   const handleViewProjectStudents = (project) => {
     setSelectedProject(project);
     setStudentsInSelectedProject(project.projectMembers.sort((a,b) => a.registerNumber.localeCompare(b.registerNumber)));
     setUgCurrentView('students_in_project');
   };
 
-  // NEW: Handler to go back from student list to project list
+  // Handler to go back from student list to project list
   const handleBackToProjects = () => {
     setUgCurrentView('projects');
     setSelectedProject(null);
@@ -671,7 +710,7 @@ function EnrolledStudents() {
                       program === "MTECH(R)" ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" :
                         "bg-red-600 hover:bg-red-700 focus:ring-red-500") :
                   (ugPrograms.includes(program) ?
-                    "bg-orange-500 hover:bg-orange-600 focus:ring-orange-400" : "") // Distinct color for UG programs
+                    "bg-orange-500 hover:bg-orange-600 focus:ring-orange-400" : "")
                 }
                 text-white
               `}
@@ -879,7 +918,7 @@ function EnrolledStudents() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className="py-4 text-center text-gray-500"> {/* Adjusted colspan */}
+                        <td colSpan="5" className="py-4 text-center text-gray-500">
                           No UG projects found for this program.
                         </td>
                       </tr>
@@ -888,7 +927,6 @@ function EnrolledStudents() {
                 </table>
               </div>
               <div className="flex flex-wrap justify-center gap-4 mt-6">
-                {/* Download buttons for UG projects table */}
                 <button
                   onClick={handleDownloadSpreadsheet}
                   className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
@@ -913,7 +951,7 @@ function EnrolledStudents() {
                       <th className="py-3 px-6 text-left border-b border-gray-300">Student Name</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
+                      <th className="py-3 px-6 text-center border-b border-300">Assessment 3</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">Average</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">Zeroth Review</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">First Review</th>
@@ -1088,7 +1126,7 @@ function EnrolledStudents() {
                               <input
                                 type="number"
                                 min="0"
-                                max={item.coord_r1_max}
+                                max={item.coord_r1_max} // Max value based on coordinator's setting
                                 value={item.r1_mark}
                                 onChange={(e) => handleStudentReviewMarkChange(index, "r1_mark", e.target.value)}
                                 className="w-24 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
@@ -1100,7 +1138,7 @@ function EnrolledStudents() {
                               <input
                                 type="number"
                                 min="0"
-                                max={item.coord_r2_max}
+                                max={item.coord_r2_max} // Max value based on coordinator's setting
                                 value={item.r2_mark}
                                 onChange={(e) => handleStudentReviewMarkChange(index, "r2_mark", e.target.value)}
                                 className="w-24 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
@@ -1112,7 +1150,7 @@ function EnrolledStudents() {
                               <input
                                 type="number"
                                 min="0"
-                                max={item.coord_r3_max}
+                                max={item.coord_r3_max} // Max value based on coordinator's setting
                                 value={item.r3_mark}
                                 onChange={(e) => handleStudentReviewMarkChange(index, "r3_mark", e.target.value)}
                                 className="w-24 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
@@ -1134,7 +1172,7 @@ function EnrolledStudents() {
                     </table>
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No review items defined by the coordinator for this program.</p>
+                  <p className="text-gray-500 text-center py-4">No review items defined by the coordinator for this program. Please ensure the coordinator for {selectedProgram} has set up review items in their dashboard.</p>
                 )}
               </>
             )}
