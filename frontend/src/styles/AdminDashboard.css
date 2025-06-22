@@ -262,3 +262,85 @@
       margin-top: 15px; /* Adjust label margin */
   }
 }
+.dashboard-content select {
+  background: rgba(255, 255, 255, 0.25);  /* light glass background */
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 10px rgba(0, 195, 255, 0.4); /* light blue glow */
+  backdrop-filter: blur(10px);
+}
+
+.dashboard-content option {
+  background: rgba(255, 255, 255, 0.15);  /* light semi-transparent for dropdown items */
+  color: #000;  /* Black text for dropdown items for better visibility */
+}
+
+.cont {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(to right, #6a11cb, #2575fc);
+  padding: 20px;
+}
+
+.dashboard-content {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  width: 100%;
+  max-width: 500px;
+  color: #fff;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+input[type="date"] {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  outline: none;
+  transition: 0.3s;
+}
+
+input[type="date"]:focus {
+  border-color: #00c3ff;
+  box-shadow: 0 0 10px rgba(0, 195, 255, 0.5);
+}
+
+.submit-button {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #00c3ff, #007bff);
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  color: #fff;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.submit-button:hover {
+  background: linear-gradient(135deg, #007bff, #00c3ff);
+  transform: scale(1.05);
+}

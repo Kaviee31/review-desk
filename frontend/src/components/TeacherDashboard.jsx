@@ -7,7 +7,7 @@ import axios from 'axios';
 import emailjs from '@emailjs/browser';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import '../styles/EnrolledStudents.css';
+import '../styles/TeacherDashboard.css';
 
 function TeacherDashboard() {
   const [announcement, setAnnouncement] = useState('');
@@ -38,7 +38,6 @@ function TeacherDashboard() {
     }
 
     try {
-      // Step 1: Get enrolled students under this teacher
       const response = await axios.get(`${BASE_URL}/teacher-courses/${teacherEmail}`);
       const enrolledStudents = response.data;
 
@@ -47,7 +46,6 @@ function TeacherDashboard() {
         return;
       }
 
-      // Step 2: Match emails from Firestore users
       const usersSnapshot = await getDocs(collection(db, "users"));
       const bccEmails = [];
       const registerNumbers = [];
@@ -68,12 +66,12 @@ function TeacherDashboard() {
         return;
       }
 
-      // Step 3: Send Email via EmailJS
       const templateParams = {
         message: announcement,
         to_name: "Student",
         to_email: "reviewdeskau@gmail.com",
         bcc: bccEmails.join(","),
+        subject: "New Announcement from your Guide"
       };
 
       await emailjs.send(
@@ -83,7 +81,6 @@ function TeacherDashboard() {
         'lBI3Htk5CKshSzMFg'
       );
 
-      // Step 4: Send Telegram messages
       const telegramRes = await axios.post(`${BASE_URL}/api/send-telegram`, {
         message: announcement,
         registerNumbers: registerNumbers,
