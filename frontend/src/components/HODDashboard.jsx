@@ -17,7 +17,7 @@ function HODDashboard() {
   const [programCounts, setProgramCounts] = useState({});
   const navigate = useNavigate();
   const firstRender = useRef(true);
-  const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
+  const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)","B.TECH(IT)","B.TECH(IT) SS"];
   const API_BASE_URL = "http://localhost:5000";
 
   useEffect(() => {
