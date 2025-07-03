@@ -39,10 +39,12 @@ useEffect(() => {
 
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
-            if (userData.profession === "Coordinator" && userData.department) {
+            // Check for 'department' field which holds the assigned course
+            if (userData.department) {
               setAssignedCourse(userData.department);
             } else {
-              console.warn("User is not a coordinator or has no assigned department.");
+              console.warn("Coordinator user has no assigned department.");
+              toast.warn("You don't have an assigned course. Please contact admin.");
             }
           } else {
             console.warn("No user document found for UID:", user.uid);
@@ -70,7 +72,7 @@ useEffect(() => {
     }
     setSavingReviews(true); // Indicate saving process
     try {
-      const response = await fetch(`http://localhost:5000/coordinator-reviews`, {
+      const response = await fetch(`${API_BASE_URL}/coordinator-reviews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -304,7 +306,9 @@ useEffect(() => {
                 ${program === "MCA(R)" ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500" :
                   program === "MCA(SS)" ? "bg-green-600 hover:bg-green-700 focus:ring-green-500" :
                     program === "MTECH(R)" ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" :
-                      "bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                    program === "MTECH(SS)" ? "bg-red-600 hover:bg-red-700 focus:ring-red-500" :
+                    program === "B.TECH(IT)" ? "bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500" :
+                    "bg-teal-600 hover:bg-teal-700 focus:ring-teal-500"
                 }
                 ${assignedCourse && program !== assignedCourse ? "opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400" : "text-white"}
               `}

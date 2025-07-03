@@ -43,23 +43,65 @@ function AssignCoordinatorForm() {
     const password = generatePassword();
 
     try {
+      // --- Start of new logic for unique coordinator per course ---
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("department", "==", selectedCourse), where("roles", "array-contains", "Coordinator"));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const existingCoordinator = querySnapshot.docs[0].data();
+        if (existingCoordinator.email !== guideEmailId) {
+          toast.error(`A coordinator is already assigned to ${selectedCourse}: ${existingCoordinator.email}.`);
+          setLoading(false);
+          return;
+        }
+      }
+      // --- End of new logic ---
+
       // Try creating new user directly
-      const userCredential = await createUserWithEmailAndPassword(auth, guideEmailId, password);
-      const user = userCredential.user;
+      let user = null;
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, guideEmailId, password);
+        user = userCredential.user;
+      } catch (authError) {
+        if (authError.code === 'auth/email-already-in-use') {
+          // If email already in use, find the user in Firestore
+          const qExisting = query(usersRef, where("email", "==", guideEmailId));
+          const querySnapshotExisting = await getDocs(qExisting);
+          if (!querySnapshotExisting.empty) {
+            user = querySnapshotExisting.docs[0]; // Get the existing user document
+            // If the user is already a coordinator for this course, prevent re-assignment
+            const userData = user.data();
+            if (userData.department === selectedCourse && userData.roles.includes("Coordinator")) {
+              toast.info(`This user is already the coordinator for ${selectedCourse}.`);
+              setLoading(false);
+              return;
+            }
+          } else {
+            toast.error('User found in Auth but not in Firestore. Cannot assign role.');
+            setLoading(false);
+            return;
+          }
+        } else {
+          throw authError; // Re-throw other authentication errors
+        }
+      }
 
-      await setDoc(doc(db, "users", user.uid), {
-        username: guideName,
-        email: guideEmailId,
-        department: selectedCourse,
-        roles: ["Coordinator"]
-      });
 
-      await sendEmailVerification(user);
+      if (user && user.uid) { // Check if user object from createUserWithEmailAndPassword
+        await setDoc(doc(db, "users", user.uid), {
+          username: guideName,
+          email: guideEmailId,
+          department: selectedCourse,
+          roles: ["Coordinator"]
+        });
 
-      const emailParams = {
-        to_name: guideName,
-        to_email: guideEmailId,
-        message: `Hello ${guideName},
+        await sendEmailVerification(user);
+
+        const emailParams = {
+          to_name: guideName,
+          to_email: guideEmailId,
+          message: `Hello ${guideName},
 
 You have been assigned as Coordinator for the ${selectedCourse} program.
 
@@ -68,59 +110,48 @@ Email: ${guideEmailId}
 Password: ${password}
 
 Please log in and change your password after your first login.`
-      };
+        };
 
-      await emailjs.send(
-        'service_zdkw9wb',
-        'template_j69ex9q',
-        emailParams,
-        'lBI3Htk5CKshSzMFg'
-      );
+        await emailjs.send(
+          'service_zdkw9wb',
+          'template_j69ex9q',
+          emailParams,
+          'lBI3Htk5CKshSzMFg'
+        );
 
-      toast.success(`New Coordinator created and email sent to ${guideEmailId}`);
+        toast.success(`New Coordinator created and email sent to ${guideEmailId}`);
+      } else if (user && user.id) { // Check if user object from getDocs (existing user)
+        const userRef = doc(db, "users", user.id);
+        await updateDoc(userRef, {
+          username: guideName,
+          department: selectedCourse,
+          roles: arrayUnion("Coordinator")
+        });
 
-    } catch (error) {
-      if (error.code === 'auth/email-already-in-use') {
-        // Existing user: update roles in Firestore
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("email", "==", guideEmailId));
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-          const userDoc = querySnapshot.docs[0];
-          const userRef = doc(db, "users", userDoc.id);
-
-          await updateDoc(userRef, {
-            username: guideName,
-            department: selectedCourse,
-            roles: arrayUnion("Coordinator")
-          });
-
-          const emailParams = {
-            to_name: guideName,
-            to_email: guideEmailId,
-            message: `Hello ${guideName},
+        const emailParams = {
+          to_name: guideName,
+          to_email: guideEmailId,
+          message: `Hello ${guideName},
 
 You have been assigned as Coordinator for the ${selectedCourse} program.
 
 Please login using your existing credentials.`
-          };
+        };
 
-          await emailjs.send(
-            'service_zdkw9wb',
-            'template_j69ex9q',
-            emailParams,
-            'lBI3Htk5CKshSzMFg'
-          );
+        await emailjs.send(
+          'service_zdkw9wb',
+          'template_j69ex9q',
+          emailParams,
+          'lBI3Htk5CKshSzMFg'
+        );
 
-          toast.success(`Existing user updated and email sent to ${guideEmailId}`);
-        } else {
-          toast.error('User found in Auth but not in Firestore.');
-        }
-      } else {
-        console.error("Error assigning coordinator:", error);
-        toast.error(`Failed: ${error.message}`);
+        toast.success(`Existing user updated and email sent to ${guideEmailId}`);
       }
+
+
+    } catch (error) {
+      console.error("Error assigning coordinator:", error);
+      toast.error(`Failed: ${error.message}`);
     }
     setLoading(false);
     setGuideEmailId('');

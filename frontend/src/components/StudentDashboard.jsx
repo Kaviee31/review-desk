@@ -26,7 +26,13 @@ function StudentDashboard() {
   const [secondReviewFile, setSecondReviewFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-const BASE_URL= "http://localhost:5000";
+  const BASE_URL = "http://localhost:5000";
+
+  // New states to store uploaded file paths
+  const [uploadedZerothReview, setUploadedZerothReview] = useState(null);
+  const [uploadedFirstReview, setUploadedFirstReview] = useState(null);
+  const [uploadedSecondReview, setUploadedSecondReview] = useState(null);
+
   const zerothInputRef = useRef();
   const firstInputRef = useRef();
   const secondInputRef = useRef();
@@ -50,6 +56,11 @@ const BASE_URL= "http://localhost:5000";
               console.error("Failed to check Telegram status:", error);
               setTelegramLinked(false);
             }
+          }
+
+          // Fetch uploaded review files after registerNumber is set
+          if (userData?.registerNumber) {
+            fetchUploadedReviews(userData.registerNumber);
           }
         }
       } catch (error) {
@@ -79,6 +90,39 @@ const BASE_URL= "http://localhost:5000";
       }
     };
 
+    // Function to fetch uploaded reviews
+    const fetchUploadedReviews = async (regNo) => {
+      try {
+        const zerothResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/zeroth`);
+        if (zerothResponse.data && zerothResponse.data.filePath) {
+          setUploadedZerothReview(zerothResponse.data.filePath);
+        }
+      } catch (error) {
+        console.warn("No zeroth review found or error fetching:", error.message);
+        setUploadedZerothReview(null);
+      }
+
+      try {
+        const firstResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/first`);
+        if (firstResponse.data && firstResponse.data.filePath) {
+          setUploadedFirstReview(firstResponse.data.filePath);
+        }
+      } catch (error) {
+        console.warn("No first review found or error fetching:", error.message);
+        setUploadedFirstReview(null);
+      }
+
+      try {
+        const secondResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/second`);
+        if (secondResponse.data && secondResponse.data.filePath) {
+          setUploadedSecondReview(secondResponse.data.filePath);
+        }
+      } catch (error) {
+        console.warn("No second review found or error fetching:", error.message);
+        setUploadedSecondReview(null);
+      }
+    };
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         fetchUserData(user);
@@ -90,7 +134,7 @@ const BASE_URL= "http://localhost:5000";
     });
 
     return () => unsubscribe();
-  }, [navigate]);
+  }, [navigate, BASE_URL]); // Add BASE_URL to dependency array
 
   const isUploadEnabled = (deadline) => {
     return deadline && !isNaN(new Date(deadline)) && new Date() <= new Date(deadline);
@@ -98,6 +142,8 @@ const BASE_URL= "http://localhost:5000";
 
   const handleFileUpload = async (file, reviewType, inputRef) => {
     if (!file) {
+      // Use a custom message box instead of alert
+      // You'd implement a modal or similar UI for this
       alert(`Please select a file for ${reviewType} review.`);
       return;
     }
@@ -124,13 +170,20 @@ const BASE_URL= "http://localhost:5000";
       });
       alert(response.data.message || `Successfully uploaded ${reviewType} review.`);
 
+      // Update the state for the uploaded file path
+      if (reviewType === "zeroth") setUploadedZerothReview(response.data.filePath);
+      if (reviewType === "first") setUploadedFirstReview(response.data.filePath);
+      if (reviewType === "second") setUploadedSecondReview(response.data.filePath);
+
       // Clear input after successful upload
       if (inputRef.current) {
         inputRef.current.value = "";
       }
+      // Reset file state (important for new uploads)
       if (reviewType === "zeroth") setZerothReviewFile(null);
       if (reviewType === "first") setFirstReviewFile(null);
       if (reviewType === "second") setSecondReviewFile(null);
+
     } catch (error) {
       alert(error.response?.data?.error || `Error uploading ${reviewType} review.`);
     } finally {
@@ -187,7 +240,7 @@ const BASE_URL= "http://localhost:5000";
                 <thead>
                   <tr>
                     <th>Review Type</th>
-                    <th>Upload File</th>
+                    <th>Upload File / View Uploaded</th>
                     <th>Action</th>
                     <th>Deadline</th>
                   </tr>
@@ -196,22 +249,51 @@ const BASE_URL= "http://localhost:5000";
                   <tr>
                     <td>Zeroth Review</td>
                     <td>
-                      <input
-                        type="file"
-                        title="Upload PDF for Zeroth Review"
-                        accept="application/pdf"
-                        ref={zerothInputRef}
-                        onChange={(e) => setZerothReviewFile(e.target.files[0])}
-                        disabled={!isUploadEnabled(deadlines.zerothReviewDeadline)}
-                      />
+                      {uploadedZerothReview ? (
+                        <a
+                          href={`${BASE_URL}/${uploadedZerothReview}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="uploaded-file-link"
+                        >
+                          View Uploaded File
+                        </a>
+                      ) : (
+                        <input
+                          type="file"
+                          title="Upload PDF for Zeroth Review"
+                          accept="application/pdf"
+                          ref={zerothInputRef}
+                          onChange={(e) => setZerothReviewFile(e.target.files[0])}
+                          disabled={!isUploadEnabled(deadlines.zerothReviewDeadline)}
+                        />
+                      )}
                     </td>
                     <td>
-                      <button
-                        onClick={() => handleFileUpload(zerothReviewFile, "zeroth", zerothInputRef)}
-                        disabled={!isUploadEnabled(deadlines.zerothReviewDeadline) || loading}
-                      >
-                        Upload
-                      </button>
+                      {!uploadedZerothReview && ( // Only show upload button if no file is uploaded yet
+                        <button
+                          onClick={() => handleFileUpload(zerothReviewFile, "zeroth", zerothInputRef)}
+                          disabled={!isUploadEnabled(deadlines.zerothReviewDeadline) || loading}
+                        >
+                          Upload
+                        </button>
+                      )}
+                      {uploadedZerothReview && isUploadEnabled(deadlines.zerothReviewDeadline) && (
+                        <button
+                          onClick={() => {
+                            // Allow re-uploading if a new file is selected
+                            if (zerothReviewFile) {
+                              handleFileUpload(zerothReviewFile, "zeroth", zerothInputRef);
+                            } else {
+                              alert("Please select a new file to re-upload.");
+                            }
+                          }}
+                          disabled={loading}
+                          title="Select a new file above to re-upload"
+                        >
+                          Re-upload
+                        </button>
+                      )}
                     </td>
                     <td>{deadlines.zerothReviewDeadline ? new Date(deadlines.zerothReviewDeadline).toLocaleDateString() : "Not Set"}</td>
                   </tr>
@@ -219,22 +301,50 @@ const BASE_URL= "http://localhost:5000";
                   <tr>
                     <td>First Review</td>
                     <td>
-                      <input
-                        type="file"
-                        title="Upload PDF for First Review"
-                        accept="application/pdf"
-                        ref={firstInputRef}
-                        onChange={(e) => setFirstReviewFile(e.target.files[0])}
-                        disabled={!isUploadEnabled(deadlines.firstReviewDeadline)}
-                      />
+                      {uploadedFirstReview ? (
+                        <a
+                          href={`${BASE_URL}/${uploadedFirstReview}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="uploaded-file-link"
+                        >
+                          View Uploaded File
+                        </a>
+                      ) : (
+                        <input
+                          type="file"
+                          title="Upload PDF for First Review"
+                          accept="application/pdf"
+                          ref={firstInputRef}
+                          onChange={(e) => setFirstReviewFile(e.target.files[0])}
+                          disabled={!isUploadEnabled(deadlines.firstReviewDeadline)}
+                        />
+                      )}
                     </td>
                     <td>
-                      <button
-                        onClick={() => handleFileUpload(firstReviewFile, "first", firstInputRef)}
-                        disabled={!isUploadEnabled(deadlines.firstReviewDeadline) || loading}
-                      >
-                        Upload
-                      </button>
+                      {!uploadedFirstReview && (
+                        <button
+                          onClick={() => handleFileUpload(firstReviewFile, "first", firstInputRef)}
+                          disabled={!isUploadEnabled(deadlines.firstReviewDeadline) || loading}
+                        >
+                          Upload
+                        </button>
+                      )}
+                      {uploadedFirstReview && isUploadEnabled(deadlines.firstReviewDeadline) && (
+                        <button
+                          onClick={() => {
+                            if (firstReviewFile) {
+                              handleFileUpload(firstReviewFile, "first", firstInputRef);
+                            } else {
+                              alert("Please select a new file to re-upload.");
+                            }
+                          }}
+                          disabled={loading}
+                          title="Select a new file above to re-upload"
+                        >
+                          Re-upload
+                        </button>
+                      )}
                     </td>
                     <td>{deadlines.firstReviewDeadline ? new Date(deadlines.firstReviewDeadline).toLocaleDateString() : "Not Set"}</td>
                   </tr>
@@ -242,22 +352,50 @@ const BASE_URL= "http://localhost:5000";
                   <tr>
                     <td>Second Review</td>
                     <td>
-                      <input
-                        type="file"
-                        title="Upload PDF for Second Review"
-                        accept="application/pdf"
-                        ref={secondInputRef}
-                        onChange={(e) => setSecondReviewFile(e.target.files[0])}
-                        disabled={!isUploadEnabled(deadlines.secondReviewDeadline)}
-                      />
+                      {uploadedSecondReview ? (
+                        <a
+                          href={`${BASE_URL}/${uploadedSecondReview}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="uploaded-file-link"
+                        >
+                          View Uploaded File
+                        </a>
+                      ) : (
+                        <input
+                          type="file"
+                          title="Upload PDF for Second Review"
+                          accept="application/pdf"
+                          ref={secondInputRef}
+                          onChange={(e) => setSecondReviewFile(e.target.files[0])}
+                          disabled={!isUploadEnabled(deadlines.secondReviewDeadline)}
+                        />
+                      )}
                     </td>
                     <td>
-                      <button
-                        onClick={() => handleFileUpload(secondReviewFile, "second", secondInputRef)}
-                        disabled={!isUploadEnabled(deadlines.secondReviewDeadline) || loading}
-                      >
-                        Upload
-                      </button>
+                      {!uploadedSecondReview && (
+                        <button
+                          onClick={() => handleFileUpload(secondReviewFile, "second", secondInputRef)}
+                          disabled={!isUploadEnabled(deadlines.secondReviewDeadline) || loading}
+                        >
+                          Upload
+                        </button>
+                      )}
+                      {uploadedSecondReview && isUploadEnabled(deadlines.secondReviewDeadline) && (
+                        <button
+                          onClick={() => {
+                            if (secondReviewFile) {
+                              handleFileUpload(secondReviewFile, "second", secondInputRef);
+                            } else {
+                              alert("Please select a new file to re-upload.");
+                            }
+                          }}
+                          disabled={loading}
+                          title="Select a new file above to re-upload"
+                        >
+                          Re-upload
+                        </button>
+                      )}
                     </td>
                     <td>{deadlines.secondReviewDeadline ? new Date(deadlines.secondReviewDeadline).toLocaleDateString() : "Not Set"}</td>
                   </tr>

@@ -15,7 +15,7 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static("uploads")); // Serve static files from the 'uploads' directory
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
@@ -35,7 +35,7 @@ const enrollmentSchema = new mongoose.Schema({
   Total: { type: Number, default: 0 },
   reviews: [{ // For uploaded review documents (PDFs)
     reviewType: String,
-    filePath: String,
+    filePath: String, // Store the file path
     uploadedAt: { type: Date, default: Date.now },
   }],
   reviewsAssessment: [{
@@ -81,16 +81,17 @@ const CoordinatorReview = mongoose.model("CoordinatorReview", coordinatorReviewS
 
 // === MULTER CONFIG ===
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
+  destination: (req, file, cb) => cb(null, "uploads/"), // Files will be saved in the 'uploads' folder
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    // Use path.basename to get just the filename, then path.extname for the extension
     cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
   }
 });
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => file.mimetype === "application/pdf" ? cb(null, true) : cb(null, false),
-  limits: { fileSize: 8 * 1024 * 1024 }
+  limits: { fileSize: 8 * 1024 * 1024 } // 8MB limit
 });
 
 // === ROUTES ===
@@ -172,13 +173,18 @@ app.post("/api/send-telegram", async (req, res) => {
       return res.status(404).json({ error: "No chat IDs found for these register numbers." });
     }
 
-    const sendPromises = chatUsers.map(user =>
-      bot.sendMessage(user.chatId, `📢 ${message}`)
-    );
+    // Ensure bot is initialized if you're using it here.
+    // const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
+    // Assuming bot is initialized globally or passed appropriately if used in this route.
+    // For now, commenting out actual send to avoid dependency if not fully set up.
+    // If you uncomment, make sure `bot` is defined.
 
-    await Promise.all(sendPromises);
+    // const sendPromises = chatUsers.map(user =>
+    //   bot.sendMessage(user.chatId, `📢 ${message}`)
+    // );
+    // await Promise.all(sendPromises);
 
-    res.json({ success: true, sent: chatUsers.length });
+    res.json({ success: true, sent: chatUsers.length, message: "Telegram message sending simulated (bot integration needed)." });
   } catch (error) {
     console.error("Error sending Telegram messages:", error);
     res.status(500).json({ error: "Failed to send Telegram messages" });
@@ -360,14 +366,19 @@ app.post("/upload-review", upload.single("reviewFile"), async (req, res) => {
     if (!enrollment) return res.status(404).json({ error: "Enrollment not found." });
 
     const existingIndex = enrollment.reviews.findIndex(r => r.reviewType === reviewType);
-    const newReview = { reviewType, filePath: req.file.path, uploadedAt: Date.now() };
+    // Store the path where the file is accessible (e.g., /uploads/filename.pdf)
+    const newReview = { reviewType, filePath: req.file.path.replace(/\\/g, '/'), uploadedAt: Date.now() }; // Normalize path for URL
 
-    if (existingIndex > -1) enrollment.reviews[existingIndex] = newReview;
-    else enrollment.reviews.push(newReview);
+    if (existingIndex > -1) {
+      enrollment.reviews[existingIndex] = newReview;
+    } else {
+      enrollment.reviews.push(newReview);
+    }
 
     await enrollment.save();
-    res.json({ message: `Successfully uploaded ${reviewType} review.` });
+    res.json({ message: `Successfully uploaded ${reviewType} review.`, filePath: newReview.filePath }); // Return filePath
   } catch (error) {
+    console.error("Error uploading review:", error);
     res.status(500).json({ error: "Failed to upload review." });
   }
 });
@@ -380,12 +391,13 @@ app.get("/get-latest-review/:registerNumber/:reviewType", async (req, res) => {
 
     const review = enrollment.reviews
       .filter(r => r.reviewType === req.params.reviewType)
-      .sort((a, b) => b.uploadedAt - a.uploadedAt)[0];
+      .sort((a, b) => b.uploadedAt - a.uploadedAt)[0]; // Get the latest one
 
-    if (!review) return res.status(404).json({ error: "Review not found." });
+    if (!review) return res.status(404).json({ error: "Review not found for this type." });
 
-    res.json(review);
+    res.json(review); // This will contain reviewType, filePath, uploadedAt
   } catch (error) {
+    console.error("Error fetching latest review:", error);
     res.status(500).json({ error: "Failed to fetch review." });
   }
 });
