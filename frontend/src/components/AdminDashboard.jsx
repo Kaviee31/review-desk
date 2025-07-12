@@ -88,10 +88,12 @@ function AdminDashboard() {
 
       const studentDoc = querySnapshot.docs[0].data();
       fetchedStudentName = studentDoc.username;
+      const studentEmail = studentDoc.email;
 
       await axios.post("http://localhost:5000/enroll", {
         studentName: fetchedStudentName,
         registerNumber: pgStudentRegNo,
+         email: studentEmail,
         courseName: pgStudentCourseName,
         teacherName: teacherName, // Use fetched teacher name
         teacherEmail: pgTeacherEmail,
@@ -147,12 +149,15 @@ function AdminDashboard() {
           continue;
         }
 
-        const studentDoc = querySnapshot.docs[0].data();
-        const fetchedStudentName = studentDoc.username;
+       const studentDoc = querySnapshot.docs[0].data();
+        fetchedStudentName = studentDoc.username;
+        const studentEmail = studentDoc.email;
+
 
         await axios.post("http://localhost:5000/enroll", {
           studentName: fetchedStudentName,
           registerNumber: regNo,
+          email: studentEmail,
           courseName: ugStudentCourseName,
           teacherName: teacherName, // Use fetched teacher name
           teacherEmail: ugTeacherEmail,

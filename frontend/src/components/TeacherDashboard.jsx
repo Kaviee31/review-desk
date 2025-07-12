@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
 import axios from 'axios';
 import emailjs from '@emailjs/browser';
 import { toast } from 'react-toastify';
@@ -30,70 +28,66 @@ function TeacherDashboard() {
     navigate('/');
   };
 
-  const handleAnnouncementSubmit = async (e) => {
-    e.preventDefault();
-    if (!announcement.trim()) {
-      toast.error("Announcement message cannot be empty");
+const handleAnnouncementSubmit = async (e) => {
+  e.preventDefault();
+  if (!announcement.trim()) {
+    toast.error("Announcement message cannot be empty");
+    return;
+  }
+
+  try {
+    const response = await axios.get(`${BASE_URL}/teacher-courses/${teacherEmail}`);
+    const enrolledStudents = response.data;
+
+    if (!enrolledStudents.length) {
+      toast.error("No students enrolled under your email.");
       return;
     }
 
-    try {
-      const response = await axios.get(`${BASE_URL}/teacher-courses/${teacherEmail}`);
-      const enrolledStudents = response.data;
+    const bccEmails = enrolledStudents
+      .filter(s => s.email?.trim())
+      .map(s => s.email.trim());
 
-      if (!enrolledStudents.length) {
-        toast.error("No students enrolled under your email.");
-        return;
-      }
+    const registerNumbers = enrolledStudents.map(s => s.registerNumber);
 
-      const usersSnapshot = await getDocs(collection(db, "users"));
-      const bccEmails = [];
-      const registerNumbers = [];
-
-      usersSnapshot.forEach(doc => {
-        const user = doc.data();
-        if (
-          user.profession === "Student" &&
-          enrolledStudents.some(s => s.registerNumber === user.registerNumber)
-        ) {
-          bccEmails.push(user.email);
-          registerNumbers.push(user.registerNumber);
-        }
-      });
-
-      if (!bccEmails.length) {
-        toast.error("No matching student emails found in Firestore.");
-        return;
-      }
-
-      const templateParams = {
-        message: announcement,
-        to_name: "Student",
-        to_email: "reviewdeskau@gmail.com",
-        bcc: bccEmails.join(","),
-        subject: "New Announcement from your Guide"
-      };
-
-      await emailjs.send(
-        'service_zdkw9wb',
-        'template_bdoxrlm',
-        templateParams,
-        'lBI3Htk5CKshSzMFg'
-      );
-
-      const telegramRes = await axios.post(`${BASE_URL}/api/send-telegram`, {
-        message: announcement,
-        registerNumbers: registerNumbers,
-      });
-
-      const successCount = telegramRes.data?.successCount ?? 0;
-      toast.success(`Announcement sent to ${bccEmails.length} students via Email & ${successCount} via Telegram`);
-      setAnnouncement('');
-    } catch (error) {
-      console.error("Error sending announcement:", error);
-      toast.error("Failed to send announcement.");
+    if (!bccEmails.length) {
+      toast.error("No student email addresses found in enrollment data.");
+      return;
     }
-  };
+
+    const templateParams = {
+      message: announcement,
+      to_name: "Student",
+      to_email: "reviewdeskau@gmail.com", // fixed TO
+      bcc: bccEmails.join(","),
+      subject: "New Announcement from your Guide",
+    };
+
+    await emailjs.send(
+      'service_zdkw9wb',
+      'template_bdoxrlm',
+      templateParams,
+      'lBI3Htk5CKshSzMFg'
+    );
+
+    const telegramRes = await axios.post(`${BASE_URL}/api/send-telegram`, {
+      message: announcement,
+      registerNumbers: registerNumbers,
+    });
+
+    const successCount = telegramRes.data?.successCount ?? 0;
+    toast.success(
+      `✅ Announcement sent to ${bccEmails.length} via Email & ${successCount} via Telegram`
+    );
+
+    setAnnouncement('');
+  } catch (error) {
+    console.error("Error sending announcement:", error);
+    toast.error("Failed to send announcement.");
+  }
+};
+
+
 
   return (
     <div className="cont">

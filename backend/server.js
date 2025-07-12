@@ -26,6 +26,7 @@ mongoose.connect(process.env.MONGO_URI)
 const enrollmentSchema = new mongoose.Schema({
   studentName: String,
   registerNumber: String,
+  email: String,
   courseName: String, // This field is crucial for filtering by program
   teacherName: String,
   teacherEmail: String,
@@ -99,7 +100,7 @@ const upload = multer({
 // Enroll a student - Now expects courseName, and optionally projectName, groupRegisterNumbers
 app.post("/enroll", async (req, res) => {
   // Destructure new fields: projectName and groupRegisterNumbers
-  const { studentName, registerNumber, courseName, teacherName, teacherEmail, projectName, groupRegisterNumbers } = req.body;
+  const { studentName, registerNumber, courseName, teacherName, teacherEmail, projectName, groupRegisterNumbers, email } = req.body;
   try {
     // Check if the student is already enrolled in this specific course
     const exists = await Enrollment.findOne({ registerNumber, courseName });
@@ -109,12 +110,13 @@ app.post("/enroll", async (req, res) => {
     const newEnrollment = new Enrollment({
       studentName,
       registerNumber,
+      email,
       courseName,
       teacherName,
       teacherEmail,
-      reviewsAssessment: [], // Initialize as empty, will be populated by teacher
-      projectName: projectName || null, // Store project name (null if not provided)
-      groupRegisterNumbers: groupRegisterNumbers || [] // Store group register numbers (empty array if not provided)
+      reviewsAssessment: [], 
+      projectName: projectName || null, 
+      groupRegisterNumbers: groupRegisterNumbers || [] 
     });
     await newEnrollment.save();
     res.status(200).json({ message: "Enrollment successful!" });
@@ -173,17 +175,6 @@ app.post("/api/send-telegram", async (req, res) => {
       return res.status(404).json({ error: "No chat IDs found for these register numbers." });
     }
 
-    // Ensure bot is initialized if you're using it here.
-    // const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
-    // Assuming bot is initialized globally or passed appropriately if used in this route.
-    // For now, commenting out actual send to avoid dependency if not fully set up.
-    // If you uncomment, make sure `bot` is defined.
-
-    // const sendPromises = chatUsers.map(user =>
-    //   bot.sendMessage(user.chatId, `📢 ${message}`)
-    // );
-    // await Promise.all(sendPromises);
-
     res.json({ success: true, sent: chatUsers.length, message: "Telegram message sending simulated (bot integration needed)." });
   } catch (error) {
     console.error("Error sending Telegram messages:", error);
@@ -191,7 +182,7 @@ app.post("/api/send-telegram", async (req, res) => {
   }
 });
 
-// Get courses enrolled by a student
+
 app.get("/student-courses/:registerNumber", async (req, res) => {
   try {
     const courses = await Enrollment.find({ registerNumber: req.params.registerNumber });
@@ -200,7 +191,16 @@ app.get("/student-courses/:registerNumber", async (req, res) => {
     res.status(500).json({ error: "Error fetching student courses" });
   }
 });
-
+app.get("/teacher-courses/:email", async (req, res) => {
+  const teacherEmail = req.params.email;
+  try {
+    const students = await Enrollment.find({ teacherEmail });
+    res.json(students);
+  } catch (err) {
+    console.error("❌ Error fetching students:", err);
+    res.status(500).json({ message: "Failed to fetch students" });
+  }
+});
 // Get all unique students
 app.get("/all-students", async (req, res) => {
   try {
@@ -271,13 +271,10 @@ app.get("/teacher-ug-projects/:teacherEmail/:courseName", async (req, res) => {
             Assessment2: "$Assessment2",
             Assessment3: "$Assessment3",
             Total: "$Total",
-            // Assuming Contact is not directly in Enrollment, but adding a placeholder
-            // You might need to fetch this from Firebase 'users' collection or join later
+    
             Contact: null // Placeholder, you might want to fetch this
           }},
-          // Get the Assessment values from one of the members.
-          // This implicitly assumes all members of a project will have the same assessment values
-          // if the frontend updates them collectively.
+         
           Assessment1: { $first: "$Assessment1" },
           Assessment2: { $first: "$Assessment2" },
           Assessment3: { $first: "$Assessment3" },
@@ -395,7 +392,7 @@ app.get("/get-latest-review/:registerNumber/:reviewType", async (req, res) => {
 
     if (!review) return res.status(404).json({ error: "Review not found for this type." });
 
-    res.json(review); // This will contain reviewType, filePath, uploadedAt
+    res.json(review); 
   } catch (error) {
     console.error("Error fetching latest review:", error);
     res.status(500).json({ error: "Failed to fetch review." });
@@ -422,8 +419,7 @@ app.get("/get-review-dates", async (req, res) => {
   }
 });
 
-// API ENDPOINTS FOR COORDINATOR REVIEW DATA (defines review item structure)
-// Save coordinator review data
+
 app.post("/coordinator-reviews", async (req, res) => {
   const { coordinatorId, program, reviewData } = req.body;
   if (!coordinatorId || !program || !reviewData) {
@@ -459,9 +455,6 @@ app.get("/coordinator-reviews/:coordinatorId/:program", async (req, res) => {
 });
 
 
-// NEW API ENDPOINTS for student review marks (teacher's side)
-
-// GET student's review marks for a specific program (modified for UG project reflection)
 app.get("/student-review-marks/:registerNumber/:courseName", async (req, res) => {
   const { registerNumber, courseName } = req.params;
   try {
@@ -474,8 +467,7 @@ app.get("/student-review-marks/:registerNumber/:courseName", async (req, res) =>
 
     // If it's a UG project student and has a project name and group members
     if (currentStudentEnrollment.projectName && currentStudentEnrollment.groupRegisterNumbers && currentStudentEnrollment.groupRegisterNumbers.length > 0) {
-      // Find one student from the same project with reviewAssessment data to ensure consistency
-      // This assumes that reviewAssessment data will be the same for all members of a project.
+     
       const projectMemberWithReview = await Enrollment.findOne({
         projectName: currentStudentEnrollment.projectName,
         courseName: courseName,
