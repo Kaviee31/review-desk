@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import multer from "multer";
 import path from "path";
 import ChatUser from "./models/ChatUser.js";
+import bot from './telegramBot.js';
 import TelegramBot from "node-telegram-bot-api";
 
 
@@ -175,7 +176,18 @@ app.post("/api/send-telegram", async (req, res) => {
       return res.status(404).json({ error: "No chat IDs found for these register numbers." });
     }
 
-    res.json({ success: true, sent: chatUsers.length, message: "Telegram message sending simulated (bot integration needed)." });
+    let successCount = 0;
+    for (const user of chatUsers) {
+      try {
+        console.log("➡️ Sending to:", user.chatId);
+        await bot.sendMessage(user.chatId, message); // ✅ this is the actual send
+        successCount++;
+      } catch (err) {
+        console.error("❌ Failed to send to:", user.chatId, err.message);
+      }
+    }
+
+    res.json({ success: true, successCount, message: "Telegram messages sent." });
   } catch (error) {
     console.error("Error sending Telegram messages:", error);
     res.status(500).json({ error: "Failed to send Telegram messages" });
