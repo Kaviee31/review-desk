@@ -31,7 +31,7 @@ function AdminDashboard() {
 
   // Define available course options for the admin to assign
   const pgCourses = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
-  const ugCourses = ["B.Tech (CSE)", "B.E. (Mech)", "B.Sc (Physics)", "B.A. (English)"]; // Sample UG courses
+  const ugCourses = ["B.Tech(IT)" , "B.Tech(IT) SS"]; // Sample UG courses
 
   // Function to fetch teacher's name from Firestore
   const fetchTeacherName = async (teacherEmailToSearch) => {
@@ -150,7 +150,7 @@ function AdminDashboard() {
         }
 
        const studentDoc = querySnapshot.docs[0].data();
-        fetchedStudentName = studentDoc.username;
+       const  fetchedStudentName = studentDoc.username;
         const studentEmail = studentDoc.email;
 
 
