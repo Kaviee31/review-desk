@@ -1,3 +1,4 @@
+// src/components/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { db } from '../firebase'; // Import db from your firebase.js config
@@ -20,10 +21,8 @@ function AdminDashboard() {
   const [pgStudentCourseName, setPgStudentCourseName] = useState(''); // State for student's course name (PG)
   const [loadingPgEnroll, setLoadingPgEnroll] = useState(false); // Loading state for PG enrollment process
 
-  // States for UG student enrollment (three register numbers)
-  const [ugStudentRegNo1, setUgStudentRegNo1] = useState('');
-  const [ugStudentRegNo2, setUgStudentRegNo2] = useState('');
-  const [ugStudentRegNo3, setUgStudentRegNo3] = useState('');
+  // States for UG student enrollment
+  const [ugStudentRegNos, setUgStudentRegNos] = useState(['']); // State for dynamic UG student register numbers
   const [ugTeacherEmail, setUgTeacherEmail] = useState('');
   const [ugStudentCourseName, setUgStudentCourseName] = useState(''); // State for student's course name (UG)
   const [ugProjectName, setUgProjectName] = useState(''); // New state for UG Project Name
@@ -31,7 +30,7 @@ function AdminDashboard() {
 
   // Define available course options for the admin to assign
   const pgCourses = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
-  const ugCourses = ["B.Tech(IT)" , "B.Tech(IT) SS"]; // Sample UG courses
+  const ugCourses = ["B.TECH(IT)" , "B.TECH(IT) SS"]; // Sample UG courses
 
   // Function to fetch teacher's name from Firestore
   const fetchTeacherName = async (teacherEmailToSearch) => {
@@ -111,12 +110,24 @@ function AdminDashboard() {
     }
   };
 
+  // Function to add a new student register number input field
+  const handleAddUgStudentInput = () => {
+    setUgStudentRegNos([...ugStudentRegNos, '']);
+  };
+
+  // Function to handle changes in a specific student register number input
+  const handleUgRegNoChange = (index, value) => {
+    const newRegNos = [...ugStudentRegNos];
+    newRegNos[index] = value;
+    setUgStudentRegNos(newRegNos);
+  };
+
   const handleUgSubmit = async (event) => {
     event.preventDefault();
     setLoadingUgEnroll(true);
     toast.dismiss();
 
-    const registerNumbersToEnroll = [ugStudentRegNo1.trim(), ugStudentRegNo2.trim(), ugStudentRegNo3.trim()].filter(Boolean);
+    const registerNumbersToEnroll = ugStudentRegNos.filter(Boolean); // Filter out empty strings
 
     if (registerNumbersToEnroll.length === 0 || !ugTeacherEmail || !ugStudentCourseName || !ugProjectName) {
       toast.error("Please fill Project Name, at least one student register number, teacher email, and UG Course for enrollment.");
@@ -180,9 +191,7 @@ function AdminDashboard() {
       toast.warn(`Enrolled ${successCount} UG students. Failed to enroll: ${failedRegNos.join(', ')}`);
     }
 
-    setUgStudentRegNo1('');
-    setUgStudentRegNo2('');
-    setUgStudentRegNo3('');
+    setUgStudentRegNos(['']); // Reset to one empty input field
     setUgTeacherEmail('');
     setUgStudentCourseName('');
     setUgProjectName('');
@@ -269,27 +278,20 @@ function AdminDashboard() {
                 placeholder="Enter project name"
                 required
               />
-              <label htmlFor="ugStudentRegNo1">Student Register Number 1:</label>
-              <input
-                type="text"
-                id="ugStudentRegNo1"
-                value={ugStudentRegNo1}
-                onChange={(e) => setUgStudentRegNo1(e.target.value)}
-              />
-              <label htmlFor="ugStudentRegNo2">Student Register Number 2:</label>
-              <input
-                type="text"
-                id="ugStudentRegNo2"
-                value={ugStudentRegNo2}
-                onChange={(e) => setUgStudentRegNo2(e.target.value)}
-              />
-              <label htmlFor="ugStudentRegNo3">Student Register Number 3:</label>
-              <input
-                type="text"
-                id="ugStudentRegNo3"
-                value={ugStudentRegNo3}
-                onChange={(e) => setUgStudentRegNo3(e.target.value)}
-              />
+              {ugStudentRegNos.map((regNo, index) => (
+                <div className="form-group" key={index}>
+                  <label htmlFor={`ugStudentRegNo${index}`}>Student Register Number {index + 1}:</label>
+                  <input
+                    type="text"
+                    id={`ugStudentRegNo${index}`}
+                    value={regNo}
+                    onChange={(e) => handleUgRegNoChange(index, e.target.value)}
+                  />
+                </div>
+              ))}
+              <button type="button" onClick={handleAddUgStudentInput} className="add-student-button">
+                Add Student
+              </button>
               <label htmlFor="ugTeacherEmail">Teacher Email:</label>
               <input
                 type="email"

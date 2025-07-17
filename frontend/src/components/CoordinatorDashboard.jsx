@@ -8,7 +8,8 @@ import "../styles/CoordinatorDashboard.css"; // Assuming this CSS provides styli
 
 function CoordinatorDashboard() {
   const [selectedProgram, setSelectedProgram] = useState(null);
-  const [assignedCourse, setAssignedCourse] = useState(null);
+  // Changed assignedCourse to assignedCourses (array)
+  const [assignedCourses, setAssignedCourses] = useState([]);
   const [loadingUserData, setLoadingUserData] = useState(true);
   const [extraRowsCount, setExtraRowsCount] = useState(0);
   const [extraRowsData, setExtraRowsData] = useState([]);
@@ -25,10 +26,12 @@ function CoordinatorDashboard() {
 
   // Base URL for your backend API
   const API_BASE_URL = "http://localhost:5000"; // Ensure this matches your backend server URL
-useEffect(() => {
+
+  useEffect(() => {
     document.title = "Coordinator Dashboard";
   }, []);
-  // Effect to fetch coordinator's assigned course on component mount
+
+  // Effect to fetch coordinator's assigned course(s) on component mount
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -39,12 +42,14 @@ useEffect(() => {
 
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
-            // Check for 'department' field which holds the assigned course
+            // Expect 'department' to be an array. If it's a string, convert it to an array for backward compatibility.
             if (userData.department) {
-              setAssignedCourse(userData.department);
+              const departments = Array.isArray(userData.department) ? userData.department : [userData.department];
+              setAssignedCourses(departments);
             } else {
-              console.warn("Coordinator user has no assigned department.");
-              toast.warn("You don't have an assigned course. Please contact admin.");
+              console.warn("Coordinator user has no assigned department(s).");
+              toast.warn("You don't have any assigned courses. Please contact admin.");
+              setAssignedCourses([]); // Ensure it's an empty array if not present
             }
           } else {
             console.warn("No user document found for UID:", user.uid);
@@ -54,7 +59,7 @@ useEffect(() => {
           toast.error("Failed to load coordinator data.");
         }
       } else {
-        setAssignedCourse(null);
+        setAssignedCourses([]); // Clear assigned courses if user signs out
         setCoordinatorUid(null); // Clear UID if user signs out
       }
       setLoadingUserData(false);
@@ -79,7 +84,7 @@ useEffect(() => {
         },
         body: JSON.stringify({
           coordinatorId: coordinatorUid,
-          program: selectedProgram,
+          program: selectedProgram, // This remains a single program as coordinator manages one at a time
           reviewData: extraRowsData,
         }),
       });
@@ -300,17 +305,17 @@ useEffect(() => {
             <button
               key={program}
               onClick={() => setSelectedProgram(program)}
-              // Disable button if it's not the assigned course for the coordinator
-              disabled={assignedCourse && program !== assignedCourse}
+              // Disable button if the program is NOT included in assignedCourses
+              disabled={!assignedCourses.includes(program)}
               className={`font-semibold py-4 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-75
                 ${program === "MCA(R)" ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500" :
                   program === "MCA(SS)" ? "bg-green-600 hover:bg-green-700 focus:ring-green-500" :
                     program === "MTECH(R)" ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" :
-                    program === "MTECH(SS)" ? "bg-red-600 hover:bg-red-700 focus:ring-red-500" :
-                    program === "B.TECH(IT)" ? "bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500" :
-                    "bg-teal-600 hover:bg-teal-700 focus:ring-teal-500"
+                      program === "MTECH(SS)" ? "bg-red-600 hover:bg-red-700 focus:ring-red-500" :
+                        program === "B.TECH(IT)" ? "bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500" :
+                        "bg-teal-600 hover:bg-teal-700 focus:ring-teal-500"
                 }
-                ${assignedCourse && program !== assignedCourse ? "opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400" : "text-white"}
+                ${!assignedCourses.includes(program) ? "opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400" : "text-white"}
               `}
             >
               {program}
@@ -355,7 +360,7 @@ useEffect(() => {
               <table aria-describedby="tableDesc" aria-label="Review marks entry table" className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
                 <thead className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
                   <tr>
-                    <th colSpan="3" className="review-header py-3 px-6 text-center border-b-2 border-gray-300">
+                  <th colSpan="3" className="review-header py-3 px-6 text-center border-b-2 border-gray-300">
                       Review 1
                     </th>
                     <th colSpan="3" className="review-header py-3 px-6 text-center border-b-2 border-gray-300">

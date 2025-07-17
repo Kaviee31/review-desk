@@ -74,7 +74,7 @@ function ReportPage() {
 
             usersSnapshot.forEach(doc => {
                 const user = doc.data();
-                if (user.profession === "Student" && user.email) {
+                if (user.userType === "Student" && user.email) {
                     bccEmails.push(user.email);
                 }
             });
@@ -88,8 +88,8 @@ function ReportPage() {
 📅 Review Deadlines Updated:
 
 🟠 Zeroth Review: ${zerothReviewDate}
-🟢 First Review: ${firstReviewDate || 'Not Set'}
-🔵 Second Review: ${secondReviewDate || 'Not Set'}
+🟢 First Review: ${firstReviewDate || 'Will be Announced later'}
+🔵 Second Review: ${secondReviewDate || 'Will be Announced later'}
 
 Please plan your reviews accordingly.
             `;
