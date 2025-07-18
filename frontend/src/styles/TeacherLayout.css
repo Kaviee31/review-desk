@@ -95,3 +95,17 @@
 .navbar-links button.active {
   border-bottom: 2px solid #ffcc00;
 }
+.role-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.role-switcher select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+  background: #fff;
+}

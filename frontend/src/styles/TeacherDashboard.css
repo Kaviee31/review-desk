@@ -209,3 +209,36 @@ thead {
     gap: 10px;
   }
 }
+.program-dropdown {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  margin-bottom: 15px;
+  border: 2px solid #6366f1;
+  border-radius: 8px;
+  background: linear-gradient(to right, #c084fc, #6366f1);
+  color: white;
+  outline: none;
+  appearance: none;
+}
+
+.program-dropdown option {
+  color: black;
+  background-color: white;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.send-button {
+  padding: 10px 16px;
+  background-color: #0a66c2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}

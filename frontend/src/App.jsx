@@ -25,6 +25,7 @@ import AdminLayout from "./components/AdminLayout";
 import TeacherLayout from "./components/TeacherLayout";
 import StudentLayout from "./components/StudentLayout";
 import HODLayout from "./components/HODLayout";
+import CoordinatorLayout from "./components/CoordinatorLayout"; // ✅ NEW
 
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import { RoleProvider } from "./contexts/RoleContext";
@@ -61,6 +62,12 @@ function App() {
           <Route path="/hod" element={<RoleProtectedRoute allowedRoles={["HOD"]}><HODLayout /></RoleProtectedRoute>}>
             <Route path="dashboard" element={<HODDashboard />} />
             <Route path="enrolled-students" element={<EnrolledStudents />} />
+          </Route>
+
+          {/* ✅ New Coordinator Route */}
+          <Route path="/coordinator" element={<RoleProtectedRoute allowedRoles={["Coordinator"]}><CoordinatorLayout /></RoleProtectedRoute>}>
+            <Route path="dashboard" element={<CoordinatorDashboard />} />
+            <Route path="change-password" element={<ChangePassword />} />
           </Route>
 
         </Routes>
