@@ -343,23 +343,35 @@ function EnrolledStudents() {
     try {
       // 1. Find the UID of the coordinator for the selectedProgram
       const usersRef = collection(db, "users");
-      // Use the 'department' field for filtering coordinator, which should match the program name
+      // Query only for documents where 'roles' array contains "Coordinator"
       const coordinatorQuery = query(
         usersRef,
-        where("roles", "array-contains", "Coordinator"),
-        where("department", "==", selectedProgram) // This 'selectedProgram' must match the coordinator's 'department'
+        where("roles", "array-contains", "Coordinator")
       );
       const coordinatorSnapshot = await getDocs(coordinatorQuery);
 
       let programCoordinatorUid = null;
       if (!coordinatorSnapshot.empty) {
-        programCoordinatorUid = coordinatorSnapshot.docs[0].id;
-        console.log(`Found coordinator for ${selectedProgram} with UID:`, programCoordinatorUid);
+        // Filter coordinators in client-side to find the one with the matching department
+        const matchingCoordinatorDoc = coordinatorSnapshot.docs.find(doc => {
+          const data = doc.data();
+          // Check if 'department' field exists and is an array that includes selectedProgram
+          return Array.isArray(data.department) && data.department.includes(selectedProgram);
+        });
+
+        if (matchingCoordinatorDoc) {
+          programCoordinatorUid = matchingCoordinatorDoc.id;
+          console.log(`Found coordinator for ${selectedProgram} with UID:`, programCoordinatorUid);
+        } else {
+          toast.warn(`No coordinator found for ${selectedProgram} in Firebase. Please ensure a coordinator is assigned to this program and their 'department' field in Firestore includes '${selectedProgram}'.`);
+          setLoadingReviewData(false);
+          console.warn(`No coordinator found for ${selectedProgram} in Firebase. Double check roles and department fields for this coordinator.`);
+          return; // Exit early if no coordinator is found
+        }
       } else {
-        toast.warn(`No coordinator found for ${selectedProgram} in Firebase. Please ensure a coordinator is assigned to this program and their 'department' field in Firestore matches '${selectedProgram}'.`);
+        toast.warn(`No coordinator found with the 'Coordinator' role in Firebase.`);
         setLoadingReviewData(false);
-        console.warn(`No coordinator found for ${selectedProgram} in Firebase. Double check roles and department fields for this coordinator.`);
-        return; // Exit early if no coordinator is found
+        return;
       }
 
       // 2. Fetch the coordinator's defined review structure for this program

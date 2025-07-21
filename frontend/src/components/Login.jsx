@@ -66,9 +66,12 @@ function Login() {
     <div className="login-page">
       <div className="login-left">
         <Lottie animationData={animationData} loop />
+        
       </div>
-
+       
+        
       <div className="login-right">
+        
         {roleSelection.length === 0 ? (
           <form className="login-form" onSubmit={handleLogin}>
             <h2>Log In</h2>
