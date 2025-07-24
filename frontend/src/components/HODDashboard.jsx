@@ -20,7 +20,7 @@ function HODDashboard() {
   const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)","B.TECH(IT)","B.TECH(IT) SS"];
   const API_BASE_URL = "http://localhost:5000";
 
-  useEffect(() => {
+useEffect(() => {
     document.title = "HOD Dashboard";
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -29,14 +29,15 @@ function HODDashboard() {
           const userDocSnap = await getDoc(userDocRef);
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
-            if (userData.profession === "HOD") {
+            // Corrected: Check if 'roles' is an array and includes "HOD"
+            if (Array.isArray(userData.roles) && userData.roles.includes("HOD")) {
               setUsername(userData.username || 'HOD');
               if (firstRender.current) {
                 loadProgramCounts();
                 firstRender.current = false;
               }
             } else {
-              toast.error("Access Denied.");
+              toast.error("Access Denied. You do not have HOD privileges.");
               navigate("/");
             }
           } else {

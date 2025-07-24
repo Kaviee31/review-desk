@@ -41,28 +41,56 @@ function AssignCoordinatorForm() {
 
     setLoading(true);
     const password = generatePassword();
-
-    try {
-      // --- Start of new logic for unique coordinator per course ---
+    
+try {
       const usersRef = collection(db, "users");
-      const q = query(usersRef, where("department", "==", selectedCourse), where("roles", "array-contains", "Coordinator"));
-      const querySnapshot = await getDocs(q);
 
-      if (!querySnapshot.empty) {
-        const existingCoordinator = querySnapshot.docs[0].data();
-        if (existingCoordinator.email !== guideEmailId) {
-          toast.error(`A coordinator is already assigned to ${selectedCourse}: ${existingCoordinator.email}.`);
+      // --- NEW: Check if the email belongs to an existing student ---
+      const studentQuery = query(usersRef, where("email", "==", guideEmailId));
+      const studentSnapshot = await getDocs(studentQuery);
+
+      if (!studentSnapshot.empty) {
+        const existingUserData = studentSnapshot.docs[0].data();
+        if (Array.isArray(existingUserData.roles) && existingUserData.roles.includes("Student")) {
+          toast.error(`Cannot assign ${guideEmailId} as a coordinator. This email is already registered as a student.`);
           setLoading(false);
           return;
+        }
+      }
+      // --- END NEW CHECK ---
+
+      // --- Existing logic for unique coordinator per course ---
+      // Query only for documents where 'roles' array contains "Coordinator"
+      const q = query(usersRef, where("roles", "array-contains", "Coordinator"));
+      const querySnapshot = await getDocs(q);
+
+      let existingCoordinatorForCourse = null;
+      if (!querySnapshot.empty) {
+        // Client-side filtering to find if a coordinator is already assigned to this specific course
+        existingCoordinatorForCourse = querySnapshot.docs.find(doc => {
+          const data = doc.data();
+          // Check if 'department' field exists, is an array, and includes selectedCourse
+          return Array.isArray(data.department) && data.department.includes(selectedCourse);
+        });
+
+        if (existingCoordinatorForCourse) {
+          const existingCoordinatorData = existingCoordinatorForCourse.data();
+          if (existingCoordinatorData.email !== guideEmailId) {
+            toast.error(`A coordinator is already assigned to ${selectedCourse}: ${existingCoordinatorData.email}.`);
+            setLoading(false);
+            return;
+          }
         }
       }
       // --- End of new logic ---
 
       // Try creating new user directly
       let user = null;
+      let isNewUser = false; // Flag to check if a new user was created
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, guideEmailId, password);
         user = userCredential.user;
+        isNewUser = true;
       } catch (authError) {
         if (authError.code === 'auth/email-already-in-use') {
           // If email already in use, find the user in Firestore
@@ -70,9 +98,10 @@ function AssignCoordinatorForm() {
           const querySnapshotExisting = await getDocs(qExisting);
           if (!querySnapshotExisting.empty) {
             user = querySnapshotExisting.docs[0]; // Get the existing user document
-            // If the user is already a coordinator for this course, prevent re-assignment
             const userData = user.data();
-            if (userData.department === selectedCourse && userData.roles.includes("Coordinator")) {
+            // If the user is already a coordinator for this course, prevent re-assignment
+            // Also check if 'department' is an array and already contains the selectedCourse
+            if (Array.isArray(userData.department) && userData.department.includes(selectedCourse) && userData.roles.includes("Coordinator")) {
               toast.info(`This user is already the coordinator for ${selectedCourse}.`);
               setLoading(false);
               return;
@@ -87,21 +116,23 @@ function AssignCoordinatorForm() {
         }
       }
 
+      if (user) {
+        let userId = isNewUser ? user.uid : user.id; // Use uid for new user, id for existing doc
+        let currentRoles = existingCoordinatorForCourse?.data()?.roles || []; // Get existing roles if coordinator exists for this course
 
-      if (user && user.uid) { // Check if user object from createUserWithEmailAndPassword
-        await setDoc(doc(db, "users", user.uid), {
-          username: guideName,
-          email: guideEmailId,
-          department: selectedCourse,
-          roles: ["Coordinator"]
-        });
+        if (isNewUser) {
+          await setDoc(doc(db, "users", userId), {
+            username: guideName,
+            email: guideEmailId,
+            department: [selectedCourse], // Ensure department is an array
+            roles: ["Coordinator"]
+          });
+          await sendEmailVerification(user); // Send verification for new user
 
-        await sendEmailVerification(user);
-
-        const emailParams = {
-          to_name: guideName,
-          to_email: guideEmailId,
-          message: `Hello ${guideName},
+          const emailParams = {
+            to_name: guideName,
+            to_email: guideEmailId,
+            message: `Hello ${guideName},
 
 You have been assigned as Coordinator for the ${selectedCourse} program.
 
@@ -110,53 +141,56 @@ Email: ${guideEmailId}
 Password: ${password}
 
 Please log in and change your password after your first login.`
-        };
+          };
 
-        await emailjs.send(
-          'service_zdkw9wb',
-          'template_j69ex9q',
-          emailParams,
-          'lBI3Htk5CKshSzMFg'
-        );
+          await emailjs.send(
+            'service_zdkw9wb',
+            'template_j69ex9q',
+            emailParams,
+            'lBI3Htk5CKshSzMFg'
+          );
 
-        toast.success(`New Coordinator created and email sent to ${guideEmailId}`);
-      } else if (user && user.id) { // Check if user object from getDocs (existing user)
-        const userRef = doc(db, "users", user.id);
-        await updateDoc(userRef, {
-          username: guideName,
-          department: selectedCourse,
-          roles: arrayUnion("Coordinator")
-        });
+          toast.success(`New Coordinator created and email sent to ${guideEmailId}`);
+        } else {
+          // Update existing user: add "Coordinator" role and selectedCourse to department array
+          const userRef = doc(db, "users", userId);
+          await updateDoc(userRef, {
+            username: guideName, // Update name in case it changed
+            // Use arrayUnion to add selectedCourse to department if it's not already there
+            department: arrayUnion(selectedCourse),
+            // Use arrayUnion to add "Coordinator" role if it's not already there
+            roles: arrayUnion("Coordinator")
+          });
 
-        const emailParams = {
-          to_name: guideName,
-          to_email: guideEmailId,
-          message: `Hello ${guideName},
+          const emailParams = {
+            to_name: guideName,
+            to_email: guideEmailId,
+            message: `Hello ${guideName},
 
 You have been assigned as Coordinator for the ${selectedCourse} program.
 
 Please login using your existing credentials.`
-        };
+          };
 
-        await emailjs.send(
-          'service_zdkw9wb',
-          'template_j69ex9q',
-          emailParams,
-          'lBI3Htk5CKshSzMFg'
-        );
+          await emailjs.send(
+            'service_zdkw9wb',
+            'template_j69ex9q',
+            emailParams,
+            'lBI3Htk5CKshSzMFg'
+          );
 
-        toast.success(`Existing user updated and email sent to ${guideEmailId}`);
+          toast.success(`Existing user updated and email sent to ${guideEmailId}`);
+        }
       }
-
-
     } catch (error) {
       console.error("Error assigning coordinator:", error);
       toast.error(`Failed: ${error.message}`);
+    } finally {
+      setLoading(false);
+      setGuideEmailId('');
+      setGuideName('');
+      setSelectedCourse('');
     }
-    setLoading(false);
-    setGuideEmailId('');
-    setGuideName('');
-    setSelectedCourse('');
   };
 
   return (
