@@ -56,7 +56,9 @@ const messageSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now, expires: 60 * 60 * 24 },
 });
 
+// MODIFIED: reviewDeadlineSchema to include courseName
 const reviewDeadlineSchema = new mongoose.Schema({
+  courseName: { type: String, required: true, unique: true }, // Each course has its own deadlines
   zerothReviewDeadline: Date,
   firstReviewDeadline: Date,
   secondReviewDeadline: Date,
@@ -411,23 +413,50 @@ app.get("/get-latest-review/:registerNumber/:reviewType", async (req, res) => {
   }
 });
 
-// Set review deadlines
+// MODIFIED: Set review deadlines - now requires courseName
 app.post("/set-review-dates", async (req, res) => {
+  const { courseName, zerothReviewDeadline, firstReviewDeadline, secondReviewDeadline } = req.body;
+  if (!courseName) {
+    return res.status(400).json({ error: "Course name is required to set review deadlines." });
+  }
   try {
-    await ReviewDeadline.updateOne({}, req.body, { upsert: true });
-    res.json({ message: "Review deadlines updated successfully!" });
+    await ReviewDeadline.updateOne(
+      { courseName: courseName }, // Find by courseName
+      { zerothReviewDeadline, firstReviewDeadline, secondReviewDeadline },
+      { upsert: true } // Create if not exists
+    );
+    res.json({ message: `Review deadlines for ${courseName} updated successfully!` });
   } catch (error) {
+    console.error("Error setting review dates:", error);
     res.status(500).json({ error: "Failed to set review dates" });
   }
 });
 
-// Get review deadlines
+// MODIFIED: Get review deadlines - now requires courseName as query param
 app.get("/get-review-dates", async (req, res) => {
+  const { courseName } = req.query; // Get courseName from query parameter
+  if (!courseName) {
+    return res.status(400).json({ error: "Course name is required to get review deadlines." });
+  }
   try {
-    const deadlines = await ReviewDeadline.findOne().sort({ createdAt: -1 });
-    res.json(deadlines || {});
+    const deadlines = await ReviewDeadline.findOne({ courseName: courseName });
+    res.json(deadlines || {}); // Return empty object if no deadlines found for the course
   } catch (error) {
+    console.error("Error fetching review dates:", error);
     res.status(500).json({ error: "Failed to fetch review dates" });
+  }
+});
+
+// NEW ENDPOINT: Get student emails by courseName
+app.get("/student-emails-by-course/:courseName", async (req, res) => {
+  const { courseName } = req.params;
+  try {
+    const students = await Enrollment.find({ courseName: courseName }, { email: 1, _id: 0 }); // Project only email field
+    const emails = students.map(student => student.email).filter(email => email); // Extract emails and filter out null/undefined
+    res.json(emails);
+  } catch (error) {
+    console.error(`Error fetching student emails for course ${courseName}:`, error);
+    res.status(500).json({ error: `Failed to fetch student emails for course ${courseName}.` });
   }
 });
 
