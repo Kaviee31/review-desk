@@ -22,6 +22,7 @@ function EnrolledStudents() {
   const [teacherUid, setTeacherUid] = useState(null);
   const [selectedStudentRegisterNumber, setSelectedStudentRegisterNumber] = useState(null);
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
+  // Modified to store objects with pdfPath, pptPath, otherPath
   const [latestReviewFiles, setLatestReviewFiles] = useState({});
 
   // States for the student review marks modal
@@ -73,11 +74,12 @@ function EnrolledStudents() {
   // Function to fetch review deadlines
   const fetchReviewDeadlines = async () => {
     try {
+      // This function is still generic, might need to be specific to selectedProgram if used elsewhere
       const response = await axios.get(`${API_BASE_URL}/get-review-dates`);
       setReviewDeadlines(response.data);
     } catch (error) {
       console.error("Error fetching review deadlines:", error);
-      toast.error("Failed to fetch review deadlines.");
+      //toast.error("Failed to fetch review deadlines.");
     }
   };
 
@@ -144,18 +146,18 @@ function EnrolledStudents() {
     }
   }, [teacherEmail, selectedProgram]);
 
-
+  // Modified fetchLatestReviewFiles to handle multiple file types
   const fetchLatestReviewFiles = async (studentList) => {
     const files = {};
     for (const student of studentList) {
       for (const reviewType of ["zeroth", "first", "second"]) {
         try {
+          // The backend now returns an object with pdfPath, pptPath, otherPath
           const response = await axios.get(`${API_BASE_URL}/get-latest-review/${student.registerNumber}/${reviewType}`);
-          if (response.data && response.data.filePath) {
-            files[`${student.registerNumber}_${reviewType}`] = response.data.filePath;
-          }
+          files[`${student.registerNumber}_${reviewType}`] = response.data; // Store the object directly
         } catch (error) {
           // console.error(`Error fetching ${reviewType} review for ${student.registerNumber}:`, error); // Suppress frequent errors
+          files[`${student.registerNumber}_${reviewType}`] = { pdfPath: null, pptPath: null, otherPath: null }; // Ensure empty object
         }
       }
     }
@@ -801,47 +803,113 @@ function EnrolledStudents() {
                               className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed"
                             />
                           </td>
+                          {/* Display all three file types for Zeroth Review */}
                           <td className="py-3 px-6 text-center">
-                            {latestReviewFiles[`${student.registerNumber}_zeroth`] ? (
+                            {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && (
                               <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`]}`}
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pdfPath}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
+                                className="text-blue-500 hover:underline block"
                               >
-                                Download
+                                PDF
                               </a>
-                            ) : (
-                              "No File"
                             )}
+                            {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pptPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                PPT
+                              </a>
+                            )}
+                            {latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].otherPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                Other
+                              </a>
+                            )}
+                            {!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath &&
+                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath &&
+                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && "No Files"}
                           </td>
+                          {/* Display all three file types for First Review */}
                           <td className="py-3 px-6 text-center">
-                            {latestReviewFiles[`${student.registerNumber}_first`] ? (
+                            {latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && (
                               <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`]}`}
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pdfPath}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
+                                className="text-blue-500 hover:underline block"
                               >
-                                Download
+                                PDF
                               </a>
-                            ) : (
-                              "No File"
                             )}
+                            {latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pptPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                PPT
+                              </a>
+                            )}
+                            {latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].otherPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                Other
+                              </a>
+                            )}
+                            {!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath &&
+                             !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath &&
+                             !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && "No Files"}
                           </td>
+                          {/* Display all three file types for Second Review */}
                           <td className="py-3 px-6 text-center">
-                            {latestReviewFiles[`${student.registerNumber}_second`] ? (
+                            {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
                               <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`]}`}
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
+                                className="text-blue-500 hover:underline block"
                               >
-                                Download
+                                PDF
                               </a>
-                            ) : (
-                              "No File"
                             )}
+                            {latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                PPT
+                              </a>
+                            )}
+                            {latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                Other
+                              </a>
+                            )}
+                            {!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath &&
+                             !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath &&
+                             !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && "No Files"}
                           </td>
                           <td className="py-3 px-6 text-center">
                             <img
@@ -989,47 +1057,113 @@ function EnrolledStudents() {
                           <td className="py-3 px-6 text-center">{student.Assessment2 || 0}</td>
                           <td className="py-3 px-6 text-center">{student.Assessment3 || 0}</td>
                           <td className="py-3 px-6 text-center">{student.Total || 0}</td>
-                           <td className="py-3 px-6 text-center">
-                            {latestReviewFiles[`${student.registerNumber}_zeroth`] ? (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`]}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
-                              >
-                                Download
-                              </a>
-                            ) : (
-                              "No File"
-                            )}
-                          </td>
+                           {/* Display all three file types for Zeroth Review */}
                           <td className="py-3 px-6 text-center">
-                            {latestReviewFiles[`${student.registerNumber}_first`] ? (
+                            {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && (
                               <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`]}`}
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pdfPath}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
+                                className="text-blue-500 hover:underline block"
                               >
-                                Download
+                                PDF
                               </a>
-                            ) : (
-                              "No File"
                             )}
+                            {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pptPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                PPT
+                              </a>
+                            )}
+                            {latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].otherPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                Other
+                              </a>
+                            )}
+                            {!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath &&
+                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath &&
+                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && "No Files"}
                           </td>
+                          {/* Display all three file types for First Review */}
                           <td className="py-3 px-6 text-center">
-                            {latestReviewFiles[`${student.registerNumber}_second`] ? (
+                            {latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && (
                               <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`]}`}
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pdfPath}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
+                                className="text-blue-500 hover:underline block"
                               >
-                                Download
+                                PDF
                               </a>
-                            ) : (
-                              "No File"
                             )}
+                            {latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pptPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                PPT
+                              </a>
+                            )}
+                            {latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].otherPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                Other
+                              </a>
+                            )}
+                            {!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath &&
+                             !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath &&
+                             !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && "No Files"}
+                          </td>
+                          {/* Display all three file types for Second Review */}
+                          <td className="py-3 px-6 text-center">
+                            {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block"
+                              >
+                                PDF
+                              </a>
+                            )}
+                            {latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                PPT
+                              </a>
+                            )}
+                            {latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                Other
+                              </a>
+                            )}
+                            {!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath &&
+                             !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath &&
+                             !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && "No Files"}
                           </td>
                           <td className="py-3 px-6 text-center">
                             <img

@@ -14,6 +14,7 @@ function StudentDashboard() {
 
   const [studentName, setStudentName] = useState("Guest");
   const [registerNumber, setRegisterNumber] = useState("");
+  const [studentCourseName, setStudentCourseName] = useState(""); // New state for student's course name
   const [telegramLinked, setTelegramLinked] = useState(null);
   const [announcement, setAnnouncement] = useState(null);
   const [deadlines, setDeadlines] = useState({
@@ -21,21 +22,58 @@ function StudentDashboard() {
     firstReviewDeadline: null,
     secondReviewDeadline: null,
   });
-  const [zerothReviewFile, setZerothReviewFile] = useState(null);
-  const [firstReviewFile, setFirstReviewFile] = useState(null);
-  const [secondReviewFile, setSecondReviewFile] = useState(null);
+  // States for file inputs
+  const [zerothPdfFile, setZerothPdfFile] = useState(null);
+  const [zerothPptFile, setZerothPptFile] = useState(null);
+  const [zerothOtherFile, setZerothOtherFile] = useState(null);
+
+  const [firstPdfFile, setFirstPdfFile] = useState(null);
+  const [firstPptFile, setFirstPptFile] = useState(null);
+  const [firstOtherFile, setFirstOtherFile] = useState(null);
+
+  const [secondPdfFile, setSecondPdfFile] = useState(null);
+  const [secondPptFile, setSecondPptFile] = useState(null);
+  const [secondOtherFile, setSecondOtherFile] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const BASE_URL = "http://localhost:5000";
 
-  // New states to store uploaded file paths
-  const [uploadedZerothReview, setUploadedZerothReview] = useState(null);
-  const [uploadedFirstReview, setUploadedFirstReview] = useState(null);
-  const [uploadedSecondReview, setUploadedSecondReview] = useState(null);
+  // States to store uploaded file paths (objects containing pdfPath, pptPath, otherPath)
+  const [uploadedZerothReview, setUploadedZerothReview] = useState({ pdfPath: null, pptPath: null, otherPath: null });
+  const [uploadedFirstReview, setUploadedFirstReview] = useState({ pdfPath: null, pptPath: null, otherPath: null });
+  const [uploadedSecondReview, setUploadedSecondReview] = useState({ pdfPath: null, pptPath: null, otherPath: null });
 
-  const zerothInputRef = useRef();
-  const firstInputRef = useRef();
-  const secondInputRef = useRef();
+  // Refs for file inputs to clear them
+  const zerothPdfInputRef = useRef();
+  const zerothPptInputRef = useRef();
+  const zerothOtherInputRef = useRef();
+
+  const firstPdfInputRef = useRef();
+  const firstPptInputRef = useRef();
+  const firstOtherInputRef = useRef();
+
+  const secondPdfInputRef = useRef();
+  const secondPptInputRef = useRef();
+  const secondOtherInputRef = useRef();
+
+
+  // Moved fetchReviewDeadlines outside of any useEffect to make it globally accessible within the component
+  const fetchReviewDeadlines = async (courseName) => {
+    if (!courseName) return; // Don't fetch if courseName is not available
+
+    try {
+      const response = await axios.get(`${BASE_URL}/get-review-dates?courseName=${courseName}`);
+      setDeadlines({
+        zerothReviewDeadline: response.data?.zerothReviewDeadline || null,
+        firstReviewDeadline: response.data?.firstReviewDeadline || null,
+        secondReviewDeadline: response.data?.secondReviewDeadline || null,
+      });
+    } catch (error) {
+      console.error("Error fetching review deadlines:", error);
+    }
+  };
+
 
   useEffect(() => {
     const fetchUserData = async (user) => {
@@ -46,6 +84,16 @@ function StudentDashboard() {
           const userData = docSnap.data();
           setStudentName(userData?.username ?? user.email);
           setRegisterNumber(userData?.registerNumber ?? "");
+
+          // Fetch student's enrollment to get courseName
+          if (userData?.registerNumber) {
+            const enrollmentResponse = await axios.get(`${BASE_URL}/student-courses/${userData.registerNumber}`);
+            if (enrollmentResponse.data && enrollmentResponse.data.length > 0) {
+              // Assuming a student is primarily enrolled in one course for deadline purposes
+              // You might need more sophisticated logic if a student can be in multiple courses
+              setStudentCourseName(enrollmentResponse.data[0].courseName);
+            }
+          }
 
           // Telegram status check
           if (userData?.registerNumber) {
@@ -77,49 +125,30 @@ function StudentDashboard() {
       }
     };
 
-    const fetchReviewDeadlines = async () => {
-      try {
-        const response = await axios.get(`${BASE_URL}/get-review-dates`);
-        setDeadlines({
-          zerothReviewDeadline: response.data?.zerothReviewDeadline || null,
-          firstReviewDeadline: response.data?.firstReviewDeadline || null,
-          secondReviewDeadline: response.data?.secondReviewDeadline || null,
-        });
-      } catch (error) {
-        console.error("Error fetching review deadlines:", error);
-      }
-    };
-
-    // Function to fetch uploaded reviews
+    // Function to fetch uploaded reviews (now expects object with paths)
     const fetchUploadedReviews = async (regNo) => {
       try {
         const zerothResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/zeroth`);
-        if (zerothResponse.data && zerothResponse.data.filePath) {
-          setUploadedZerothReview(zerothResponse.data.filePath);
-        }
+        setUploadedZerothReview(zerothResponse.data || { pdfPath: null, pptPath: null, otherPath: null });
       } catch (error) {
         console.warn("No zeroth review found or error fetching:", error.message);
-        setUploadedZerothReview(null);
+        setUploadedZerothReview({ pdfPath: null, pptPath: null, otherPath: null });
       }
 
       try {
         const firstResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/first`);
-        if (firstResponse.data && firstResponse.data.filePath) {
-          setUploadedFirstReview(firstResponse.data.filePath);
-        }
+        setUploadedFirstReview(firstResponse.data || { pdfPath: null, pptPath: null, otherPath: null });
       } catch (error) {
         console.warn("No first review found or error fetching:", error.message);
-        setUploadedFirstReview(null);
+        setUploadedFirstReview({ pdfPath: null, pptPath: null, otherPath: null });
       }
 
       try {
         const secondResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/second`);
-        if (secondResponse.data && secondResponse.data.filePath) {
-          setUploadedSecondReview(secondResponse.data.filePath);
-        }
+        setUploadedSecondReview(secondResponse.data || { pdfPath: null, pptPath: null, otherPath: null });
       } catch (error) {
         console.warn("No second review found or error fetching:", error.message);
-        setUploadedSecondReview(null);
+        setUploadedSecondReview({ pdfPath: null, pptPath: null, otherPath: null });
       }
     };
 
@@ -127,7 +156,6 @@ function StudentDashboard() {
       if (user) {
         fetchUserData(user);
         fetchAnnouncements();
-        fetchReviewDeadlines();
       } else {
         navigate("/login");
       }
@@ -136,30 +164,48 @@ function StudentDashboard() {
     return () => unsubscribe();
   }, [navigate, BASE_URL]); // Add BASE_URL to dependency array
 
+  // New useEffect to call fetchReviewDeadlines once studentCourseName is set
+  useEffect(() => {
+    if (studentCourseName) {
+      fetchReviewDeadlines(studentCourseName);
+    }
+  }, [studentCourseName, fetchReviewDeadlines]); // Depend on studentCourseName and fetchReviewDeadlines
+
   const isUploadEnabled = (deadline) => {
     return deadline && !isNaN(new Date(deadline)) && new Date() <= new Date(deadline);
   };
 
-  const handleFileUpload = async (file, reviewType, inputRef) => {
+  // Modified handleFileUpload to accept file, reviewType, fileType, and inputRef
+  const handleFileUpload = async (file, reviewType, fileType, inputRef) => {
     if (!file) {
-      // Use a custom message box instead of alert
-      // You'd implement a modal or similar UI for this
-      alert(`Please select a file for ${reviewType} review.`);
+      alert(`Please select a ${fileType.toUpperCase()} file for ${reviewType} review.`);
       return;
     }
-    if (file.type !== "application/pdf") {
-      alert("Only PDF files are allowed.");
+
+    // Basic client-side validation for file types
+    if (fileType === "pdf" && file.type !== "application/pdf") {
+      alert("Only PDF files are allowed for PDF upload.");
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      alert("File size must be less than 8MB.");
+    if (fileType === "ppt" && !(file.type === "application/vnd.ms-powerpoint" || file.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation")) {
+      alert("Only PPT/PPTX files are allowed for PPT upload.");
+      return;
+    }
+    // For 'other', allow a broad range but exclude known types for specific inputs
+    if (fileType === "other" && (file.type === "application/pdf" || file.type.includes("powerpoint"))) {
+      alert("Please use the specific PDF or PPT upload for those file types.");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      alert("File size must be less than 10MB.");
       return;
     }
 
     const formData = new FormData();
-    formData.append("reviewFile", file);
+    formData.append(`${reviewType}${fileType.charAt(0).toUpperCase() + fileType.slice(1)}`, file); // e.g., zerothPdf, firstPpt
     formData.append("registerNumber", registerNumber);
-    formData.append("reviewType", reviewType);
+    formData.append("reviewType", reviewType); // Still send reviewType to identify the main review entry
 
     try {
       setLoading(true);
@@ -168,28 +214,82 @@ function StudentDashboard() {
           "Content-Type": "multipart/form-data",
         },
       });
-      alert(response.data.message || `Successfully uploaded ${reviewType} review.`);
+      alert(response.data.message || `Successfully uploaded ${fileType.toUpperCase()} for ${reviewType} review.`);
 
-      // Update the state for the uploaded file path
-      if (reviewType === "zeroth") setUploadedZerothReview(response.data.filePath);
-      if (reviewType === "first") setUploadedFirstReview(response.data.filePath);
-      if (reviewType === "second") setUploadedSecondReview(response.data.filePath);
+      // Update the correct state based on reviewType and fileType
+      const newFilePaths = response.data.filePath;
+      if (reviewType === "zeroth") {
+        setUploadedZerothReview(prev => ({ ...prev, ...newFilePaths }));
+      } else if (reviewType === "first") {
+        setUploadedFirstReview(prev => ({ ...prev, ...newFilePaths }));
+      } else if (reviewType === "second") {
+        setUploadedSecondReview(prev => ({ ...prev, ...newFilePaths }));
+      }
 
       // Clear input after successful upload
       if (inputRef.current) {
         inputRef.current.value = "";
       }
-      // Reset file state (important for new uploads)
-      if (reviewType === "zeroth") setZerothReviewFile(null);
-      if (reviewType === "first") setFirstReviewFile(null);
-      if (reviewType === "second") setSecondReviewFile(null);
+      // Reset specific file state
+      if (reviewType === "zeroth") {
+        if (fileType === "pdf") setZerothPdfFile(null);
+        if (fileType === "ppt") setZerothPptFile(null);
+        if (fileType === "other") setZerothOtherFile(null);
+      } else if (reviewType === "first") {
+        if (fileType === "pdf") setFirstPdfFile(null);
+        if (fileType === "ppt") setFirstPptFile(null);
+        if (fileType === "other") setFirstOtherFile(null);
+      } else if (reviewType === "second") {
+        if (fileType === "pdf") setSecondPdfFile(null);
+        if (fileType === "ppt") setSecondPptFile(null);
+        if (fileType === "other") setSecondOtherFile(null);
+      }
 
     } catch (error) {
-      alert(error.response?.data?.error || `Error uploading ${reviewType} review.`);
+      alert(error.response?.data?.error || `Error uploading ${fileType.toUpperCase()} for ${reviewType} review.`);
     } finally {
       setLoading(false);
     }
   };
+
+  // Helper function to render file input and upload button
+  const renderFileUploadControls = (reviewType, fileType, fileState, setFileState, uploadedFilePaths, inputRef, deadline) => {
+    const isFileUploaded = uploadedFilePaths[`${fileType}Path`];
+    const isEnabled = isUploadEnabled(deadline);
+
+    return (
+      <div className="file-upload-control">
+        <label className="file-label">{fileType.toUpperCase()}:</label>
+        {isFileUploaded ? (
+          <a
+            href={`${BASE_URL}/${isFileUploaded}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="uploaded-file-link"
+          >
+            View Uploaded {fileType.toUpperCase()}
+          </a>
+        ) : (
+          <input
+            type="file"
+            title={`Upload ${fileType.toUpperCase()} for ${reviewType} Review`}
+            accept={fileType === "pdf" ? "application/pdf" : fileType === "ppt" ? ".ppt,.pptx" : "*/*"}
+            ref={inputRef}
+            onChange={(e) => setFileState(e.target.files[0])}
+            disabled={!isEnabled}
+          />
+        )}
+        <button
+          onClick={() => handleFileUpload(fileState, reviewType, fileType, inputRef)}
+          disabled={!isEnabled || loading || (!fileState && isFileUploaded)} // Disable if no new file for re-upload
+          className={`upload-button ${!isEnabled || loading || (!fileState && isFileUploaded) ? 'disabled' : ''}`}
+        >
+          {isFileUploaded && fileState ? "Re-upload" : "Upload"}
+        </button>
+      </div>
+    );
+  };
+
 
   return (
     <>
@@ -198,6 +298,7 @@ function StudentDashboard() {
           <div className="profile-card">
             <h2>{studentName}</h2>
             <p>Register Number: {registerNumber}</p>
+            {studentCourseName && <p>Course: {studentCourseName}</p>} {/* Display student's course */}
 
             {telegramLinked === null ? (
               <p>Checking Telegram status...</p>
@@ -240,8 +341,9 @@ function StudentDashboard() {
                 <thead>
                   <tr>
                     <th>Review Type</th>
-                    <th>Upload File / View Uploaded</th>
-                    <th>Action</th>
+                    <th>PDF</th>
+                    <th>PPT</th>
+                    <th>Other Document</th>
                     <th>Deadline</th>
                   </tr>
                 </thead>
@@ -249,51 +351,13 @@ function StudentDashboard() {
                   <tr>
                     <td>Zeroth Review</td>
                     <td>
-                      {uploadedZerothReview ? (
-                        <a
-                          href={`${BASE_URL}/${uploadedZerothReview}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="uploaded-file-link"
-                        >
-                          View Uploaded File
-                        </a>
-                      ) : (
-                        <input
-                          type="file"
-                          title="Upload PDF for Zeroth Review"
-                          accept="application/pdf"
-                          ref={zerothInputRef}
-                          onChange={(e) => setZerothReviewFile(e.target.files[0])}
-                          disabled={!isUploadEnabled(deadlines.zerothReviewDeadline)}
-                        />
-                      )}
+                      {renderFileUploadControls("zeroth", "pdf", zerothPdfFile, setZerothPdfFile, uploadedZerothReview, zerothPdfInputRef, deadlines.zerothReviewDeadline)}
                     </td>
                     <td>
-                      {!uploadedZerothReview && ( // Only show upload button if no file is uploaded yet
-                        <button
-                          onClick={() => handleFileUpload(zerothReviewFile, "zeroth", zerothInputRef)}
-                          disabled={!isUploadEnabled(deadlines.zerothReviewDeadline) || loading}
-                        >
-                          Upload
-                        </button>
-                      )}
-                      {uploadedZerothReview && isUploadEnabled(deadlines.zerothReviewDeadline) && (
-                        <button
-                          onClick={() => {
-                            // Allow re-uploading if a new file is selected
-                            if (zerothReviewFile) {
-                              handleFileUpload(zerothReviewFile, "zeroth", zerothInputRef);
-                            } else {
-                              alert("Please select a new file to re-upload.");
-                            }
-                          }}
-                          disabled={loading}
-                          title="Select a new file above to re-upload"
-                        >
-                          Re-upload
-                        </button>
-                      )}
+                      {renderFileUploadControls("zeroth", "ppt", zerothPptFile, setZerothPptFile, uploadedZerothReview, zerothPptInputRef, deadlines.zerothReviewDeadline)}
+                    </td>
+                    <td>
+                      {renderFileUploadControls("zeroth", "other", zerothOtherFile, setZerothOtherFile, uploadedZerothReview, zerothOtherInputRef, deadlines.zerothReviewDeadline)}
                     </td>
                     <td>{deadlines.zerothReviewDeadline ? new Date(deadlines.zerothReviewDeadline).toLocaleDateString() : "Not Set"}</td>
                   </tr>
@@ -301,50 +365,13 @@ function StudentDashboard() {
                   <tr>
                     <td>First Review</td>
                     <td>
-                      {uploadedFirstReview ? (
-                        <a
-                          href={`${BASE_URL}/${uploadedFirstReview}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="uploaded-file-link"
-                        >
-                          View Uploaded File
-                        </a>
-                      ) : (
-                        <input
-                          type="file"
-                          title="Upload PDF for First Review"
-                          accept="application/pdf"
-                          ref={firstInputRef}
-                          onChange={(e) => setFirstReviewFile(e.target.files[0])}
-                          disabled={!isUploadEnabled(deadlines.firstReviewDeadline)}
-                        />
-                      )}
+                      {renderFileUploadControls("first", "pdf", firstPdfFile, setFirstPdfFile, uploadedFirstReview, firstPdfInputRef, deadlines.firstReviewDeadline)}
                     </td>
                     <td>
-                      {!uploadedFirstReview && (
-                        <button
-                          onClick={() => handleFileUpload(firstReviewFile, "first", firstInputRef)}
-                          disabled={!isUploadEnabled(deadlines.firstReviewDeadline) || loading}
-                        >
-                          Upload
-                        </button>
-                      )}
-                      {uploadedFirstReview && isUploadEnabled(deadlines.firstReviewDeadline) && (
-                        <button
-                          onClick={() => {
-                            if (firstReviewFile) {
-                              handleFileUpload(firstReviewFile, "first", firstInputRef);
-                            } else {
-                              alert("Please select a new file to re-upload.");
-                            }
-                          }}
-                          disabled={loading}
-                          title="Select a new file above to re-upload"
-                        >
-                          Re-upload
-                        </button>
-                      )}
+                      {renderFileUploadControls("first", "ppt", firstPptFile, setFirstPptFile, uploadedFirstReview, firstPptInputRef, deadlines.firstReviewDeadline)}
+                    </td>
+                    <td>
+                      {renderFileUploadControls("first", "other", firstOtherFile, setFirstOtherFile, uploadedFirstReview, firstOtherInputRef, deadlines.firstReviewDeadline)}
                     </td>
                     <td>{deadlines.firstReviewDeadline ? new Date(deadlines.firstReviewDeadline).toLocaleDateString() : "Not Set"}</td>
                   </tr>
@@ -352,50 +379,13 @@ function StudentDashboard() {
                   <tr>
                     <td>Second Review</td>
                     <td>
-                      {uploadedSecondReview ? (
-                        <a
-                          href={`${BASE_URL}/${uploadedSecondReview}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="uploaded-file-link"
-                        >
-                          View Uploaded File
-                        </a>
-                      ) : (
-                        <input
-                          type="file"
-                          title="Upload PDF for Second Review"
-                          accept="application/pdf"
-                          ref={secondInputRef}
-                          onChange={(e) => setSecondReviewFile(e.target.files[0])}
-                          disabled={!isUploadEnabled(deadlines.secondReviewDeadline)}
-                        />
-                      )}
+                      {renderFileUploadControls("second", "pdf", secondPdfFile, setSecondPdfFile, uploadedSecondReview, secondPdfInputRef, deadlines.secondReviewDeadline)}
                     </td>
                     <td>
-                      {!uploadedSecondReview && (
-                        <button
-                          onClick={() => handleFileUpload(secondReviewFile, "second", secondInputRef)}
-                          disabled={!isUploadEnabled(deadlines.secondReviewDeadline) || loading}
-                        >
-                          Upload
-                        </button>
-                      )}
-                      {uploadedSecondReview && isUploadEnabled(deadlines.secondReviewDeadline) && (
-                        <button
-                          onClick={() => {
-                            if (secondReviewFile) {
-                              handleFileUpload(secondReviewFile, "second", secondInputRef);
-                            } else {
-                              alert("Please select a new file to re-upload.");
-                            }
-                          }}
-                          disabled={loading}
-                          title="Select a new file above to re-upload"
-                        >
-                          Re-upload
-                        </button>
-                      )}
+                      {renderFileUploadControls("second", "ppt", secondPptFile, setSecondPptFile, uploadedSecondReview, secondPptInputRef, deadlines.secondReviewDeadline)}
+                    </td>
+                    <td>
+                      {renderFileUploadControls("second", "other", secondOtherFile, setSecondOtherFile, uploadedSecondReview, secondOtherInputRef, deadlines.secondReviewDeadline)}
                     </td>
                     <td>{deadlines.secondReviewDeadline ? new Date(deadlines.secondReviewDeadline).toLocaleDateString() : "Not Set"}</td>
                   </tr>

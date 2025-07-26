@@ -115,6 +115,15 @@ function AdminDashboard() {
     setUgStudentRegNos([...ugStudentRegNos, '']);
   };
 
+  const handleRemoveUgStudentInput = () => {
+    // Only remove if there's more than one input field
+    if (ugStudentRegNos.length > 1) {
+      setUgStudentRegNos(ugStudentRegNos.slice(0, -1));
+    } else {
+      toast.info("At least one student input field is required.");
+    }
+  };
+
   // Function to handle changes in a specific student register number input
   const handleUgRegNoChange = (index, value) => {
     const newRegNos = [...ugStudentRegNos];
@@ -228,7 +237,7 @@ function AdminDashboard() {
 
         {studentType === 'PG' && (
           <div>
-            <h3>Assign PG Student to Teacher</h3>
+            <h3>Assign PG Student to Guide</h3>
             <form onSubmit={handlePgSubmit}>
               <label htmlFor="pgStudentRegNo">Student Register Number:</label>
               <input
@@ -267,7 +276,7 @@ function AdminDashboard() {
 
         {studentType === 'UG' && (
           <div>
-            <h3>Assign UG Students to Teacher (Bulk)</h3>
+            <h3>Assign UG Students to Guide</h3>
             <form onSubmit={handleUgSubmit}>
               <label htmlFor="ugProjectName">Project Name:</label>
               <input
@@ -291,6 +300,9 @@ function AdminDashboard() {
               ))}
               <button type="button" onClick={handleAddUgStudentInput} className="add-student-button">
                 Add Student
+              </button>
+              <button type="button" onClick={handleRemoveUgStudentInput} className="add-student-button">
+                Remove Student
               </button>
               <label htmlFor="ugTeacherEmail">Teacher Email:</label>
               <input

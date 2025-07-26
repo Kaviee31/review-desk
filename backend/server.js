@@ -35,9 +35,11 @@ const enrollmentSchema = new mongoose.Schema({
   Assessment2: { type: Number, default: 0 },
   Assessment3: { type: Number, default: 0 },
   Total: { type: Number, default: 0 },
-  reviews: [{ // For uploaded review documents (PDFs)
-    reviewType: String,
-    filePath: String, // Store the file path
+  reviews: [{ // For uploaded review documents (PDFs, PPTs, Other)
+    reviewType: String, // e.g., "zeroth", "first", "second"
+    pdfPath: String,    // Path for PDF file
+    pptPath: String,    // Path for PPT file
+    otherPath: String,  // Path for any other document
     uploadedAt: { type: Date, default: Date.now },
   }],
   reviewsAssessment: [{
@@ -92,10 +94,30 @@ const storage = multer.diskStorage({
     cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
   }
 });
+
+// Updated file filter to accept PDF, PPT, and common document types
 const upload = multer({
   storage,
-  fileFilter: (req, file, cb) => file.mimetype === "application/pdf" ? cb(null, true) : cb(null, false),
-  limits: { fileSize: 8 * 1024 * 1024 } // 8MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = [
+      "application/pdf",
+      "application/vnd.ms-powerpoint", // .ppt
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx
+      "application/msword", // .doc
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+      "application/vnd.ms-excel", // .xls
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+      "text/plain", // .txt
+      "image/jpeg", // .jpeg, .jpg
+      "image/png", // .png
+    ];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Invalid file type. Only PDF, PPT, Word, Excel, Text, Image files are allowed."), false);
+    }
+  },
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
 // === ROUTES ===
@@ -367,34 +389,67 @@ app.get("/all-messages", async (req, res) => {
   }
 });
 
-// Upload review document
-app.post("/upload-review", upload.single("reviewFile"), async (req, res) => {
-  const { registerNumber, reviewType } = req.body;
-  if (!req.file) return res.status(400).json({ error: "No file uploaded or invalid format." });
+// MODIFIED: Upload review document to handle multiple file types
+app.post("/upload-review", upload.fields([
+  { name: 'zerothPdf', maxCount: 1 },
+  { name: 'zerothPpt', maxCount: 1 },
+  { name: 'zerothOther', maxCount: 1 },
+  { name: 'firstPdf', maxCount: 1 },
+  { name: 'firstPpt', maxCount: 1 },
+  { name: 'firstOther', maxCount: 1 },
+  { name: 'secondPdf', maxCount: 1 },
+  { name: 'secondPpt', maxCount: 1 },
+  { name: 'secondOther', maxCount: 1 },
+]), async (req, res) => {
+  const { registerNumber, reviewType } = req.body; // reviewType will be 'zeroth', 'first', or 'second'
+  const files = req.files;
+
+  if (!registerNumber || !reviewType) {
+    return res.status(400).json({ error: "Missing registerNumber or reviewType." });
+  }
 
   try {
     const enrollment = await Enrollment.findOne({ registerNumber });
-    if (!enrollment) return res.status(404).json({ error: "Enrollment not found." });
-
-    const existingIndex = enrollment.reviews.findIndex(r => r.reviewType === reviewType);
-    // Store the path where the file is accessible (e.g., /uploads/filename.pdf)
-    const newReview = { reviewType, filePath: req.file.path.replace(/\\/g, '/'), uploadedAt: Date.now() }; // Normalize path for URL
-
-    if (existingIndex > -1) {
-      enrollment.reviews[existingIndex] = newReview;
-    } else {
-      enrollment.reviews.push(newReview);
+    if (!enrollment) {
+      return res.status(404).json({ error: "Enrollment not found." });
     }
 
+    let reviewEntry = enrollment.reviews.find(r => r.reviewType === reviewType);
+
+    if (!reviewEntry) {
+      reviewEntry = { reviewType };
+      enrollment.reviews.push(reviewEntry);
+    }
+
+    // Update paths based on uploaded files
+    if (files[`${reviewType}Pdf`] && files[`${reviewType}Pdf`][0]) {
+      reviewEntry.pdfPath = files[`${reviewType}Pdf`][0].path.replace(/\\/g, '/');
+    }
+    if (files[`${reviewType}Ppt`] && files[`${reviewType}Ppt`][0]) {
+      reviewEntry.pptPath = files[`${reviewType}Ppt`][0].path.replace(/\\/g, '/');
+    }
+    if (files[`${reviewType}Other`] && files[`${reviewType}Other`][0]) {
+      reviewEntry.otherPath = files[`${reviewType}Other`][0].path.replace(/\\/g, '/');
+    }
+    reviewEntry.uploadedAt = Date.now(); // Update timestamp on any upload
+
     await enrollment.save();
-    res.json({ message: `Successfully uploaded ${reviewType} review.`, filePath: newReview.filePath }); // Return filePath
+    res.json({
+      message: `Successfully uploaded files for ${reviewType} review.`,
+      // Return all paths for the updated review entry
+      filePath: {
+        pdfPath: reviewEntry.pdfPath || null,
+        pptPath: reviewEntry.pptPath || null,
+        otherPath: reviewEntry.otherPath || null,
+      }
+    });
   } catch (error) {
     console.error("Error uploading review:", error);
-    res.status(500).json({ error: "Failed to upload review." });
+    res.status(500).json({ error: error.message || "Failed to upload review." });
   }
 });
 
-// Get latest uploaded review for a student
+// MODIFIED: Get latest uploaded review for a student - returns all file types
 app.get("/get-latest-review/:registerNumber/:reviewType", async (req, res) => {
   try {
     const enrollment = await Enrollment.findOne({ registerNumber: req.params.registerNumber });
@@ -404,9 +459,17 @@ app.get("/get-latest-review/:registerNumber/:reviewType", async (req, res) => {
       .filter(r => r.reviewType === req.params.reviewType)
       .sort((a, b) => b.uploadedAt - a.uploadedAt)[0]; // Get the latest one
 
-    if (!review) return res.status(404).json({ error: "Review not found for this type." });
+    if (!review) {
+      // Return null for all paths if no review of that type is found
+      return res.json({ pdfPath: null, pptPath: null, otherPath: null });
+    }
 
-    res.json(review); 
+    // Return all paths for the found review
+    res.json({
+      pdfPath: review.pdfPath || null,
+      pptPath: review.pptPath || null,
+      otherPath: review.otherPath || null,
+    });
   } catch (error) {
     console.error("Error fetching latest review:", error);
     res.status(500).json({ error: "Failed to fetch review." });
