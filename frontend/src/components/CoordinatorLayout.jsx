@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, LayoutDashboard, KeyRound } from "lucide-react";
+import { LogOut, LayoutDashboard, KeyRound, Users } from "lucide-react";
 import { getAuth } from "firebase/auth";
 import RoleSwitcherDropdown from "../components/RoleSwitcherDropdown";
 import "../styles/CoordinatorLayout.css";
@@ -22,6 +22,9 @@ function CoordinatorLayout() {
         <div className="navbar-links">
           <button onClick={() => navigate("/coordinator/dashboard")}>
             <LayoutDashboard size={18} /> Dashboard
+          </button>
+          <button onClick={() => navigate("/coordinator/students")}> {/* New button */}
+            <Users size={18} /> View Students
           </button>
           <button onClick={() => navigate("/coordinator/change-password")}>
             <KeyRound size={18} /> Change Password
