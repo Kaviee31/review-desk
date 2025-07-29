@@ -22,7 +22,7 @@ function EnrolledStudents() {
   const [teacherUid, setTeacherUid] = useState(null);
   const [selectedStudentRegisterNumber, setSelectedStudentRegisterNumber] = useState(null);
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
-  // Modified to store objects with pdfPath, pptPath, otherPath
+  // Modified to store objects with pdfPath, pptPath, otherPath, and uploadedAt
   const [latestReviewFiles, setLatestReviewFiles] = useState({});
 
   // States for the student review marks modal
@@ -72,20 +72,27 @@ function EnrolledStudents() {
   }, []);
 
   // Function to fetch review deadlines
-  const fetchReviewDeadlines = async () => {
+  const fetchReviewDeadlines = useCallback(async (courseName) => {
+    if (!courseName) return;
     try {
-      // This function is still generic, might need to be specific to selectedProgram if used elsewhere
-      const response = await axios.get(`${API_BASE_URL}/get-review-dates`);
-      setReviewDeadlines(response.data);
+      const response = await axios.get(`${API_BASE_URL}/get-review-dates?courseName=${courseName}`);
+      setReviewDeadlines({
+        zerothReviewDeadline: response.data?.zerothReviewDeadline || null,
+        firstReviewDeadline: response.data?.firstReviewDeadline || null,
+        secondReviewDeadline: response.data?.secondReviewDeadline || null,
+      });
     } catch (error) {
       console.error("Error fetching review deadlines:", error);
-      //toast.error("Failed to fetch review deadlines.");
     }
-  };
+  }, [API_BASE_URL]);
+
 
   useEffect(() => {
-    fetchReviewDeadlines(); // Fetch deadlines on component mount
-  }, []);
+    if (selectedProgram) {
+      fetchReviewDeadlines(selectedProgram);
+    }
+  }, [selectedProgram, fetchReviewDeadlines]);
+
 
   // Function to fetch students from the backend (for PG courses)
   const fetchPgStudents = async () => {
@@ -146,18 +153,18 @@ function EnrolledStudents() {
     }
   }, [teacherEmail, selectedProgram]);
 
-  // Modified fetchLatestReviewFiles to handle multiple file types
+  // Modified fetchLatestReviewFiles to handle multiple file types and uploadedAt
   const fetchLatestReviewFiles = async (studentList) => {
     const files = {};
     for (const student of studentList) {
       for (const reviewType of ["zeroth", "first", "second"]) {
         try {
-          // The backend now returns an object with pdfPath, pptPath, otherPath
+          // The backend now returns an object with pdfPath, pptPath, otherPath, and uploadedAt
           const response = await axios.get(`${API_BASE_URL}/get-latest-review/${student.registerNumber}/${reviewType}`);
           files[`${student.registerNumber}_${reviewType}`] = response.data; // Store the object directly
         } catch (error) {
           // console.error(`Error fetching ${reviewType} review for ${student.registerNumber}:`, error); // Suppress frequent errors
-          files[`${student.registerNumber}_${reviewType}`] = { pdfPath: null, pptPath: null, otherPath: null }; // Ensure empty object
+          files[`${student.registerNumber}_${reviewType}`] = { pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null }; // Ensure empty object
         }
       }
     }
@@ -704,6 +711,23 @@ function EnrolledStudents() {
     return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
+  // Helper to calculate days late
+  const calculateDaysLate = (uploadedAt, deadline) => {
+    if (!uploadedAt || !deadline) return null;
+    const uploadDate = new Date(uploadedAt);
+    const deadlineDate = new Date(deadline);
+    // Set both to start of day to compare dates only
+    uploadDate.setHours(0, 0, 0, 0);
+    deadlineDate.setHours(0, 0, 0, 0);
+
+    if (uploadDate > deadlineDate) {
+      const diffTime = Math.abs(uploadDate - deadlineDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return `${diffDays} day(s) late`;
+    }
+    return null; // Not late
+  };
+
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen p-4 bg-gray-100 font-inter">
@@ -803,7 +827,7 @@ function EnrolledStudents() {
                               className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed"
                             />
                           </td>
-                          {/* Display all three file types for Zeroth Review */}
+                          {/* Display all three file types for Zeroth Review and late status */}
                           <td className="py-3 px-6 text-center">
                             {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && (
                               <a
@@ -835,11 +859,17 @@ function EnrolledStudents() {
                                 Other
                               </a>
                             )}
-                            {!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath &&
+                            {(!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath &&
                              !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && "No Files"}
+                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath) ? (
+                              <span className="text-gray-500 text-xs">No Files</span>
+                            ) : (
+                              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) || "On Time"}
+                              </span>
+                            )}
                           </td>
-                          {/* Display all three file types for First Review */}
+                          {/* Display all three file types for First Review and late status */}
                           <td className="py-3 px-6 text-center">
                             {latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && (
                               <a
@@ -871,11 +901,17 @@ function EnrolledStudents() {
                                 Other
                               </a>
                             )}
-                            {!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath &&
+                            {(!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath &&
                              !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && "No Files"}
+                             !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath) ? (
+                              <span className="text-gray-500 text-xs">No Files</span>
+                            ) : (
+                              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) || "On Time"}
+                              </span>
+                            )}
                           </td>
-                          {/* Display all three file types for Second Review */}
+                          {/* Display all three file types for Second Review and late status */}
                           <td className="py-3 px-6 text-center">
                             {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
                               <a
@@ -893,7 +929,7 @@ function EnrolledStudents() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-500 hover:underline block mt-1"
-                              >
+                                >
                                 PPT
                               </a>
                             )}
@@ -907,9 +943,15 @@ function EnrolledStudents() {
                                 Other
                               </a>
                             )}
-                            {!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath &&
+                            {(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath &&
                              !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && "No Files"}
+                             !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
+                              <span className="text-gray-500 text-xs">No Files</span>
+                            ) : (
+                              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) || "On Time"}
+                              </span>
+                            )}
                           </td>
                           <td className="py-3 px-6 text-center">
                             <img
@@ -1089,11 +1131,17 @@ function EnrolledStudents() {
                                 Other
                               </a>
                             )}
-                            {!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath &&
+                            {(!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath &&
                              !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && "No Files"}
+                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath) ? (
+                              <span className="text-gray-500 text-xs">No Files</span>
+                            ) : (
+                              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) || "On Time"}
+                              </span>
+                            )}
                           </td>
-                          {/* Display all three file types for First Review */}
+                          {/* Display all three file types for First Review and late status */}
                           <td className="py-3 px-6 text-center">
                             {latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && (
                               <a
@@ -1125,11 +1173,17 @@ function EnrolledStudents() {
                                 Other
                               </a>
                             )}
-                            {!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath &&
+                            {(!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath &&
                              !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && "No Files"}
+                             !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath) ? (
+                              <span className="text-gray-500 text-xs">No Files</span>
+                            ) : (
+                              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) || "On Time"}
+                              </span>
+                            )}
                           </td>
-                          {/* Display all three file types for Second Review */}
+                          {/* Display all three file types for Second Review and late status */}
                           <td className="py-3 px-6 text-center">
                             {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
                               <a
@@ -1147,7 +1201,7 @@ function EnrolledStudents() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-500 hover:underline block mt-1"
-                              >
+                                >
                                 PPT
                               </a>
                             )}
@@ -1161,9 +1215,15 @@ function EnrolledStudents() {
                                 Other
                               </a>
                             )}
-                            {!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath &&
+                            {(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath &&
                              !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && "No Files"}
+                             !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
+                              <span className="text-gray-500 text-xs">No Files</span>
+                            ) : (
+                              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) || "On Time"}
+                              </span>
+                            )}
                           </td>
                           <td className="py-3 px-6 text-center">
                             <img

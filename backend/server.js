@@ -460,21 +460,23 @@ app.get("/get-latest-review/:registerNumber/:reviewType", async (req, res) => {
       .sort((a, b) => b.uploadedAt - a.uploadedAt)[0]; // Get the latest one
 
     if (!review) {
-      // Return null for all paths if no review of that type is found
-      return res.json({ pdfPath: null, pptPath: null, otherPath: null });
+      // Return null for all paths and uploadedAt if no review of that type is found
+      return res.json({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
     }
 
-    // Return all paths for the found review
+    // Return all paths and uploadedAt for the found review
     res.json({
       pdfPath: review.pdfPath || null,
       pptPath: review.pptPath || null,
       otherPath: review.otherPath || null,
+      uploadedAt: review.uploadedAt, // Include uploadedAt
     });
   } catch (error) {
     console.error("Error fetching latest review:", error);
     res.status(500).json({ error: "Failed to fetch review." });
   }
 });
+
 
 // MODIFIED: Set review deadlines - now requires courseName
 app.post("/set-review-dates", async (req, res) => {

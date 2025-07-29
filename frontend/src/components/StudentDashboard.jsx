@@ -39,10 +39,10 @@ function StudentDashboard() {
   const navigate = useNavigate();
   const BASE_URL = "http://localhost:5000";
 
-  // States to store uploaded file paths (objects containing pdfPath, pptPath, otherPath)
-  const [uploadedZerothReview, setUploadedZerothReview] = useState({ pdfPath: null, pptPath: null, otherPath: null });
-  const [uploadedFirstReview, setUploadedFirstReview] = useState({ pdfPath: null, pptPath: null, otherPath: null });
-  const [uploadedSecondReview, setUploadedSecondReview] = useState({ pdfPath: null, pptPath: null, otherPath: null });
+  // States to store uploaded file paths (objects containing pdfPath, pptPath, otherPath, and uploadedAt)
+  const [uploadedZerothReview, setUploadedZerothReview] = useState({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
+  const [uploadedFirstReview, setUploadedFirstReview] = useState({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
+  const [uploadedSecondReview, setUploadedSecondReview] = useState({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
 
   // Refs for file inputs to clear them
   const zerothPdfInputRef = useRef();
@@ -125,30 +125,30 @@ function StudentDashboard() {
       }
     };
 
-    // Function to fetch uploaded reviews (now expects object with paths)
+    // Function to fetch uploaded reviews (now expects object with paths and uploadedAt)
     const fetchUploadedReviews = async (regNo) => {
       try {
         const zerothResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/zeroth`);
-        setUploadedZerothReview(zerothResponse.data || { pdfPath: null, pptPath: null, otherPath: null });
+        setUploadedZerothReview(zerothResponse.data || { pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
       } catch (error) {
         console.warn("No zeroth review found or error fetching:", error.message);
-        setUploadedZerothReview({ pdfPath: null, pptPath: null, otherPath: null });
+        setUploadedZerothReview({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
       }
 
       try {
         const firstResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/first`);
-        setUploadedFirstReview(firstResponse.data || { pdfPath: null, pptPath: null, otherPath: null });
+        setUploadedFirstReview(firstResponse.data || { pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
       } catch (error) {
         console.warn("No first review found or error fetching:", error.message);
-        setUploadedFirstReview({ pdfPath: null, pptPath: null, otherPath: null });
+        setUploadedFirstReview({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
       }
 
       try {
         const secondResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/second`);
-        setUploadedSecondReview(secondResponse.data || { pdfPath: null, pptPath: null, otherPath: null });
+        setUploadedSecondReview(secondResponse.data || { pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
       } catch (error) {
         console.warn("No second review found or error fetching:", error.message);
-        setUploadedSecondReview({ pdfPath: null, pptPath: null, otherPath: null });
+        setUploadedSecondReview({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
       }
     };
 
@@ -171,8 +171,16 @@ function StudentDashboard() {
     }
   }, [studentCourseName, fetchReviewDeadlines]); // Depend on studentCourseName and fetchReviewDeadlines
 
+  // Modified isUploadEnabled to allow uploads up to 7 days after the deadline
   const isUploadEnabled = (deadline) => {
-    return deadline && !isNaN(new Date(deadline)) && new Date() <= new Date(deadline);
+    if (!deadline) return false; // If no deadline is set, disable uploads
+    const now = new Date();
+    const deadlineDate = new Date(deadline);
+    const gracePeriodEnd = new Date(deadlineDate);
+    gracePeriodEnd.setDate(deadlineDate.getDate() + 6); // Add 7 days to the deadline
+
+    // Allow upload if current date is before or on the deadline, OR within the 7-day grace period
+    return now <= deadlineDate || (now > deadlineDate && now <= gracePeriodEnd);
   };
 
   // Modified handleFileUpload to accept file, reviewType, fileType, and inputRef
@@ -255,7 +263,7 @@ function StudentDashboard() {
   // Helper function to render file input and upload button
   const renderFileUploadControls = (reviewType, fileType, fileState, setFileState, uploadedFilePaths, inputRef, deadline) => {
     const isFileUploaded = uploadedFilePaths[`${fileType}Path`];
-    const isEnabled = isUploadEnabled(deadline);
+    const isEnabled = isUploadEnabled(deadline); // Use the updated isUploadEnabled logic
 
     return (
       <div className="file-upload-control">
