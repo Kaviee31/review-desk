@@ -1,28 +1,29 @@
+// src/components/AssignCoordinatorForm.jsx
+
 import React, { useState } from 'react';
 import { auth, db } from '../firebase';
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
 } from 'firebase/auth';
-import { setDoc, doc } from 'firebase/firestore';
+import {
+  collection, query, where, getDocs, doc, setDoc, updateDoc, arrayUnion
+} from 'firebase/firestore';
 import emailjs from 'emailjs-com';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import '../styles/AdminDashboard.css'; // Assuming this CSS provides styling
+import '../styles/AssignCoordinatorForm.css';
 
 function AssignCoordinatorForm() {
   const [guideEmailId, setGuideEmailId] = useState('');
   const [guideName, setGuideName] = useState('');
-  // Changed from selectedDepartment to selectedCourse to be more explicit
-  const [selectedCourse, setSelectedCourse] = useState(''); 
+  const [selectedCourse, setSelectedCourse] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Define the available courses for coordinators
-  const courses = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
+  const courses = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)","B.TECH(IT)","B.TECH(IT) SS"];
 
-  // Function to generate a random password for new coordinator accounts
   const generatePassword = () => {
-    const chars =
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
     let password = '';
     for (let i = 0; i < 10; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -30,113 +31,210 @@ function AssignCoordinatorForm() {
     return password;
   };
 
-  // Handler for form submission
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission behavior
+    e.preventDefault();
 
-    // Basic validation to ensure all fields are filled
     if (!guideEmailId || !guideName || !selectedCourse) {
       toast.error('Please fill all fields');
       return;
     }
 
-    const password = generatePassword(); // Generate a password for the new coordinator
+    setLoading(true);
+    const password = generatePassword();
+    
+try {
+      const usersRef = collection(db, "users");
 
-    try {
-      // 1. Register the coordinator in Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        guideEmailId,
-        password
-      );
-      const user = userCredential.user;
+      // --- NEW: Check if the email belongs to an existing student ---
+      const studentQuery = query(usersRef, where("email", "==", guideEmailId));
+      const studentSnapshot = await getDocs(studentQuery);
 
-      // 2. Store coordinator details in Firestore
-      // The 'department' field now stores the specific course
-      await setDoc(doc(db, 'users', user.uid), {
-        email: guideEmailId,
-        username: guideName,
-        profession: 'Coordinator', // Assign the 'Coordinator' profession
-        department: selectedCourse, // Store the assigned course here
-      });
+      if (!studentSnapshot.empty) {
+        const existingUserData = studentSnapshot.docs[0].data();
+        if (Array.isArray(existingUserData.roles) && existingUserData.roles.includes("Student")) {
+          toast.error(`Cannot assign ${guideEmailId} as a coordinator. This email is already registered as a student.`);
+          setLoading(false);
+          return;
+        }
+      }
+      // --- END NEW CHECK ---
 
-      // 3. Send email verification to the newly created user
-      await sendEmailVerification(user);
+      // --- Existing logic for unique coordinator per course ---
+      // Query only for documents where 'roles' array contains "Coordinator"
+      const q = query(usersRef, where("roles", "array-contains", "Coordinator"));
+      const querySnapshot = await getDocs(q);
 
-      // 4. Send login credentials to the coordinator via EmailJS
-      const emailParams = {
-        to_name: guideName,
-        to_email: guideEmailId,
-        message: `Hello ${guideName},
+      let existingCoordinatorForCourse = null;
+      if (!querySnapshot.empty) {
+        // Client-side filtering to find if a coordinator is already assigned to this specific course
+        existingCoordinatorForCourse = querySnapshot.docs.find(doc => {
+          const data = doc.data();
+          // Check if 'department' field exists, is an array, and includes selectedCourse
+          return Array.isArray(data.department) && data.department.includes(selectedCourse);
+        });
 
-You have been assigned as a coordinator for the ${selectedCourse} program.
+        if (existingCoordinatorForCourse) {
+          const existingCoordinatorData = existingCoordinatorForCourse.data();
+          if (existingCoordinatorData.email !== guideEmailId) {
+            toast.error(`A coordinator is already assigned to ${selectedCourse}: ${existingCoordinatorData.email}.`);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+      // --- End of new logic ---
+
+      // Try creating new user directly
+      let user = null;
+      let isNewUser = false; // Flag to check if a new user was created
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, guideEmailId, password);
+        user = userCredential.user;
+        isNewUser = true;
+      } catch (authError) {
+        if (authError.code === 'auth/email-already-in-use') {
+          // If email already in use, find the user in Firestore
+          const qExisting = query(usersRef, where("email", "==", guideEmailId));
+          const querySnapshotExisting = await getDocs(qExisting);
+          if (!querySnapshotExisting.empty) {
+            user = querySnapshotExisting.docs[0]; // Get the existing user document
+            const userData = user.data();
+            // If the user is already a coordinator for this course, prevent re-assignment
+            // Also check if 'department' is an array and already contains the selectedCourse
+            if (Array.isArray(userData.department) && userData.department.includes(selectedCourse) && userData.roles.includes("Coordinator")) {
+              toast.info(`This user is already the coordinator for ${selectedCourse}.`);
+              setLoading(false);
+              return;
+            }
+          } else {
+            toast.error('User found in Auth but not in Firestore. Cannot assign role.');
+            setLoading(false);
+            return;
+          }
+        } else {
+          throw authError; // Re-throw other authentication errors
+        }
+      }
+
+      if (user) {
+        let userId = isNewUser ? user.uid : user.id; // Use uid for new user, id for existing doc
+        let currentRoles = existingCoordinatorForCourse?.data()?.roles || []; // Get existing roles if coordinator exists for this course
+
+        if (isNewUser) {
+          await setDoc(doc(db, "users", userId), {
+            username: guideName,
+            email: guideEmailId,
+            department: [selectedCourse], // Ensure department is an array
+            roles: ["Coordinator"]
+          });
+          await sendEmailVerification(user); // Send verification for new user
+
+          const emailParams = {
+            to_name: guideName,
+            to_email: guideEmailId,
+            message: `Hello ${guideName},
+
+You have been assigned as Coordinator for the ${selectedCourse} program.
 
 Your login credentials are:
 Email: ${guideEmailId}
 Password: ${password}
 
-Please log in and change your password after your first login for security.
-`,
-      };
+Please log in and change your password after your first login.`
+          };
 
-      // Ensure 'emailjs.send' parameters are correctly configured for your EmailJS service
-      await emailjs.send(
-        'service_zdkw9wb', // Replace with your EmailJS service ID
-        'template_j69ex9q', // Replace with your EmailJS template ID
-        emailParams,
-        'lBI3Htk5CKshSzMFg' // Replace with your EmailJS user ID (public key)
-      );
+          await emailjs.send(
+            'service_zdkw9wb',
+            'template_j69ex9q',
+            emailParams,
+            'lBI3Htk5CKshSzMFg'
+          );
 
-      toast.success(`📧 Email sent successfully to ${guideEmailId}`);
-      // Clear form fields after successful submission
+          toast.success(`New Coordinator created and email sent to ${guideEmailId}`);
+        } else {
+          // Update existing user: add "Coordinator" role and selectedCourse to department array
+          const userRef = doc(db, "users", userId);
+          await updateDoc(userRef, {
+            username: guideName, // Update name in case it changed
+            // Use arrayUnion to add selectedCourse to department if it's not already there
+            department: arrayUnion(selectedCourse),
+            // Use arrayUnion to add "Coordinator" role if it's not already there
+            roles: arrayUnion("Coordinator")
+          });
+
+          const emailParams = {
+            to_name: guideName,
+            to_email: guideEmailId,
+            message: `Hello ${guideName},
+
+You have been assigned as Coordinator for the ${selectedCourse} program.
+
+Please login using your existing credentials.`
+          };
+
+          await emailjs.send(
+            'service_zdkw9wb',
+            'template_j69ex9q',
+            emailParams,
+            'lBI3Htk5CKshSzMFg'
+          );
+
+          toast.success(`Existing user updated and email sent to ${guideEmailId}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error assigning coordinator:", error);
+      toast.error(`Failed: ${error.message}`);
+    } finally {
+      setLoading(false);
       setGuideEmailId('');
       setGuideName('');
       setSelectedCourse('');
-    } catch (error) {
-      console.error("Error assigning coordinator:", error);
-      toast.error(`❌ Failed to assign coordinator: ${error.message}`);
     }
   };
 
   return (
-    <div className="cont">
-      <div className="dashboard-content">
-        <h2>Assign Coordinator</h2>
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="guideEmailId">Coordinator Email ID:</label>
+    <div className="assign-coordinator-container">
+      <h2>Assign Coordinator</h2>
+      <form className="assign-coordinator-form" onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>Email ID:</label>
           <input
             type="email"
-            id="guideEmailId"
             value={guideEmailId}
             onChange={(e) => setGuideEmailId(e.target.value)}
             required
           />
+        </div>
 
-          <label htmlFor="guideName">Coordinator Name:</label>
+        <div className="form-group">
+          <label>Name:</label>
           <input
             type="text"
-            id="guideName"
             value={guideName}
             onChange={(e) => setGuideName(e.target.value)}
             required
           />
+        </div>
 
-          <label htmlFor="selectedCourse">Course Assigned:</label>
+        <div className="form-group">
+          <label>Course:</label>
           <select
-            id="selectedCourse"
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
             required
           >
-            <option value="">Select a Course</option> {/* Default empty option */}
-            {courses.map((course) => (
+            <option value="">Select a Course</option>
+            {courses.map(course => (
               <option key={course} value={course}>{course}</option>
             ))}
           </select>
+        </div>
 
-          <button type="submit">Assign Coordinator</button>
-        </form>
-      </div>
+        <button type="submit" disabled={loading}>
+          {loading ? "Assigning..." : "Assign Coordinator"}
+        </button>
+      </form>
     </div>
   );
 }

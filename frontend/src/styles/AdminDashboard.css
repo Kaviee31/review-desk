@@ -1,203 +1,346 @@
-/* You can copy the entire content of TeacherDashboard.css here */
+/* src/styles/AdminDashboard.css */
 
-/* Background with a blurred overlay */
-.app-container {
-    background: url("../assets/teach.webp") no-repeat center center/cover;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    padding: 10px; /* for safety on small screens */
-    box-sizing: border-box;
-    overflow: hidden;
-    padding-left: 220px;
+/* Main container for the entire Admin Dashboard page */
+.cont {
+  display: flex; /* Enables flexbox for its direct children (sidebar and content) */
+  min-height: 100vh; /* Ensures it takes full viewport height */
+  background: url("../assets/teach.webp") no-repeat center center/cover; /* Background image */
+  position: relative; /* For the overlay */
+  box-sizing: border-box; /* Include padding in element's total width and height */
+  overflow: hidden; /* Hide overflow if content goes beyond screen */
+  color: white; /* Default text color for the container */
+  font-family: 'Inter', sans-serif; /* Using Inter for a modern look */
 }
 
-/* Glassmorphism background overlay */
-.app-container::before {
+/* Glassmorphism background overlay for .cont */
+.cont::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Removed the background color to eliminate the black overlay */
+  backdrop-filter: blur(8px); /* Increased blur for more prominent glass effect */
+  z-index: 0; /* Behind the content */
+}
+
+/* Admin Sidebar for buttons */
+.admin-sidebar {
+  flex: 0 0 220px; /* Slightly wider sidebar for better button fit */
+  background: rgba(255, 255, 255, 0.08); /* More subtle transparency */
+  padding: 30px 20px; /* Increased vertical padding */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1; /* Above the background overlay */
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.5); /* Stronger shadow for depth */
+  border-right: 1px solid rgba(255, 255, 255, 0.18); /* Sharper border */
+  overflow-y: auto; /* Allow scrolling if many buttons */
+  position: sticky; /* Sticky sidebar for better UX */
+  top: 0; /* Align to top */
+  height: 100vh; /* Make it full height */
+}
+
+.admin-sidebar h2 {
+  font-size: 26px; /* Slightly larger title */
+  font-weight: 700; /* Bolder font */
+  margin-bottom: 40px; /* More space below title */
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(0, 195, 255, 0.6); /* Subtle text glow */
+}
+
+.admin-sidebar button {
+  width: 100%;
+  padding: 14px 15px; /* Larger padding for clickability */
+  margin-bottom: 20px; /* More space between buttons */
+  border: none;
+  border-radius: 10px; /* Slightly more rounded corners */
+  cursor: pointer;
+  font-weight: 600; /* Medium bold */
+  font-size: 17px; /* Slightly larger font */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smoother transition */
+  background: rgba(0, 123, 255, 0.8); /* Solid blue-ish background */
+  color: white;
+  box-shadow: 0 6px 12px rgba(0, 123, 255, 0.3); /* Defined shadow */
+  letter-spacing: 0.5px; /* Slight letter spacing */
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2); /* Subtle text shadow */
+}
+
+.admin-sidebar button.active { /* Style for the currently selected button */
+  background: linear-gradient(135deg, #00c3ff, #007bff); /* Vibrant gradient */
+  transform: translateY(-3px) scale(1.05); /* Lift and enlarge */
+  box-shadow: 0 8px 20px rgba(0, 195, 255, 0.7); /* More prominent glow */
+  border: 1px solid rgba(255, 255, 255, 0.5); /* White border on active */
+}
+
+.admin-sidebar button:hover:not(.active) {
+  background: linear-gradient(135deg, #008ae6, #005bb5); /* Darker gradient on hover */
+  transform: translateY(-2px); /* Subtle lift */
+  box-shadow: 0 5px 15px rgba(0, 123, 255, 0.5); /* Enhanced hover shadow */
+}
+
+
+/* Dashboard Content (Right side for forms) */
+.dashboard-content {
+  flex-grow: 1; /* Takes up remaining space */
+  max-width: 750px; /* Slightly larger max-width for forms */
+  margin: 30px auto; /* Increased vertical margin, horizontally centered */
+  background: rgba(255, 255, 255, 0.18); /* Slightly more opaque glassmorphism */
+  padding: 40px; /* Increased padding inside the form */
+  border-radius: 20px; /* More rounded corners */
+  z-index: 1;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.4); /* Stronger, deeper shadow */
+  backdrop-filter: blur(25px); /* Increased blur for more prominent glass effect */
+  border: 1px solid rgba(255, 255, 255, 0.25); /* Sharper, slightly more visible border */
+  overflow-y: auto; /* Enable scrolling for forms if content overflows */
+  position: relative; /* Needed for pseudo-elements or specific positioning */
+}
+
+/* Add a subtle inner shadow or overlay to content for more depth */
+.dashboard-content::before {
     content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(5px);
-    z-index: 0;
+    border-radius: 20px;
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1); /* Inner glow */
+    pointer-events: none; /* Allows clicks to pass through */
+    z-index: -1; /* Behind other content */
 }
 
-/* Dashboard Container */
-.dashboard-content {
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
-    padding: 25px 30px;
-    border-radius: 16px;
-    width: 360px;
-    max-height: 90vh;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    z-index: 1;
-    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
 
-/* Headings */
-.dashboard-content h1, 
-.dashboard-content h2 {
-    text-align: center;
-    color: #fff;
-    font-size: 22px;
-    font-weight: 600;
-    margin-bottom: 15px;
+/* Headings within forms */
+.dashboard-content h2,
+.dashboard-content h3 {
+  text-align: center;
+  color: #fff;
+  font-size: 28px; /* Larger heading for forms */
+  font-weight: 700; /* Bolder */
+  margin-bottom: 35px; /* More space below form headings */
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); /* Subtle glow for headings */
 }
 
 /* Labels */
 .dashboard-content label {
-    margin-top: 8px;
-    align-self: flex-start;
-    color: #ddd;
-    font-weight: bold;
-    font-size: 14px;
+  margin-top: 20px; /* More space above labels */
+  margin-bottom: 5px; /* Space between label and input */
+  display: block;
+  color: #e0e0e0; /* Lighter gray for labels */
+  font-weight: 600; /* Slightly bolder labels */
+  font-size: 15px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 /* Inputs & Select */
-.dashboard-content input, 
+.dashboard-content input,
 .dashboard-content select {
-    width: 100%;
-    padding: 10px;
-    margin: 6px 0;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border-radius: 8px;
-    font-size: 15px;
-    transition: all 0.3s ease-in-out;
+  width: 100%;
+  padding: 12px 15px; /* Larger padding for inputs */
+  border: 1px solid rgba(255, 255, 255, 0.35); /* Slightly stronger border */
+  background: rgba(255, 255, 255, 0.15); /* Slightly more transparent input background */
+  color: white;
+  border-radius: 10px; /* More rounded inputs */
+  font-size: 16px;
+  transition: all 0.4s ease-in-out; /* Slower, smoother transition */
+  box-sizing: border-box;
+  text-shadow: 0 0 5px rgba(0,0,0,0.1); /* Subtle text shadow inside inputs */
 }
 
 .dashboard-content input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6); /* Clearer placeholder text */
 }
 
-.dashboard-content input:focus, 
+.dashboard-content input:focus,
 .dashboard-content select:focus {
-    border-color: #00c3ff;
-    outline: none;
-    box-shadow: 0 0 10px rgba(0, 195, 255, 0.6);
+  border-color: #5ac8fa; /* Brighter focus border */
+  outline: none;
+  box-shadow: 0 0 15px rgba(90, 200, 250, 0.8); /* Stronger focus glow */
+  background: rgba(255, 255, 255, 0.25); /* Less transparent on focus */
 }
 
-/* Button */
-.dashboard-content button {
-    margin-top: 12px;
-    padding: 12px;
-    width: 100%;
-    background: linear-gradient(135deg, #00c3ff, #007bff);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 16px;
-    transition: all 0.3s ease-in-out;
-    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.4);
+/* Form Submit Button */
+.dashboard-content button[type="submit"] {
+  margin-top: 30px; /* More space above submit button */
+  padding: 15px; /* Larger padding */
+  width: 100%;
+  background: linear-gradient(135deg, #00e676, #00c853); /* Fresh green gradient */
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 18px; /* Larger font */
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 6px 15px rgba(0, 200, 83, 0.5); /* Stronger green shadow */
+  letter-spacing: 1px; /* Emphasize text */
 }
 
-.dashboard-content button:hover {
-    background: linear-gradient(135deg, #007bff, #00c3ff);
-    transform: scale(1.05);
+.dashboard-content button[type="submit"]:hover {
+  background: linear-gradient(135deg, #00c853, #00e676); /* Reverse gradient on hover */
+  transform: translateY(-3px) scale(1.02); /* Lift and slight enlarge */
+  box-shadow: 0 8px 20px rgba(0, 200, 83, 0.7); /* More intense shadow */
 }
 
-/* Scrollbar for overflow */
+.dashboard-content button[type="submit"]:disabled {
+  background: rgba(150, 150, 150, 0.5); /* Grayed out when disabled */
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  color: rgba(255,255,255,0.7);
+}
+
+/* Scrollbar for overflow in content area */
 .dashboard-content::-webkit-scrollbar {
-    width: 6px;
+  width: 8px; /* Wider scrollbar */
 }
 .dashboard-content::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.4); /* More visible scrollbar thumb */
+  border-radius: 8px;
+}
+.dashboard-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1); /* Subtle track */
     border-radius: 8px;
 }
 
-/* Mobile Responsive */
-@media (max-width: 500px) {
-    .dashboard-content {
-        width: 100%;
-        padding: 20px;
-        max-height: 95vh;
-    }
-}
-
-.dashboard-content textarea {
-    width: 100%;
-    padding: 10px;
-    margin: 6px 0;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border-radius: 8px;
-    font-size: 15px;
-    resize: vertical;
-    min-height: 100px;
-    transition: all 0.3s ease-in-out;
-}
-
-.dashboard-content textarea::placeholder {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.dashboard-content textarea:focus {
-    border-color: #00c3ff;
-    outline: none;
-    box-shadow: 0 0 10px rgba(0, 195, 255, 0.6);
-}
-
-
-.teacher-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 200px;
-    height: 100vh;
-    background: linear-gradient(to bottom, rgba(0, 123, 255, 0.3), rgba(0, 60, 130, 0.4));
-    backdrop-filter: blur(10px);
-    display: flex;
+/* Mobile Responsive adjustments */
+@media (max-width: 767px) {
+  .cont {
     flex-direction: column;
-    align-items: center;
-    padding: 20px 10px;
-    box-shadow: 4px 0 12px rgba(0,0,0,0.3);
-    z-index: 100;
-}
+    padding: 15px; /* Slightly more padding on mobile */
+  }
 
-.sidebar-title {
-    font-size: 28px;
-    color: white;
-    margin-bottom: 30px;
-    font-weight: bold;
-}
-
-.sidebar-links {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+  .admin-sidebar {
     width: 100%;
-}
+    flex: none;
+    height: auto; /* Allow sidebar height to be determined by content */
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    padding-bottom: 20px;
+    margin-bottom: 20px; /* Space between sidebar and content */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3); /* Lighter shadow on mobile */
+  }
 
-.sidebar-links button {
-    background: rgba(255, 255, 255, 0.15);
-    border: none;
-    color: white;
-    font-size: 16px;
-    padding: 10px 15px;
+  .admin-sidebar h2 {
+      margin-bottom: 20px; /* Adjust margin */
+      font-size: 24px;
+  }
+
+  .admin-sidebar .flex-col {
+      flex-direction: row; /* Horizontal buttons on mobile */
+      justify-content: center;
+      gap: 15px; /* Increase gap */
+      width: 100%;
+  }
+
+  .admin-sidebar button {
+      margin-bottom: 0;
+      flex-grow: 1;
+      font-size: 15px; /* Slightly smaller font for mobile buttons */
+      padding: 10px 12px;
+  }
+
+  .dashboard-content {
     width: 100%;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background 0.3s ease-in-out, transform 0.2s ease;
+    max-width: 100%; /* Override max-width on mobile to take full width */
+    margin: 0; /* Remove margin to take full width */
+    border-radius: 16px;
+    max-height: 85vh; /* Adjust max height for scrolling on small screens */
+    padding: 25px; /* Reduce padding on mobile */
+  }
+
+  .dashboard-content h2,
+  .dashboard-content h3 {
+      font-size: 24px; /* Adjust heading size */
+      margin-bottom: 25px;
+  }
+
+  .dashboard-content label {
+      margin-top: 15px; /* Adjust label margin */
+  }
+}
+.dashboard-content select {
+  background: rgba(255, 255, 255, 0.25);  /* light glass background */
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 10px rgba(0, 195, 255, 0.4); /* light blue glow */
+  backdrop-filter: blur(10px);
 }
 
-.sidebar-links button:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.05);
+.dashboard-content option {
+  background: rgba(255, 255, 255, 0.15);  /* light semi-transparent for dropdown items */
+  color: #000;  /* Black text for dropdown items for better visibility */
+}
+
+.cont {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(to right, #6a11cb, #2575fc);
+  padding: 20px;
+}
+
+.dashboard-content {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  width: 100%;
+  max-width: 500px;
+  color: #fff;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+input[type="date"] {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  outline: none;
+  transition: 0.3s;
+}
+
+input[type="date"]:focus {
+  border-color: #00c3ff;
+  box-shadow: 0 0 10px rgba(0, 195, 255, 0.5);
+}
+
+.submit-button {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #00c3ff, #007bff);
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  color: #fff;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.submit-button:hover {
+  background: linear-gradient(135deg, #007bff, #00c3ff);
+  transform: scale(1.05);
 }

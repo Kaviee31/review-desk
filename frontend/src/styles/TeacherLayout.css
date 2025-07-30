@@ -67,3 +67,45 @@
   box-sizing: border-box;
   background-color: transparent;
 }
+
+.role-switch {
+  margin-left: 10px;
+  padding: 5px;
+  background-color: #f0f4f8;
+  border-radius: 5px;
+}
+
+.teacher-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 30px;
+  background: #293241;
+  color: white;
+  font-weight: 500;
+}
+
+.navbar-links button {
+  margin-right: 15px;
+  background: transparent;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+.navbar-links button.active {
+  border-bottom: 2px solid #ffcc00;
+}
+.role-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.role-switcher select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+  background: #fff;
+}

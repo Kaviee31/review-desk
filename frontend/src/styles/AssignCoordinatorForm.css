@@ -1,70 +1,122 @@
-/* src/styles/AssignCoordinatorForm.css */
-.assign-coordinator-form-container {
+:root {
+  --primary-color: #4a63e7;
+  --secondary-color: #f4f7fb;
+  --accent-color: #ffb347;
+  --border-color: rgba(255, 255, 255, 0.3);
+  --text-dark: #ffffff;
+  --input-bg: rgba(255, 255, 255, 0.15);
+}
+
+body {
+  background: linear-gradient(135deg, #3b2f80, #4a63e7, #2f58a7);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  color: var(--text-dark);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.assign-coordinator-container {
   max-width: 500px;
-  margin: 40px auto;
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  background-color: #ffffff;
-  font-family: 'Arial', sans-serif;
-}
-
-.assign-coordinator-form-container h2 {
+  padding: 40px;
+  margin: 50px auto;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   text-align: center;
-  color: #333;
+  color: #fff;
+}
+
+.assign-coordinator-container h2 {
+  font-size: 28px;
+  font-weight: bold;
   margin-bottom: 30px;
-  font-size: 1.8em;
-  font-weight: 600;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
-.assign-coordinator-form .form-group {
-  margin-bottom: 20px;
-}
-
-.assign-coordinator-form .form-group label {
+.assign-coordinator-form label {
   display: block;
-  margin-bottom: 8px;
-  color: #555;
-  font-weight: 500;
-}
-
-.assign-coordinator-form .form-group input[type="email"],
-.assign-coordinator-form .form-group input[type="text"] {
-  width: calc(100% - 20px); /* Adjust for padding */
-  padding: 12px 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 1em;
-  box-sizing: border-box; /* Include padding and border in the element's total width and height */
-  transition: border-color 0.3s ease;
-}
-
-.assign-coordinator-form .form-group input[type="email"]:focus,
-.assign-coordinator-form .form-group input[type="text"]:focus {
-  border-color: #007bff;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-}
-
-.assign-coordinator-form .submit-button {
-  width: 100%;
-  padding: 14px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1.1em;
+  text-align: left;
+  margin: 15px 0 8px;
   font-weight: 600;
+  color: #fff;
+}
+
+.assign-coordinator-form input,
+.assign-coordinator-form select {
+  width: 100%;
+  padding: 15px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.assign-coordinator-form input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.assign-coordinator-form input:focus,
+.assign-coordinator-form select:focus {
+  border-color: #5ac8fa;
+  box-shadow: 0 0 15px rgba(90, 200, 250, 0.8);
+  background: rgba(255, 255, 255, 0.25);
+  outline: none;
+}
+
+/* Modern glass dropdown style */
+.assign-coordinator-form select {
+  width: 100%;
+  padding: 15px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1); /* lighter glass */
+  color: #ffffff; /* white text */
+  font-size: 16px;
+  backdrop-filter: blur(20px);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 20px;
+}
+
+.assign-coordinator-form select option {
+  background-color: rgba(67, 101, 248, 0.8);
+  color: #fff;
+}
+
+/* Button */
+.assign-coordinator-form button {
+  margin-top: 30px;
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #00e676, #00c853);
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 8px 20px rgba(0, 200, 83, 0.6);
+  transition: 0.3s ease;
 }
 
-.assign-coordinator-form .submit-button:hover {
-  background-color: #0056b3;
-  transform: translateY(-2px);
-}
-
-.assign-coordinator-form .submit-button:active {
-  transform: translateY(0);
-  background-color: #004085;
+.assign-coordinator-form button:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 25px rgba(0, 200, 83, 0.8);
 }

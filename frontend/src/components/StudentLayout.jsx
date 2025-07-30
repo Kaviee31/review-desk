@@ -25,14 +25,14 @@ function StudentLayout() {
         <div className="navbar-logo">📘 ReviewDesk</div>
         <div className="navbar-links">
           <button
-            className={isActive("/student-dashboard") ? "active" : ""}
-            onClick={() => navigate("/student-dashboard")}
+            className={isActive("/student/dashboard") ? "active" : ""}
+            onClick={() => navigate("/student/dashboard")}
           >
             <BookOpenCheck size={18} /> Dashboard
           </button>
           <button
-            className={isActive("/student-dashboard/courses") ? "active" : ""}
-            onClick={() => navigate("/student-dashboard/courses")}
+            className={isActive("/student/courses") ? "active" : ""}
+            onClick={() => navigate("/student/courses")}
           >
             <User2 size={18} /> My Courses
           </button>

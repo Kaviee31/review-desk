@@ -74,7 +74,7 @@ body {
   backdrop-filter: blur(20px);
   border-radius: 16px;
   padding: 30px;
-  max-width: 480px;
+  max-width: 600px;
   width: 100%;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -86,28 +86,29 @@ body {
 /* Heading */
 .dashboard-content h2 {
   text-align: center;
-  font-size: 24px;
+  font-size: 26px;
   margin-bottom: 10px;
   color: #fff;
 }
 
-/* Inputs and Textarea */
-.dashboard-content input,
+/* Inputs */
+.dashboard-content input[type="text"],
+.dashboard-content input[type="file"],
 .dashboard-content textarea {
   width: 100%;
-  padding: 12px 15px;
-  background: rgba(255, 255, 255, 0.2);
+  padding: 15px 18px;
+  background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
+  border-radius: 12px;
   color: white;
   font-size: 15px;
   outline: none;
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
 }
 
-.dashboard-content textarea {
-  min-height: 120px;
-  resize: vertical;
+.dashboard-content input[type="file"] {
+  padding: 12px 10px;
 }
 
 .dashboard-content input::placeholder,
@@ -118,15 +119,23 @@ body {
 .dashboard-content input:focus,
 .dashboard-content textarea:focus {
   border-color: #00c3ff;
-  box-shadow: 0 0 10px rgba(0, 195, 255, 0.5);
+  box-shadow: 0 0 12px rgba(0, 195, 255, 0.7), inset 0 0 8px rgba(0, 195, 255, 0.4);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Textarea specific beautiful design */
+.dashboard-content textarea {
+  min-height: 130px;
+  resize: vertical;
 }
 
 /* Submit Button */
-.dashboard-content button[type="submit"] {
+.dashboard-content button[type="submit"],
+.dashboard-content button {
   padding: 12px;
   background: linear-gradient(135deg, #00c3ff, #007bff);
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   color: white;
   font-size: 16px;
   font-weight: bold;
@@ -135,9 +144,51 @@ body {
   box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
 }
 
-.dashboard-content button[type="submit"]:hover {
+.dashboard-content button[type="submit"]:hover,
+.dashboard-content button:hover {
   background: linear-gradient(135deg, #007bff, #00c3ff);
   transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.5);
+}
+
+/* Table Styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  padding: 12px;
+  text-align: center;
+  color: white;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+thead {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+/* Announcements Section */
+.announcement-section {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.announcement-section h3 {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: #fff;
+}
+
+.announcement-item {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  font-size: 15px;
+  color: rgba(255,255,255,0.9);
 }
 
 /* Responsive */
@@ -158,4 +209,36 @@ body {
     gap: 10px;
   }
 }
+.program-dropdown {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  margin-bottom: 15px;
+  border: 2px solid #6366f1;
+  border-radius: 8px;
+  background: linear-gradient(to right, #c084fc, #6366f1);
+  color: white;
+  outline: none;
+  appearance: none;
+}
 
+.program-dropdown option {
+  color: black;
+  background-color: white;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.send-button {
+  padding: 10px 16px;
+  background-color: #0a66c2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
