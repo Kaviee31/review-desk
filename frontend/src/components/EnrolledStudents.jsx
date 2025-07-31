@@ -24,6 +24,7 @@ function EnrolledStudents() {
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
   // Modified to store objects with pdfPath, pptPath, otherPath, and uploadedAt
   const [latestReviewFiles, setLatestReviewFiles] = useState({});
+  const [studentCounts, setStudentCounts] = useState({});
 
   // States for the student review marks modal
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -66,6 +67,26 @@ function EnrolledStudents() {
     });
     return () => unsubscribe(); // Cleanup subscription
   }, []);
+
+
+  useEffect(() => {
+  const fetchCounts = async () => {
+    try {
+      const counts = {};
+      for (const program of allPrograms) {
+        const response = await axios.get(`${API_BASE_URL}/teacher-students/${teacherEmail}?courseName=${program}`);
+        counts[program] = response.data.length;
+      }
+      setStudentCounts(counts);
+    } catch (err) {
+      console.error("Error fetching student counts", err);
+    }
+  };
+
+  if (teacherEmail) {
+    fetchCounts();
+  }
+}, [teacherEmail]);
 
   useEffect(() => {
     document.title = "Enrolled Students";
@@ -736,28 +757,19 @@ function EnrolledStudents() {
       </h1>
 
       {!selectedProgram && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 w-full max-w-4xl">
-          {allPrograms.map((program) => (
-            <button
-              key={program}
-              onClick={() => setSelectedProgram(program)}
-              className={`font-semibold py-4 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-75
-                ${pgPrograms.includes(program) ?
-                  (program === "MCA(R)" ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500" :
-                    program === "MCA(SS)" ? "bg-green-600 hover:bg-green-700 focus:ring-green-500" :
-                      program === "MTECH(R)" ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" :
-                        "bg-red-600 hover:bg-red-700 focus:ring-red-500") :
-                  (ugPrograms.includes(program) ?
-                    "bg-orange-500 hover:bg-orange-600 focus:ring-orange-400" : "")
-                }
-                text-white
-              `}
-            >
-              {program}
-            </button>
-          ))}
-        </div>
-      )}
+  <div className="programs-grid">
+    {allPrograms.map((program) => (
+      <div
+        key={program}
+        className="program-card vibrant"
+        onClick={() => setSelectedProgram(program)}
+      >
+        <h3>{program}</h3>
+        <p>{studentCounts[program] ?? 0} Student{(studentCounts[program] ?? 0) === 1 ? "" : "s"}</p>
+      </div>
+    ))}
+  </div>
+)}
 
       {selectedProgram && (
         <div className="w-full max-w-6xl bg-white p-6 rounded-lg shadow-xl" role="main">
