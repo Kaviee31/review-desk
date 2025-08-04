@@ -9,7 +9,8 @@ import ChatUser from "./models/ChatUser.js";
 import bot from './telegramBot.js';
 import TelegramBot from "node-telegram-bot-api";
 
-
+const zerothReviewRoutes = require('./routes/zerothReview');
+app.use('/api/zeroth-review', zerothReviewRoutes);
 
 dotenv.config();
 

@@ -9,6 +9,7 @@ import * as XLSX from "xlsx";
 import { collection, query, orderBy, limit, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ZerothReviewForm from './ZerothReviewForm';
 import '../styles/EnrolledStudents.css';
 
 const UNSEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/134/134935.png";
@@ -22,10 +23,14 @@ function EnrolledStudents() {
   const [teacherUid, setTeacherUid] = useState(null);
   const [selectedStudentRegisterNumber, setSelectedStudentRegisterNumber] = useState(null);
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
+   const [loading, setLoading] = useState(true);
+    const [zerothReviewComments, setZerothReviewComments] = useState({});
+  const [newComments, setNewComments] = useState({});
   // Modified to store objects with pdfPath, pptPath, otherPath, and uploadedAt
   const [latestReviewFiles, setLatestReviewFiles] = useState({});
   const [studentCounts, setStudentCounts] = useState({});
-
+ const [selectedStudent, setSelectedStudent] = useState(null);
+  const [zerothReviews, setZerothReviews] = useState({});
   // States for the student review marks modal
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [currentStudentForReview, setCurrentStudentForReview] = useState(null); // The student object whose reviews are being viewed
@@ -107,7 +112,58 @@ function EnrolledStudents() {
     }
   }, [API_BASE_URL]);
 
+useEffect(() => {
+    if (selectedProgram) {
+      fetchStudents();
+    }
+  }, [selectedProgram]);
 
+  const fetchStudents = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/students?program=${selectedProgram}`);
+      const studentData = res.data;
+      setStudents(studentData);
+      fetchZerothReviewComments(studentData);
+    } catch (err) {
+      console.error("Error fetching students:", err);
+    }
+  };
+
+  const fetchZerothReviewComments = async (students) => {
+    try {
+      const registerNumbers = students.map((s) => s.registerNumber);
+      const res = await axios.post(`${API_BASE_URL}/zeroth-review/comments`, { registerNumbers });
+      const commentsMap = res.data.reduce((acc, item) => {
+        acc[item.registerNumber] = item.comment;
+        return acc;
+      }, {});
+      setZerothReviewComments(commentsMap);
+    } catch (err) {
+      console.error("Error fetching zeroth review comments:", err);
+    }
+  };
+
+  const handleCommentChange = (registerNumber, value) => {
+    setNewComments((prev) => ({ ...prev, [registerNumber]: value }));
+  };
+
+  const handleSubmitComment = async (registerNumber) => {
+    try {
+      const comment = newComments[registerNumber];
+      if (!comment.trim()) return;
+
+      await axios.post(`${API_BASE_URL}/zeroth-review/submit`, {
+        registerNumber,
+        comment,
+        teacherEmail,
+      });
+
+      setZerothReviewComments((prev) => ({ ...prev, [registerNumber]: comment }));
+      setNewComments((prev) => ({ ...prev, [registerNumber]: "" }));
+    } catch (err) {
+      console.error("Error submitting zeroth review comment:", err);
+    }
+  };
   useEffect(() => {
     if (selectedProgram) {
       fetchReviewDeadlines(selectedProgram);
@@ -817,6 +873,7 @@ function EnrolledStudents() {
                             />
                           </td>
                           <td className="py-3 px-6 text-center">
+                            
                             <input
                               type="number"
                               value={student.marks2}
@@ -1311,7 +1368,72 @@ function EnrolledStudents() {
             </h3>
             <p className="text-gray-600 mb-4">
               Program: {selectedProgram}
-            </p>
+            </p>            <table className="mt-4 w-full border border-gray-300 rounded-md">
+  <thead className="bg-gray-100 text-sm text-gray-700">
+    <tr>
+      <th className="p-2 text-left">Zeroth Review Files</th>
+      <th className="p-2 text-left">Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td className="p-2">
+        {latestReviewFiles[`${currentStudentForReview.registerNumber}_zeroth`]?.pdfPath && (
+          <a
+            href={`${API_BASE_URL}/${latestReviewFiles[`${currentStudentForReview.registerNumber}_zeroth`].pdfPath}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline block"
+          >
+            PDF
+          </a>
+        )}
+        {latestReviewFiles[`${currentStudentForReview.registerNumber}_zeroth`]?.pptPath && (
+          <a
+            href={`${API_BASE_URL}/${latestReviewFiles[`${currentStudentForReview.registerNumber}_zeroth`].pptPath}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline block"
+          >
+            PPT
+          </a>
+        )}
+        {latestReviewFiles[`${currentStudentForReview.registerNumber}_zeroth`]?.otherPath && (
+          <a
+            href={`${API_BASE_URL}/${latestReviewFiles[`${currentStudentForReview.registerNumber}_zeroth`].otherPath}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline block"
+          >
+            Other
+          </a>
+        )}
+      </td>
+      <td className="p-2">
+        <input
+          type="text"
+          placeholder="Enter comment"
+          value={newComments[currentStudentForReview.registerNumber] || ""}
+          onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, e.target.value)}
+          className="w-full p-1 border border-gray-300 rounded-md text-sm"
+        />
+        <button
+          onClick={() => handleSubmitComment(currentStudentForReview.registerNumber)}
+          className="mt-1 text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded"
+        >
+          Submit
+        </button>
+        {zerothReviewComments[currentStudentForReview.registerNumber] && (
+          <p className="mt-1 text-xs text-gray-600 italic">
+            Saved: {zerothReviewComments[currentStudentForReview.registerNumber]}
+          </p>
+        )}
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
 
             {loadingReviewData ? (
               <div className="flex justify-center items-center h-32">
@@ -1377,6 +1499,7 @@ function EnrolledStudents() {
                           </tr>
                         ))}
                       </tbody>
+                      
                       <tfoot className="bg-gray-100 text-gray-800 uppercase text-sm leading-normal font-semibold">
                         <tr>
                           <td className="py-2 px-4 text-right border-t border-gray-300" colSpan="2">Total Awarded Marks (R1):</td>
@@ -1425,6 +1548,7 @@ function EnrolledStudents() {
           </div>
         </div>
       )}
+      
     </div>
   );
 }
