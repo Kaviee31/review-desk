@@ -49,6 +49,13 @@ const enrollmentSchema = new mongoose.Schema({
     r2_mark: { type: Number, default: 0 },
     r3_mark: { type: Number, default: 0 },
   }],
+  // NEW: Fields for Viva Voce marks
+  viva: {
+    guide: { type: Number, default: 0 },
+    panel: { type: Number, default: 0 },
+    external: { type: Number, default: 0 },
+  },
+  viva_total_awarded: { type: Number, default: 0 },
   // NEW FIELDS FOR UG STUDENTS' PROJECT DATA
   projectName: { type: String }, // Stores the project name for the group
   groupRegisterNumbers: { type: [String], default: [] } // Stores all register numbers in the UG group
@@ -308,7 +315,7 @@ app.get("/teacher-ug-projects/:teacherEmail/:courseName", async (req, res) => {
             Assessment2: "$Assessment2",
             Assessment3: "$Assessment3",
             Total: "$Total",
-    
+            viva_total_awarded: "$viva_total_awarded", // Include viva marks for each member
             Contact: null // Placeholder, you might want to fetch this
           }},
          
@@ -316,18 +323,21 @@ app.get("/teacher-ug-projects/:teacherEmail/:courseName", async (req, res) => {
           Assessment2: { $first: "$Assessment2" },
           Assessment3: { $first: "$Assessment3" },
           Total: { $first: "$Total" }, // Include Total as per request for consistency
+          viva_total_awarded: { $first: "$viva_total_awarded" }, // Get the first viva total for the project
           groupRegisterNumbers: { $addToSet: "$registerNumber" },
           reviewsAssessment: { $first: "$reviewsAssessment" } // Get the first reviewsAssessment found for the project
         }
       },
       {
         $project: {
+          _id: 0,
           projectName: "$_id",
           projectMembers: 1, // Array of { registerNumber, studentName, ... }
           Assessment1: 1, // Use the fetched Assessment1
           Assessment2: 1, // Use the fetched Assessment2
           Assessment3: 1, // Use the fetched Assessment3
           Total: 1,
+          viva_total_awarded: 1, // Pass through the viva total
           groupRegisterNumbers: 1,
           reviewsAssessment: 1 // Pass through the first found reviewsAssessment
         }
@@ -562,45 +572,46 @@ app.get("/coordinator-reviews/:coordinatorId/:program", async (req, res) => {
 });
 
 
+// MODIFIED: Get student review marks, now includes viva marks
 app.get("/student-review-marks/:registerNumber/:courseName", async (req, res) => {
   const { registerNumber, courseName } = req.params;
   try {
-    // First, find the current student's enrollment
     const currentStudentEnrollment = await Enrollment.findOne({ registerNumber, courseName });
-
     if (!currentStudentEnrollment) {
       return res.status(404).json({ error: "Student enrollment not found for this course." });
     }
 
-    // If it's a UG project student and has a project name and group members
-    if (currentStudentEnrollment.projectName && currentStudentEnrollment.groupRegisterNumbers && currentStudentEnrollment.groupRegisterNumbers.length > 0) {
-     
+    if (currentStudentEnrollment.projectName && currentStudentEnrollment.groupRegisterNumbers?.length > 0) {
       const projectMemberWithReview = await Enrollment.findOne({
         projectName: currentStudentEnrollment.projectName,
         courseName: courseName,
-        reviewsAssessment: { $exists: true, $not: { $size: 0 } } // Find one with non-empty reviewsAssessment
+        reviewsAssessment: { $exists: true, $not: { $size: 0 } }
       });
 
       if (projectMemberWithReview) {
-        return res.status(200).json({ reviewsAssessment: projectMemberWithReview.reviewsAssessment || [] });
+        return res.status(200).json({
+          reviewsAssessment: projectMemberWithReview.reviewsAssessment || [],
+          viva: projectMemberWithReview.viva || { guide: 0, panel: 0, external: 0 },
+          viva_total_awarded: projectMemberWithReview.viva_total_awarded || 0,
+        });
       }
-      // If no member of the project has reviewsAssessment, return empty
-      return res.status(200).json({ reviewsAssessment: [] });
-
+      return res.status(200).json({ reviewsAssessment: [], viva: { guide: 0, panel: 0, external: 0 }, viva_total_awarded: 0 });
     } else {
-      // For PG students or UG students not part of a group/project
-      return res.status(200).json({ reviewsAssessment: currentStudentEnrollment.reviewsAssessment || [] });
+      return res.status(200).json({
+        reviewsAssessment: currentStudentEnrollment.reviewsAssessment || [],
+        viva: currentStudentEnrollment.viva || { guide: 0, panel: 0, external: 0 },
+        viva_total_awarded: currentStudentEnrollment.viva_total_awarded || 0,
+      });
     }
-
   } catch (error) {
     console.error("Error fetching student review marks:", error);
     res.status(500).json({ error: "Failed to fetch student review marks." });
   }
 });
 
-// POST/PUT student's review marks for a specific program
+// MODIFIED: POST student's review marks, now includes viva marks
 app.post("/student-review-marks", async (req, res) => {
-  const { registerNumber, courseName, reviewsAssessment } = req.body;
+  const { registerNumber, courseName, reviewsAssessment, viva, viva_total_awarded } = req.body;
   if (!registerNumber || !courseName || !Array.isArray(reviewsAssessment)) {
     return res.status(400).json({ error: "Missing required fields or invalid format." });
   }
@@ -608,15 +619,21 @@ app.post("/student-review-marks", async (req, res) => {
   try {
     const updatedEnrollment = await Enrollment.findOneAndUpdate(
       { registerNumber, courseName },
-      { $set: { reviewsAssessment: reviewsAssessment } },
-      { new: true, upsert: false } // upsert: false because enrollment should already exist
+      { 
+        $set: { 
+          reviewsAssessment: reviewsAssessment,
+          viva: viva,
+          viva_total_awarded: viva_total_awarded,
+        } 
+      },
+      { new: true, upsert: false }
     );
 
     if (!updatedEnrollment) {
       return res.status(404).json({ error: "Student enrollment not found for this course." });
     }
 
-    res.status(200).json({ message: "Student review marks saved successfully!", data: updatedEnrollment.reviewsAssessment });
+    res.status(200).json({ message: "Student review marks saved successfully!", data: updatedEnrollment });
   } catch (error) {
     console.error("Error saving student review marks:", error);
     res.status(500).json({ error: "Failed to save student review marks." });

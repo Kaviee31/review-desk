@@ -46,6 +46,9 @@ function EnrolledStudents() {
   const [selectedProject, setSelectedProject] = useState(null); // The project object selected from the projects table
   const [studentsInSelectedProject, setStudentsInSelectedProject] = useState([]); // Students belonging to the selected project
 
+    const [vivaMarks, setVivaMarks] = useState({ guide: 0, panel: 0, external: 0 });
+  const [vivaTotalAwarded, setVivaTotalAwarded] = useState(0);
+
   // Review Deadlines State
   const [reviewDeadlines, setReviewDeadlines] = useState({
     zerothReviewDeadline: null,
@@ -1455,6 +1458,9 @@ useEffect(() => {
                           <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R3)</th>
                           <th className="py-2 px-4 text-center border-b border-gray-300">R3 Max</th>
                           <th className="py-2 px-4 text-center border-b border-gray-300">R3 Awarded</th>
+                          <th className="py-2 px-4 text-left border-b border-gray-300">Viva</th>
+                          
+                          <th className="py-2 px-4 text-center border-b border-gray-300">Awarded Marks</th>
                         </tr>
                       </thead>
                       <tbody className="text-gray-700 text-sm">
@@ -1496,6 +1502,7 @@ useEffect(() => {
                                 className="w-24 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
                               />
                             </td>
+                            
                           </tr>
                         ))}
                       </tbody>
