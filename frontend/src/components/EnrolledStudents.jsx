@@ -54,6 +54,7 @@ function EnrolledStudents() {
     zerothReviewDeadline: null,
     firstReviewDeadline: null,
     secondReviewDeadline: null,
+    thirdReviewDeadline: null, // NEW: Third review deadline
   });
 
   // Ensure these program names are consistent across AdminDashboard and CoordinatorDashboard
@@ -109,6 +110,7 @@ function EnrolledStudents() {
         zerothReviewDeadline: response.data?.zerothReviewDeadline || null,
         firstReviewDeadline: response.data?.firstReviewDeadline || null,
         secondReviewDeadline: response.data?.secondReviewDeadline || null,
+        thirdReviewDeadline: response.data?.thirdReviewDeadline || null, // NEW: Fetch third review deadline
       });
     } catch (error) {
       console.error("Error fetching review deadlines:", error);
@@ -236,8 +238,9 @@ useEffect(() => {
   // Modified fetchLatestReviewFiles to handle multiple file types and uploadedAt
   const fetchLatestReviewFiles = async (studentList) => {
     const files = {};
+    // Include "third" in the reviewType array
     for (const student of studentList) {
-      for (const reviewType of ["zeroth", "first", "second"]) {
+      for (const reviewType of ["zeroth", "first", "second", "third"]) { // MODIFIED: Added "third"
         try {
           // The backend now returns an object with pdfPath, pptPath, otherPath, and uploadedAt
           const response = await axios.get(`${API_BASE_URL}/get-latest-review/${student.registerNumber}/${reviewType}`);
@@ -307,7 +310,7 @@ useEffect(() => {
           Assessment1: Number(student.marks1) || 0,
           Assessment2: Number(student.marks2) || 0,
           Assessment3: Number(student.marks3) || 0,
-          Total: Number(student.marks4) || 0,
+          Total: Number(student.Total) || 0,
         })),
       };
       await axios.post(`${API_BASE_URL}/update-marks`, payload);
@@ -851,6 +854,7 @@ useEffect(() => {
                       <th className="py-3 px-6 text-center border-b border-gray-300">Zeroth Review</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">First Review</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">Second Review</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Third Review</th> {/* NEW: Third Review Column */}
                       <th className="py-3 px-6 text-center border-b border-gray-300">Contact</th>
                     </tr>
                   </thead>
@@ -937,7 +941,7 @@ useEffect(() => {
                               <span className="text-gray-500 text-xs">No Files</span>
                             ) : (
                               <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) || "On Time"}
+                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) || "(On Time)"}
                               </span>
                             )}
                           </td>
@@ -1025,6 +1029,48 @@ useEffect(() => {
                               </span>
                             )}
                           </td>
+                          {/* NEW: Display all three file types for Third Review and late status */}
+                          <td className="py-3 px-6 text-center">
+                            {latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pdfPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block"
+                              >
+                                PDF
+                              </a>
+                            )}
+                            {latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pptPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                PPT
+                              </a>
+                            )}
+                            {latestReviewFiles[`${student.registerNumber}_third`]?.otherPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].otherPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                Other
+                              </a>
+                            )}
+                            {(!latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath &&
+                             !latestReviewFiles[`${student.registerNumber}_third`]?.pptPath &&
+                             !latestReviewFiles[`${student.registerNumber}_third`]?.otherPath) ? (
+                              <span className="text-gray-500 text-xs">No Files</span>
+                            ) : (
+                              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) || "On Time"}
+                              </span>
+                            )}
+                          </td>
                           <td className="py-3 px-6 text-center">
                             <img
                               src={unseenMessagesStatus[student.registerNumber] ? UNSEEN_MESSAGE_ICON_URL : SEEN_MESSAGE_ICON_URL}
@@ -1039,7 +1085,7 @@ useEffect(() => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="10" className="py-4 text-center text-gray-500">
+                        <td colSpan="11" className="py-4 text-center text-gray-500"> {/* MODIFIED: colSpan to 11 */}
                           No students enrolled yet for this program or your assigned program.
                         </td>
                       </tr>
@@ -1150,6 +1196,7 @@ useEffect(() => {
                       <th className="py-3 px-6 text-center border-b border-gray-300">Zeroth Review</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">First Review</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">Second Review</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Third Review</th> {/* NEW: Third Review Column */}
                       <th className="py-3 px-6 text-center border-b border-gray-300">Contact</th>
                     </tr>
                   </thead>
@@ -1297,6 +1344,48 @@ useEffect(() => {
                               </span>
                             )}
                           </td>
+                          {/* NEW: Display all three file types for Third Review and late status */}
+                          <td className="py-3 px-6 text-center">
+                            {latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pdfPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block"
+                              >
+                                PDF
+                              </a>
+                            )}
+                            {latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pptPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                PPT
+                              </a>
+                            )}
+                            {latestReviewFiles[`${student.registerNumber}_third`]?.otherPath && (
+                              <a
+                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].otherPath}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline block mt-1"
+                              >
+                                Other
+                              </a>
+                            )}
+                            {(!latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath &&
+                             !latestReviewFiles[`${student.registerNumber}_third`]?.pptPath &&
+                             !latestReviewFiles[`${student.registerNumber}_third`]?.otherPath) ? (
+                              <span className="text-gray-500 text-xs">No Files</span>
+                            ) : (
+                              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) || "On Time"}
+                              </span>
+                            )}
+                          </td>
                           <td className="py-3 px-6 text-center">
                             <img
                               src={unseenMessagesStatus[student.registerNumber] ? UNSEEN_MESSAGE_ICON_URL : SEEN_MESSAGE_ICON_URL}
@@ -1311,7 +1400,7 @@ useEffect(() => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="10" className="py-4 text-center text-gray-500">
+                        <td colSpan="11" className="py-4 text-center text-gray-500"> {/* MODIFIED: colSpan to 11 */}
                           No students found in this project.
                         </td>
                       </tr>
@@ -1561,3 +1650,4 @@ useEffect(() => {
 }
 
 export default EnrolledStudents;
+

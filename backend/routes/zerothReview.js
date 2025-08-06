@@ -1,6 +1,7 @@
 // routes/zerothReview.js
-const express = require('express');
-const ZerothReview = require('../models/ZerothReview');
+import express from 'express'; // Use import
+import ZerothReview from '../models/Review.js'; // Use import and ensure .js extension for local files
+
 const router = express.Router();
 
 // Save Zeroth Review comment
@@ -26,4 +27,4 @@ router.get('/all', async (req, res) => {
   res.json(reviews);
 });
 
-module.exports = router;
+export default router; // <--- Change to export default

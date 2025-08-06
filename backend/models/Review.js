@@ -1,5 +1,5 @@
 // models/ZerothReview.js
-const mongoose = require('mongoose');
+import mongoose from 'mongoose'; // Use import
 
 const zerothReviewSchema = new mongoose.Schema({
   studentId: {
@@ -19,4 +19,5 @@ const zerothReviewSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model('ZerothReview', zerothReviewSchema);
+const ZerothReview = mongoose.model('ZerothReview', zerothReviewSchema); // Define the model
+export default ZerothReview; // <--- Change to export default

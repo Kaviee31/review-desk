@@ -8,9 +8,7 @@ import path from "path";
 import ChatUser from "./models/ChatUser.js";
 import bot from './telegramBot.js';
 import TelegramBot from "node-telegram-bot-api";
-
-const zerothReviewRoutes = require('./routes/zerothReview');
-app.use('/api/zeroth-review', zerothReviewRoutes);
+import zerothReview from "./routes/zerothReview.js";
 
 dotenv.config();
 
@@ -18,6 +16,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use("/uploads", express.static("uploads")); // Serve static files from the 'uploads' directory
+app.use('/api/zeroth-review', zerothReview);
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
@@ -37,7 +36,7 @@ const enrollmentSchema = new mongoose.Schema({
   Assessment3: { type: Number, default: 0 },
   Total: { type: Number, default: 0 },
   reviews: [{ // For uploaded review documents (PDFs, PPTs, Other)
-    reviewType: String, // e.g., "zeroth", "first", "second"
+    reviewType: String, // e.g., "zeroth", "first", "second", "third"
     pdfPath: String,    // Path for PDF file
     pptPath: String,    // Path for PPT file
     otherPath: String,  // Path for any other document
@@ -66,12 +65,13 @@ const messageSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now, expires: 60 * 60 * 24 },
 });
 
-// MODIFIED: reviewDeadlineSchema to include courseName
+// MODIFIED: reviewDeadlineSchema to include courseName and third review deadline
 const reviewDeadlineSchema = new mongoose.Schema({
   courseName: { type: String, required: true, unique: true }, // Each course has its own deadlines
   zerothReviewDeadline: Date,
   firstReviewDeadline: Date,
   secondReviewDeadline: Date,
+  thirdReviewDeadline: Date, // NEW: Third review deadline
 }, { timestamps: true });
 
 // SCHEMA for Coordinator Review Data (defines the structure of review items)
@@ -400,7 +400,7 @@ app.get("/all-messages", async (req, res) => {
   }
 });
 
-// MODIFIED: Upload review document to handle multiple file types
+// MODIFIED: Upload review document to handle multiple file types including third review
 app.post("/upload-review", upload.fields([
   { name: 'zerothPdf', maxCount: 1 },
   { name: 'zerothPpt', maxCount: 1 },
@@ -411,8 +411,11 @@ app.post("/upload-review", upload.fields([
   { name: 'secondPdf', maxCount: 1 },
   { name: 'secondPpt', maxCount: 1 },
   { name: 'secondOther', maxCount: 1 },
+  { name: 'thirdPdf', maxCount: 1 }, // NEW: Third review PDF
+  { name: 'thirdPpt', maxCount: 1 }, // NEW: Third review PPT
+  { name: 'thirdOther', maxCount: 1 }, // NEW: Third review Other
 ]), async (req, res) => {
-  const { registerNumber, reviewType } = req.body; // reviewType will be 'zeroth', 'first', or 'second'
+  const { registerNumber, reviewType } = req.body; // reviewType will be 'zeroth', 'first', 'second', or 'third'
   const files = req.files;
 
   if (!registerNumber || !reviewType) {
@@ -489,16 +492,16 @@ app.get("/get-latest-review/:registerNumber/:reviewType", async (req, res) => {
 });
 
 
-// MODIFIED: Set review deadlines - now requires courseName
+// MODIFIED: Set review deadlines - now requires courseName and includes third review deadline
 app.post("/set-review-dates", async (req, res) => {
-  const { courseName, zerothReviewDeadline, firstReviewDeadline, secondReviewDeadline } = req.body;
+  const { courseName, zerothReviewDeadline, firstReviewDeadline, secondReviewDeadline, thirdReviewDeadline } = req.body;
   if (!courseName) {
     return res.status(400).json({ error: "Course name is required to set review deadlines." });
   }
   try {
     await ReviewDeadline.updateOne(
       { courseName: courseName }, // Find by courseName
-      { zerothReviewDeadline, firstReviewDeadline, secondReviewDeadline },
+      { zerothReviewDeadline, firstReviewDeadline, secondReviewDeadline, thirdReviewDeadline }, // Include third review deadline
       { upsert: true } // Create if not exists
     );
     res.json({ message: `Review deadlines for ${courseName} updated successfully!` });
@@ -508,7 +511,7 @@ app.post("/set-review-dates", async (req, res) => {
   }
 });
 
-// MODIFIED: Get review deadlines - now requires courseName as query param
+// MODIFIED: Get review deadlines - now requires courseName as query param and includes third review deadline
 app.get("/get-review-dates", async (req, res) => {
   const { courseName } = req.query; // Get courseName from query parameter
   if (!courseName) {
@@ -644,3 +647,4 @@ app.post("/student-review-marks", async (req, res) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
