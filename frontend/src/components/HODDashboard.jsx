@@ -157,6 +157,7 @@ useEffect(() => {
                     <th>Assessment 2</th>
                     <th>Assessment 3</th>
                     <th>Total</th>
+                    <th>Viva Total</th>
                     <th>Assigned Teacher</th>
                   </tr>
                 </thead>
@@ -169,10 +170,11 @@ useEffect(() => {
                       <td>{student.marks2}</td>
                       <td>{student.marks3}</td>
                       <td>{student.marks4}</td>
+                      <td>{student.viva_total_awarded || 0}</td>
                       <td>{student.teacherDisplayName}</td>
                     </tr>
                   )) : (
-                    <tr><td colSpan="7">No students found.</td></tr>
+                    <tr><td colSpan="8">No students found.</td></tr>
                   )}
                 </tbody>
               </table>
