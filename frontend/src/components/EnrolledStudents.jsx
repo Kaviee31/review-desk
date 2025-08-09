@@ -9,7 +9,6 @@ import * as XLSX from "xlsx";
 import { collection, query, orderBy, limit, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import ZerothReviewForm from './ZerothReviewForm';
 import '../styles/EnrolledStudents.css';
 
 const UNSEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/134/134935.png";
@@ -24,8 +23,7 @@ function EnrolledStudents() {
   const [selectedStudentRegisterNumber, setSelectedStudentRegisterNumber] = useState(null);
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
    const [loading, setLoading] = useState(true);
-    const [zerothReviewComments, setZerothReviewComments] = useState({});
-  const [newComments, setNewComments] = useState({});
+    
   // Modified to store objects with pdfPath, pptPath, otherPath, and uploadedAt
   const [latestReviewFiles, setLatestReviewFiles] = useState({});
   const [studentCounts, setStudentCounts] = useState({});
@@ -46,8 +44,8 @@ function EnrolledStudents() {
   const [selectedProject, setSelectedProject] = useState(null); // The project object selected from the projects table
   const [studentsInSelectedProject, setStudentsInSelectedProject] = useState([]); // Students belonging to the selected project
 
-    const [vivaMarks, setVivaMarks] = useState({ guide: 0, panel: 0, external: 0 });
-  const [vivaTotalAwarded, setVivaTotalAwarded] = useState(0);
+  // NEW: Consolidated state for Viva marks
+const [vivaMarks, setVivaMarks] = useState({ guide: 0, panel: 0, external: 0 });
 
   // Review Deadlines State
   const [reviewDeadlines, setReviewDeadlines] = useState({
@@ -57,11 +55,16 @@ function EnrolledStudents() {
     thirdReviewDeadline: null, // NEW: Third review deadline
   });
 
+
+  
+  const [zerothReviewComments, setZerothReviewComments] = useState({});
+  const [newComments, setNewComments] = useState({});
   // Ensure these program names are consistent across AdminDashboard and CoordinatorDashboard
   const pgPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
   const ugPrograms = ["B.TECH(IT)", "B.TECH(IT) SS"];
   const allPrograms = [...pgPrograms, ...ugPrograms];
   const API_BASE_URL = "http://localhost:5000";
+  
 
   // Effect to set teacher email and UID on auth state change
   useEffect(() => {
@@ -148,25 +151,37 @@ useEffect(() => {
     }
   };
 
-  const handleCommentChange = (registerNumber, value) => {
-    setNewComments((prev) => ({ ...prev, [registerNumber]: value }));
+  const handleCommentChange = (identifier, value) => {
+    setNewComments((prev) => ({ ...prev, [identifier]: value }));
   };
 
-  const handleSubmitComment = async (registerNumber) => {
+  const handleSubmitComment = async (identifier) => {
     try {
-      const comment = newComments[registerNumber];
-      if (!comment.trim()) return;
+      const comment = newComments[identifier];
+      if (!comment.trim()) {
+        toast.warn("Comment cannot be empty!");
+        return;
+      }
+      if (pgPrograms.includes(selectedProgram)) {
+        await axios.post(`${API_BASE_URL}/zeroth-review/submit`, {
+          registerNumber: identifier,
+          comment,
+          teacherEmail,
+        });
+      } else if (ugPrograms.includes(selectedProgram)) {
+        await axios.post(`${API_BASE_URL}/zeroth-review/submit`, {
+          projectName: identifier,
+          comment,
+          teacherEmail,
+        });
+      }
 
-      await axios.post(`${API_BASE_URL}/zeroth-review/submit`, {
-        registerNumber,
-        comment,
-        teacherEmail,
-      });
-
-      setZerothReviewComments((prev) => ({ ...prev, [registerNumber]: comment }));
-      setNewComments((prev) => ({ ...prev, [registerNumber]: "" }));
+      setZerothReviewComments((prev) => ({ ...prev, [identifier]: comment }));
+      setNewComments((prev) => ({ ...prev, [identifier]: "" }));
+      toast.success("Comment submitted successfully!");
     } catch (err) {
       console.error("Error submitting zeroth review comment:", err);
+      toast.error(err.response?.data?.error || "Error submitting comment.");
     }
   };
   useEffect(() => {
@@ -190,9 +205,16 @@ useEffect(() => {
           contact: student.contact || "",
           // Ensure reviewsAssessment is always an array, even if null/undefined from backend
           reviewsAssessment: student.reviewsAssessment || [],
+          viva: student.viva || { guide: 0, panel: 0, external: 0 },
+          zerothReviewComment: student.zerothReviewComment || ""
         }));
         updatedStudents.sort((a, b) => a.registerNumber.localeCompare(b.registerNumber));
         setStudents(updatedStudents);
+        const commentsMap = updatedStudents.reduce((acc, student) => {
+        acc[student.registerNumber] = student.zerothReviewComment;
+        return acc;
+      }, {});
+      setZerothReviewComments(commentsMap);
         console.log("Fetched PG Students:", updatedStudents);
       } catch (err) {
         console.error(`Error fetching students for ${selectedProgram}:`, err);
@@ -224,6 +246,7 @@ useEffect(() => {
       if (pgPrograms.includes(selectedProgram)) {
         fetchPgStudents();
         setUgProjects([]); // Clear UG projects if PG is selected
+        
       } else if (ugPrograms.includes(selectedProgram)) {
         fetchUgProjects();
         setStudents([]); // Clear PG students if UG is selected
@@ -431,6 +454,7 @@ useEffect(() => {
     setShowReviewModal(true);
     setLoadingReviewData(true);
     setStudentReviewMarks([]); // Clear previous marks
+    setVivaMarks(student.viva || { guide: 0, panel: 0, external: 0 });
 
     try {
       // 1. Find the UID of the coordinator for the selectedProgram
@@ -507,7 +531,14 @@ useEffect(() => {
       });
       setStudentReviewMarks(combinedReviewData);
       console.log("Combined review data for modal display (after merging with existing marks):", combinedReviewData);
-
+// NEW: Handler for VIVA mark changes
+const handleVivaMarkChange = (field, value) => {
+    const numericValue = Number(value);
+    setVivaMarks(prev => ({
+        ...prev,
+        [field]: isNaN(numericValue) ? 0 : numericValue
+    }));
+};
 
     } catch (error) {
       console.error("Error loading review data for student:", error);
@@ -623,6 +654,7 @@ useEffect(() => {
                   Assessment2: normalizedAssessment2,
                   Assessment3: normalizedAssessment3,
                   Total: newTotalAverage,
+                  viva: vivaMarks, 
               }]
           };
           // 3. Send update for Assessment1, 2, 3 and Total to the backend for this student
@@ -659,6 +691,7 @@ useEffect(() => {
                 r1_mark: item.r1_mark,
                 r2_mark: item.r2_mark,
                 r3_mark: item.r3_mark,
+                viva: vivaMarks,
               }))
             } : member;
           });
@@ -680,7 +713,7 @@ useEffect(() => {
 
 
   // Calculate totals for the modal's footer
-  const calculateModalTotals = () => {
+ const calculateModalTotals = () => {
     let totalAwardedR1 = 0;
     let totalAwardedR2 = 0;
     let totalAwardedR3 = 0;
@@ -691,10 +724,13 @@ useEffect(() => {
       totalAwardedR3 += Number(item.r3_mark) || 0;
     });
 
-    return { totalAwardedR1, totalAwardedR2, totalAwardedR3 };
-  };
+    // Calculate total viva marks
+    const totalViva = (Number(vivaMarks.guide) || 0) + (Number(vivaMarks.panel) || 0) + (Number(vivaMarks.external) || 0);
 
-  const { totalAwardedR1, totalAwardedR2, totalAwardedR3 } = calculateModalTotals();
+    return { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva };
+};
+
+const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateModalTotals();
 
   // Function to download the specific student's review marks as PDF
   const handleDownloadStudentReviewPDF = () => {
@@ -768,7 +804,19 @@ useEffect(() => {
         doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
       }
     });
-
+// Add VIVA marks section to PDF
+ autoTable(doc, {
+     startY: doc.lastAutoTable.finalY + 10,
+     head: [['Viva Voce Component', 'Marks Awarded']],
+     body: [
+         ['Guide', vivaMarks.guide.toString()],
+         ['Panel Members', vivaMarks.panel.toString()],
+         ['External', vivaMarks.external.toString()],
+         [{ content: 'Total Viva Marks', styles: { fontStyle: 'bold' } }, { content: totalViva.toString(), styles: { fontStyle: 'bold' } }]
+     ],
+     theme: 'grid',
+     headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0], fontStyle: 'bold' },
+ });
     doc.save(`${studentName.replace(/[^a-zA-Z0-9]/g, '_')}_${registerNumber}_Review_Marks.pdf`);
     toast.success("Student review marks PDF downloaded successfully!");
   };
@@ -1463,51 +1511,20 @@ useEffect(() => {
             </p>            <table className="mt-4 w-full border border-gray-300 rounded-md">
   <thead className="bg-gray-100 text-sm text-gray-700">
     <tr>
-      <th className="p-2 text-left">Zeroth Review Files</th>
-      <th className="p-2 text-left">Comment</th>
+     
+      <th className="p-2 text-left">Enter Comment For Zeroth Review</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td className="p-2">
-        {latestReviewFiles[`${currentStudentForReview.registerNumber}_zeroth`]?.pdfPath && (
-          <a
-            href={`${API_BASE_URL}/${latestReviewFiles[`${currentStudentForReview.registerNumber}_zeroth`].pdfPath}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 hover:underline block"
-          >
-            PDF
-          </a>
-        )}
-        {latestReviewFiles[`${currentStudentForReview.registerNumber}_zeroth`]?.pptPath && (
-          <a
-            href={`${API_BASE_URL}/${latestReviewFiles[`${currentStudentForReview.registerNumber}_zeroth`].pptPath}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 hover:underline block"
-          >
-            PPT
-          </a>
-        )}
-        {latestReviewFiles[`${currentStudentForReview.registerNumber}_zeroth`]?.otherPath && (
-          <a
-            href={`${API_BASE_URL}/${latestReviewFiles[`${currentStudentForReview.registerNumber}_zeroth`].otherPath}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 hover:underline block"
-          >
-            Other
-          </a>
-        )}
-      </td>
+      
       <td className="p-2">
         <input
           type="text"
           placeholder="Enter comment"
           value={newComments[currentStudentForReview.registerNumber] || ""}
           onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, e.target.value)}
-          className="w-full p-1 border border-gray-300 rounded-md text-sm"
+          className="w-96 p-2 border border-gray-300 rounded-md text-sm"
         />
         <button
           onClick={() => handleSubmitComment(currentStudentForReview.registerNumber)}
@@ -1532,86 +1549,126 @@ useEffect(() => {
                 <p className="text-lg text-blue-600">Loading review items...</p>
               </div>
             ) : (
-              <>
-                {coordinatorReviewStructure.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-sm">
-                      <thead className="bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
-                        <tr>
-                          <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R1)</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">R1 Max</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">R1 Awarded</th>
-                          <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R2)</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">R2 Max</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">R2 Awarded</th>
-                          <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R3)</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">R3 Max</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">R3 Awarded</th>
-                          <th className="py-2 px-4 text-left border-b border-gray-300">Viva</th>
-                          
-                          <th className="py-2 px-4 text-center border-b border-gray-300">Awarded Marks</th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-gray-700 text-sm">
-                        {studentReviewMarks.map((item, index) => (
-                          <tr key={index} className="border-b border-gray-200">
-                            <td className="py-2 px-4 text-left">{item.r1_item_desc}</td>
-                            <td className="py-2 px-4 text-center font-bold text-gray-800">{item.coord_r1_max}</td>
-                            <td className="py-2 px-4 text-center">
-                              <input
-                                type="number"
-                                min="0"
-                                max={item.coord_r1_max} // Max value based on coordinator's setting
-                                value={item.r1_mark}
-                                onChange={(e) => handleStudentReviewMarkChange(index, "r1_mark", e.target.value)}
-                                className="w-24 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
-                              />
-                            </td>
-                            <td className="py-2 px-4 text-left">{item.r2_item_desc}</td>
-                            <td className="py-2 px-4 text-center font-bold text-gray-800">{item.coord_r2_max}</td>
-                            <td className="py-2 px-4 text-center">
-                              <input
-                                type="number"
-                                min="0"
-                                max={item.coord_r2_max} // Max value based on coordinator's setting
-                                value={item.r2_mark}
-                                onChange={(e) => handleStudentReviewMarkChange(index, "r2_mark", e.target.value)}
-                                className="w-24 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
-                              />
-                            </td>
-                            <td className="py-2 px-4 text-left">{item.r3_item_desc}</td>
-                            <td className="py-2 px-4 text-center font-bold text-gray-800">{item.coord_r3_max}</td>
-                            <td className="py-2 px-4 text-center">
-                              <input
-                                type="number"
-                                min="0"
-                                max={item.coord_r3_max} // Max value based on coordinator's setting
-                                value={item.r3_mark}
-                                onChange={(e) => handleStudentReviewMarkChange(index, "r3_mark", e.target.value)}
-                                className="w-24 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
-                              />
-                            </td>
-                            
-                          </tr>
-                        ))}
-                      </tbody>
-                      
-                      <tfoot className="bg-gray-100 text-gray-800 uppercase text-sm leading-normal font-semibold">
-                        <tr>
-                          <td className="py-2 px-4 text-right border-t border-gray-300" colSpan="2">Total Awarded Marks (R1):</td>
-                          <td className="py-2 px-4 text-center border-t border-gray-300">{totalAwardedR1}</td>
-                          <td className="py-2 px-4 text-right border-t border-gray-300" colSpan="2">Total Awarded Marks (R2):</td>
-                          <td className="py-2 px-4 text-center border-t border-gray-300">{totalAwardedR2}</td>
-                          <td className="py-2 px-4 text-right border-t border-gray-300" colSpan="2">Total Awarded Marks (R3):</td>
-                          <td className="py-2 px-4 text-center border-t border-gray-300">{totalAwardedR3}</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-center py-4">No review items defined by the coordinator for this program. Please ensure the coordinator for {selectedProgram} has set up review items in their dashboard.</p>
-                )}
-              </>
+             <>
+  {coordinatorReviewStructure.length > 0 ? (
+    <div className="overflow-x-auto mt-6">
+      <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-sm">
+        <thead className="bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
+          <tr>
+            <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R1)</th>
+            <th className="py-2 px-4 text-center border-b border-gray-300">R1 Max</th>
+            <th className="py-2 px-4 text-center border-b border-gray-300">R1 Awarded</th>
+            <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R2)</th>
+            <th className="py-2 px-4 text-center border-b border-gray-300">R2 Max</th>
+            <th className="py-2 px-4 text-center border-b border-gray-300">R2 Awarded</th>
+            <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R3)</th>
+            <th className="py-2 px-4 text-center border-b border-gray-300">R3 Max</th>
+            <th className="py-2 px-4 text-center border-b border-gray-300">R3 Awarded</th>
+          </tr>
+        </thead>
+        <tbody className="text-gray-700 text-sm">
+          {studentReviewMarks.map((item, index) => (
+            <tr key={index} className="border-b border-gray-200">
+              <td className="py-2 px-4 text-left">{item.r1_item_desc}</td>
+              <td className="py-2 px-4 text-center font-bold text-gray-800">{item.coord_r1_max}</td>
+              <td className="py-2 px-4 text-center">
+                <input
+                  type="number"
+                  min="0"
+                  max={item.coord_r1_max}
+                  value={item.r1_mark}
+                  onChange={(e) => handleStudentReviewMarkChange(index, "r1_mark", e.target.value)}
+                  className="w-24 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
+                />
+              </td>
+              <td className="py-2 px-4 text-left">{item.r2_item_desc}</td>
+              <td className="py-2 px-4 text-center font-bold text-gray-800">{item.coord_r2_max}</td>
+              <td className="py-2 px-4 text-center">
+                <input
+                  type="number"
+                  min="0"
+                  max={item.coord_r2_max}
+                  value={item.r2_mark}
+                  onChange={(e) => handleStudentReviewMarkChange(index, "r2_mark", e.target.value)}
+                  className="w-24 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
+                />
+              </td>
+              <td className="py-2 px-4 text-left">{item.r3_item_desc}</td>
+              <td className="py-2 px-4 text-center font-bold text-gray-800">{item.coord_r3_max}</td>
+              <td className="py-2 px-4 text-center">
+                <input
+                  type="number"
+                  min="0"
+                  max={item.coord_r3_max}
+                  value={item.r3_mark}
+                  onChange={(e) => handleStudentReviewMarkChange(index, "r3_mark", e.target.value)}
+                  className="w-24 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot className="bg-gray-100 text-gray-800 uppercase text-sm leading-normal font-semibold">
+          <tr>
+            <td className="py-2 px-4 text-right border-t border-gray-300" colSpan="2">Total Awarded Marks (R1):</td>
+            <td className="py-2 px-4 text-center border-t border-gray-300">{totalAwardedR1}</td>
+            <td className="py-2 px-4 text-right border-t border-gray-300" colSpan="2">Total Awarded Marks (R2):</td>
+            <td className="py-2 px-4 text-center border-t border-gray-300">{totalAwardedR2}</td>
+            <td className="py-2 px-4 text-right border-t border-gray-300" colSpan="2">Total Awarded Marks (R3):</td>
+            <td className="py-2 px-4 text-center border-t border-gray-300">{totalAwardedR3}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  ) : (
+    <p className="text-gray-500 text-center py-4">No review items defined by the coordinator for this program. Please ensure the coordinator for {selectedProgram} has set up review items in their dashboard.</p>
+  )}
+
+  {/* VIVA MARKS SECTION */}
+  <div className="mt-6 pt-4 border-t-2 border-gray-200">
+      <h4 className="text-xl font-semibold mb-4 text-gray-700">Viva Voce Examination</h4>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
+          {/* Guide Marks */}
+          <div className="flex flex-col">
+              <label className="mb-1 font-semibold text-gray-600">Guide Marks</label>
+              <input
+                  type="number"
+                  min="0"
+                  value={vivaMarks.guide}
+                  onChange={(e) => handleVivaMarkChange('guide', e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
+              />
+          </div>
+          {/* Panel Members Marks */}
+          <div className="flex flex-col">
+              <label className="mb-1 font-semibold text-gray-600">Panel Members Marks</label>
+              <input
+                  type="number"
+                  min="0"
+                  value={vivaMarks.panel}
+                  onChange={(e) => handleVivaMarkChange('panel', e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
+              />
+          </div>
+          {/* External Examiner Marks */}
+          <div className="flex flex-col">
+              <label className="mb-1 font-semibold text-gray-600">External Examiner Marks</label>
+              <input
+                  type="number"
+                  min="0"
+                  value={vivaMarks.external}
+                  onChange={(e) => handleVivaMarkChange('external', e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
+              />
+          </div>
+      </div>
+       {/* Viva Total */}
+      <div className="mt-4 pt-4 border-t border-dashed flex justify-end items-center gap-4">
+          <span className="text-lg font-bold text-gray-800">Total Viva Marks:</span>
+          <span className="text-2xl font-bold text-blue-600">{totalViva}</span>
+      </div>
+  </div>
+</>
             )}
 
             {savingReviewMarks && (

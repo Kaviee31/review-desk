@@ -57,7 +57,8 @@ const enrollmentSchema = new mongoose.Schema({
   viva_total_awarded: { type: Number, default: 0 },
   // NEW FIELDS FOR UG STUDENTS' PROJECT DATA
   projectName: { type: String }, // Stores the project name for the group
-  groupRegisterNumbers: { type: [String], default: [] } // Stores all register numbers in the UG group
+  groupRegisterNumbers: { type: [String], default: [] },// Stores all register numbers in the UG group
+  zerothReviewComment: { type: String, default: "" }
 });
 
 const messageSchema = new mongoose.Schema({
@@ -226,6 +227,62 @@ app.post("/api/send-telegram", async (req, res) => {
   }
 });
 
+
+
+app.get("/student-zeroth-review/:registerNumber", async (req, res) => {
+  const { registerNumber } = req.params;
+
+  try {
+    const student = await Enrollment.findOne({
+      $or: [
+        { registerNumber: registerNumber },
+        { "projectMembers.registerNumber": registerNumber }
+      ]
+    });
+    
+    if (!student) {
+      return res.status(404).json({ error: "Student not found." });
+    }
+
+    // Return the comment if it exists, otherwise an empty string
+    res.status(200).json({ comment: student.zerothReviewComment || "" });
+  } catch (error) {
+    console.error("Error fetching student zeroth review comment:", error);
+    res.status(500).json({ error: "Failed to fetch student zeroth review comment." });
+  }
+});
+
+app.post("/zeroth-review/submit", async (req, res) => {
+  const { registerNumber, projectName, comment, teacherEmail } = req.body;
+  try {
+    let result;
+    if (registerNumber) {
+      // Logic for PG students
+      result = await Enrollment.findOneAndUpdate(
+        { registerNumber },
+        { $set: { zerothReviewComment: comment } },
+        { new: true }
+      );
+    } else if (projectName) {
+      // Logic for UG projects, update all students in the project
+      result = await Enrollment.updateMany(
+        { projectName },
+        { $set: { zerothReviewComment: comment } },
+        { new: true }
+      );
+    } else {
+      return res.status(400).json({ error: "Invalid request. Must provide either registerNumber or projectName." });
+    }
+
+    if (!result) {
+      return res.status(404).json({ error: "Student or project not found." });
+    }
+    res.status(200).json({ message: "Zeroth review comment submitted successfully." });
+  } catch (error) {
+    console.error("Error submitting zeroth review comment:", error);
+    res.status(500).json({ error: "Failed to submit zeroth review comment." });
+  }
+});
 
 app.get("/student-courses/:registerNumber", async (req, res) => {
   try {
