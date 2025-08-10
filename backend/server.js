@@ -8,7 +8,6 @@ import path from "path";
 import ChatUser from "./models/ChatUser.js";
 import bot from './telegramBot.js';
 import TelegramBot from "node-telegram-bot-api";
-import zerothReview from "./routes/zerothReview.js";
 
 dotenv.config();
 
@@ -16,7 +15,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use("/uploads", express.static("uploads")); // Serve static files from the 'uploads' directory
-app.use('/api/zeroth-review', zerothReview);
+
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
@@ -372,6 +371,7 @@ app.get("/teacher-ug-projects/:teacherEmail/:courseName", async (req, res) => {
             Assessment2: "$Assessment2",
             Assessment3: "$Assessment3",
             Total: "$Total",
+            viva: "$viva", // MODIFIED: Include the full viva object for each member
             viva_total_awarded: "$viva_total_awarded", // Include viva marks for each member
             Contact: null // Placeholder, you might want to fetch this
           }},
@@ -413,19 +413,29 @@ app.post("/update-marks", async (req, res) => {
   try {
     const { students } = req.body; // 'students' is an array of student objects to update
     for (const student of students) {
-      // Find the existing enrollment by registerNumber and courseName
+       // MODIFIED: Prepare a dynamic update object
+      const updateFields = {
+        Assessment1: Number(student.Assessment1) || 0,
+        Assessment2: Number(student.Assessment2) || 0,
+        Assessment3: Number(student.Assessment3) || 0,
+        Total: Number(student.Total) || 0,
+      };
+
+      // If reviewsAssessment is passed, include it in the update
+      if (student.reviewsAssessment && Array.isArray(student.reviewsAssessment)) {
+        updateFields.reviewsAssessment = student.reviewsAssessment;
+      }
+
+      // If viva marks are passed, include them and calculate the total
+      if (student.viva) {
+        updateFields.viva = student.viva;
+        updateFields.viva_total_awarded = (Number(student.viva.guide) || 0) + (Number(student.viva.panel) || 0) + (Number(student.viva.external) || 0);
+      }
+
+      // Find the existing enrollment by registerNumber and courseName and update it
       await Enrollment.findOneAndUpdate(
         { registerNumber: student.registerNumber, courseName: student.courseName },
-        {
-          $set: {
-            Assessment1: Number(student.Assessment1) || 0,
-            Assessment2: Number(student.Assessment2) || 0,
-            Assessment3: Number(student.Assessment3) || 0,
-            Total: Number(student.Total) || 0,
-            // Only set reviewsAssessment if it's explicitly provided and valid
-            ...(Array.isArray(student.reviewsAssessment) && { reviewsAssessment: student.reviewsAssessment })
-          }
-        },
+        { $set: updateFields },
         { new: true, upsert: false } // upsert: false because enrollment should already exist
       );
     }
@@ -435,6 +445,7 @@ app.post("/update-marks", async (req, res) => {
     res.status(500).json({ error: "Failed to update marks" });
   }
 });
+
 
 // Post a chat message
 app.post("/post-message", async (req, res) => {
@@ -704,4 +715,3 @@ app.post("/student-review-marks", async (req, res) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-

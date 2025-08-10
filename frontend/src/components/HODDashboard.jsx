@@ -7,6 +7,8 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/HODDashboard.css';
+import { jsPDF } from "jspdf";
+import autoTable from 'jspdf-autotable';
 
 function HODDashboard() {
   const [username, setUsername] = useState('HOD');
@@ -20,7 +22,7 @@ function HODDashboard() {
   const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)","B.TECH(IT)","B.TECH(IT) SS"];
   const API_BASE_URL = "http://localhost:5000";
 
-useEffect(() => {
+  useEffect(() => {
     document.title = "HOD Dashboard";
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -29,7 +31,6 @@ useEffect(() => {
           const userDocSnap = await getDoc(userDocRef);
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
-            // Corrected: Check if 'roles' is an array and includes "HOD"
             if (Array.isArray(userData.roles) && userData.roles.includes("HOD")) {
               setUsername(userData.username || 'HOD');
               if (firstRender.current) {
@@ -121,6 +122,46 @@ useEffect(() => {
     setSelectedProgram(program);
     fetchStudentsByProgram(program);
   };
+  
+  const handleDownloadZerothReviewPDF = () => {
+    if (students.length === 0) {
+      toast.warn("No student data available to download.");
+      return;
+    }
+
+    const doc = new jsPDF();
+    doc.text(`${selectedProgram} - Zeroth Review Comments`, 14, 22);
+
+    // **Check if the program is project-based (has projectName)**
+    const hasProjectName = students.some(student => student.projectName);
+
+    let tableColumn;
+    let tableRows;
+
+    if (hasProjectName) {
+      tableColumn = ["Register Number", "Project Name", "Zeroth Review Comment"];
+      tableRows = students.map(student => [
+        student.registerNumber,
+        student.projectName || "N/A",
+        student.zerothReviewComment || "No comment submitted"
+      ]);
+    } else {
+      tableColumn = ["Register Number", "Zeroth Review Comment"];
+      tableRows = students.map(student => [
+        student.registerNumber,
+        student.zerothReviewComment || "No comment submitted"
+      ]);
+    }
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 30,
+    });
+
+    doc.save(`${selectedProgram}_Zeroth_Review_Comments.pdf`);
+    toast.success("PDF downloaded successfully!");
+  };
 
   if (loadingUser) {
     return <div className="loading">Loading HOD Dashboard...</div>;
@@ -143,7 +184,12 @@ useEffect(() => {
 
       {selectedProgram && (
         <div className="students-section">
-          <h2>{selectedProgram} - Enrolled Students</h2>
+          <div className="section-header">
+            <h2>{selectedProgram} - Enrolled Students</h2>
+            <button onClick={handleDownloadZerothReviewPDF} className="download-btn">
+              Download Zeroth Review Comments
+            </button>
+          </div>
           {loadingStudents ? (
             <p>Loading students...</p>
           ) : (
@@ -157,6 +203,7 @@ useEffect(() => {
                     <th>Assessment 2</th>
                     <th>Assessment 3</th>
                     <th>Total</th>
+                    <th>Viva Total</th>
                     <th>Assigned Teacher</th>
                   </tr>
                 </thead>
@@ -169,10 +216,11 @@ useEffect(() => {
                       <td>{student.marks2}</td>
                       <td>{student.marks3}</td>
                       <td>{student.marks4}</td>
+                      <td>{student.viva_total_awarded || 0}</td>
                       <td>{student.teacherDisplayName}</td>
                     </tr>
                   )) : (
-                    <tr><td colSpan="7">No students found.</td></tr>
+                    <tr><td colSpan="8">No students found.</td></tr>
                   )}
                 </tbody>
               </table>
