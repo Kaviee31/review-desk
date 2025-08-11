@@ -113,7 +113,7 @@ function TeacherDashboard() {
   };
 
   return (
-    <div className="cont">
+    <div className="containers">
       <div className="dashboard-content">
         <h2>📣 Send Announcement to Students</h2>
 

@@ -910,17 +910,31 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
 
       {!selectedProgram && (
   <div className="programs-grid">
-    {allPrograms.map((program) => (
-      <div
-        key={program}
-        className="program-card vibrant"
-        onClick={() => setSelectedProgram(program)}
-      >
-        <h3>{program}</h3>
-        <p>{studentCounts[program] ?? 0} Student{(studentCounts[program] ?? 0) === 1 ? "" : "s"}</p>
-      </div>
-    ))}
-  </div>
+  {allPrograms.map((program) => (
+    <div
+      key={program}
+      className="program-card vibrant"
+      onClick={() => setSelectedProgram(program)}
+      style={{ border: '2px solid orange', borderRadius: '16px' }}
+    >
+      <h3 style={{ 
+        color: 'black', 
+        fontWeight: 'bold', 
+        fontSize: '1.6rem', 
+        textShadow: '1px 1px 3px rgba(0,0,0,0.4)' 
+      }}>
+        {program}
+      </h3>
+      <p style={{ 
+        color: 'black', 
+        fontSize: '1rem', 
+        textShadow: '1px 1px 2px rgba(0,0,0,0.3)' 
+      }}>
+        {studentCounts[program] ?? 0} Student{(studentCounts[program] ?? 0) === 1 ? "" : "s"}
+      </p>
+    </div>
+  ))}
+</div>
 )}
 
       {selectedProgram && (

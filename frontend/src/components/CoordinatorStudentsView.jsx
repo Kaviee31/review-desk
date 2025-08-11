@@ -2,12 +2,11 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { toast } from 'react-toastify';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
-
 
 function CoordinatorStudentsView() {
   const [coordinatorUid, setCoordinatorUid] = useState(null);
@@ -30,11 +29,9 @@ function CoordinatorStudentsView() {
   // States to store uploaded file paths (objects containing pdfPath, pptPath, otherPath, and uploadedAt)
   const [latestReviewFiles, setLatestReviewFiles] = useState({});
 
-
   const API_BASE_URL = "http://localhost:5000";
   const pgPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
   const ugPrograms = ["B.TECH(IT)", "B.TECH(IT) SS"];
-
 
   useEffect(() => {
     document.title = "Coordinator View Students";
@@ -93,11 +90,12 @@ function CoordinatorStudentsView() {
     }
   }, [selectedProgram, fetchReviewDeadlines]);
 
-
   // Function to fetch students for a selected PG program
   const fetchPgStudents = async (program) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/students-by-course/${program}`);
+      // NOTE: This endpoint seems incorrect for a coordinator view. It should probably be a generic one.
+      // Assuming an endpoint `/students-by-program/{program}` exists for coordinators.
+      const response = await axios.get(`${API_BASE_URL}/students-by-program/${program}`);
       const updatedStudents = response.data.map((student) => ({
         ...student,
         marks1: student.Assessment1 || 0,
@@ -117,7 +115,9 @@ function CoordinatorStudentsView() {
   // Function to fetch UG projects for a selected UG program
   const fetchUgProjects = async (program) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/ug-projects-by-course/${program}`);
+      // NOTE: This endpoint seems incorrect for a coordinator view. It should probably be a generic one.
+      // Assuming an endpoint `/ug-projects-by-program/{program}` exists for coordinators.
+      const response = await axios.get(`${API_BASE_URL}/ug-projects-by-program/${program}`);
       setUgProjects(response.data);
     } catch (err) {
       console.error(`Error fetching UG projects for ${program}:`, err);
@@ -144,7 +144,6 @@ function CoordinatorStudentsView() {
       setUgCurrentView('projects');
     }
   }, [selectedProgram]);
-
 
   // Modified fetchLatestReviewFiles to handle multiple file types and uploadedAt
   const fetchLatestReviewFiles = async (studentList) => {
@@ -174,10 +173,9 @@ function CoordinatorStudentsView() {
     }
   }, [students, ugProjects, selectedProgram]);
 
-
   const handleViewProjectStudents = (project) => {
     setSelectedProject(project);
-    setStudentsInSelectedProject(project.projectMembers.sort((a,b) => a.registerNumber.localeCompare(b.registerNumber)));
+    setStudentsInSelectedProject(project.projectMembers.sort((a, b) => a.registerNumber.localeCompare(b.registerNumber)));
     setUgCurrentView('students_in_project');
   };
 
@@ -185,16 +183,6 @@ function CoordinatorStudentsView() {
     setUgCurrentView('projects');
     setSelectedProject(null);
     setStudentsInSelectedProject([]);
-  };
-
-  const handleBackToCourses = () => {
-    setSelectedProgram(null);
-    setStudents([]);
-    setUgProjects([]);
-    setUgCurrentView('projects');
-    setSelectedProject(null);
-    setStudentsInSelectedProject([]);
-    setLatestReviewFiles({});
   };
 
   // Helper to calculate days late
@@ -212,7 +200,6 @@ function CoordinatorStudentsView() {
     }
     return null; // Not late
   };
-
 
   if (loadingCourses) {
     return (
@@ -294,41 +281,17 @@ function CoordinatorStudentsView() {
                           <td className="py-3 px-6 text-center">{student.marks2}</td>
                           <td className="py-3 px-6 text-center">{student.marks3}</td>
                           <td className="py-3 px-6 text-center">{student.marks4}</td>
-                          {/* Display all three file types for Zeroth Review and late status */}
                           <td className="py-3 px-6 text-center">
                             {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pdfPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block"
-                              >
-                                PDF
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pdfPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block">PDF</a>
                             )}
                             {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pptPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                PPT
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pptPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">PPT</a>
                             )}
                             {latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].otherPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                Other
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].otherPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">Other</a>
                             )}
-                            {(!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath &&
-                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath) ? (
+                            {(!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath) ? (
                               <span className="text-gray-500 text-xs">No Files</span>
                             ) : (
                               <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
@@ -336,41 +299,17 @@ function CoordinatorStudentsView() {
                               </span>
                             )}
                           </td>
-                          {/* Display all three file types for First Review and late status */}
                           <td className="py-3 px-6 text-center">
                             {latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pdfPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block"
-                              >
-                                PDF
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pdfPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block">PDF</a>
                             )}
                             {latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pptPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                PPT
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pptPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">PPT</a>
                             )}
                             {latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].otherPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                Other
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].otherPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">Other</a>
                             )}
-                            {(!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath &&
-                             !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath) ? (
+                            {(!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath) ? (
                               <span className="text-gray-500 text-xs">No Files</span>
                             ) : (
                               <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
@@ -378,41 +317,17 @@ function CoordinatorStudentsView() {
                               </span>
                             )}
                           </td>
-                          {/* Display all three file types for Second Review and late status */}
                           <td className="py-3 px-6 text-center">
                             {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block"
-                              >
-                                PDF
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block">PDF</a>
                             )}
                             {latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                                >
-                                PPT
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">PPT</a>
                             )}
                             {latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                Other
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">Other</a>
                             )}
-                            {(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath &&
-                             !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
+                            {(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
                               <span className="text-gray-500 text-xs">No Files</span>
                             ) : (
                               <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
@@ -516,41 +431,17 @@ function CoordinatorStudentsView() {
                           <td className="py-3 px-6 text-center">{student.Assessment2 || 0}</td>
                           <td className="py-3 px-6 text-center">{student.Assessment3 || 0}</td>
                           <td className="py-3 px-6 text-center">{student.Total || 0}</td>
-                           {/* Display all three file types for Zeroth Review */}
                           <td className="py-3 px-6 text-center">
                             {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pdfPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block"
-                              >
-                                PDF
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pdfPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block">PDF</a>
                             )}
                             {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pptPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                PPT
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pptPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">PPT</a>
                             )}
                             {latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].otherPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                Other
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].otherPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">Other</a>
                             )}
-                            {(!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath &&
-                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath) ? (
+                            {(!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath) ? (
                               <span className="text-gray-500 text-xs">No Files</span>
                             ) : (
                               <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
@@ -558,41 +449,17 @@ function CoordinatorStudentsView() {
                               </span>
                             )}
                           </td>
-                          {/* Display all three file types for First Review and late status */}
                           <td className="py-3 px-6 text-center">
                             {latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pdfPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block"
-                              >
-                                PDF
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pdfPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block">PDF</a>
                             )}
                             {latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pptPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                PPT
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pptPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">PPT</a>
                             )}
                             {latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].otherPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                Other
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].otherPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">Other</a>
                             )}
-                            {(!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath &&
-                             !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath) ? (
+                            {(!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath) ? (
                               <span className="text-gray-500 text-xs">No Files</span>
                             ) : (
                               <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
@@ -600,41 +467,17 @@ function CoordinatorStudentsView() {
                               </span>
                             )}
                           </td>
-                          {/* Display all three file types for Second Review and late status */}
                           <td className="py-3 px-6 text-center">
                             {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block"
-                              >
-                                PDF
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block">PDF</a>
                             )}
                             {latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                                >
-                                PPT
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">PPT</a>
                             )}
                             {latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                Other
-                              </a>
+                              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">Other</a>
                             )}
-                            {(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath &&
-                             !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
+                            {(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
                               <span className="text-gray-500 text-xs">No Files</span>
                             ) : (
                               <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
@@ -665,8 +508,6 @@ function CoordinatorStudentsView() {
             </>
           )}
 
-
-          {/* Back button to go back to program selection (for both UG/PG main views) */}
           {(!ugPrograms.includes(selectedProgram) || (ugPrograms.includes(selectedProgram) && ugCurrentView === 'projects')) && (
             <div className="flex justify-center mt-8">
               <button
@@ -674,11 +515,10 @@ function CoordinatorStudentsView() {
                   setSelectedProgram(null);
                   setStudents([]);
                   setUgProjects([]);
-                  setUnseenMessagesStatus({});
                   setLatestReviewFiles({});
-                  setUgCurrentView('projects'); // Reset UG view
-                  setSelectedProject(null); // Clear selected project
-                  setStudentsInSelectedProject([]); // Clear students in project
+                  setUgCurrentView('projects');
+                  setSelectedProject(null);
+                  setStudentsInSelectedProject([]);
                 }}
                 className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"
               >
@@ -686,138 +526,6 @@ function CoordinatorStudentsView() {
               </button>
             </div>
           )}
-        </div>
-      )}
-
-      {selectedStudentRegisterNumber && (
-        <ChatWindow
-          currentUser={teacherEmail}
-          contactUser={selectedStudentRegisterNumber}
-          onClose={handleCloseChat}
-        />
-      )}
-
-      {/* Review Marks Modal (Remains the same, but now callable from UG project student list) */}
-      {showReviewModal && currentStudentForReview && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
-            <h3 className="text-2xl font-bold mb-4 text-gray-800">
-              Review Marks for {currentStudentForReview.studentName} ({currentStudentForReview.registerNumber})
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Program: {selectedProgram}
-            </p>
-
-            {loadingReviewData ? (
-              <div className="flex justify-center items-center h-32">
-                <p className="text-lg text-blue-600">Loading review items...</p>
-              </div>
-            ) : (
-              <>
-                {coordinatorReviewStructure.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-sm">
-                      <thead className="bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
-                        <tr>
-                          <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R1)</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">R1 Max</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">R1 Awarded</th>
-                          <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R2)</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">R2 Max</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">R2 Awarded</th>
-                          <th className="py-2 px-4 text-left border-b border-gray-300">Review Item (R3)</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">R3 Max</th>
-                          <th className="py-2 px-4 text-center border-b border-gray-300">R3 Awarded</th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-gray-700 text-sm">
-                        {studentReviewMarks.map((item, index) => (
-                          <tr key={index} className="border-b border-gray-200">
-                            <td className="py-2 px-4 text-left">{item.r1_item_desc}</td>
-                            <td className="py-2 px-4 text-center font-bold text-gray-800">{item.coord_r1_max}</td>
-                            <td className="py-2 px-4 text-center">
-                              <input
-                                type="number"
-                                min="0"
-                                max={item.coord_r1_max} // Max value based on coordinator's setting
-                                value={item.r1_mark}
-                                onChange={(e) => handleStudentReviewMarkChange(index, "r1_mark", e.target.value)}
-                                className="w-24 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
-                              />
-                            </td>
-                            <td className="py-2 px-4 text-left">{item.r2_item_desc}</td>
-                            <td className="py-2 px-4 text-center font-bold text-gray-800">{item.coord_r2_max}</td>
-                            <td className="py-2 px-4 text-center">
-                              <input
-                                type="number"
-                                min="0"
-                                max={item.coord_r2_max} // Max value based on coordinator's setting
-                                value={item.r2_mark}
-                                onChange={(e) => handleStudentReviewMarkChange(index, "r2_mark", e.target.value)}
-                                className="w-24 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
-                              />
-                            </td>
-                            <td className="py-2 px-4 text-left">{item.r3_item_desc}</td>
-                            <td className="py-2 px-4 text-center font-bold text-gray-800">{item.coord_r3_max}</td>
-                            <td className="py-2 px-4 text-center">
-                              <input
-                                type="number"
-                                min="0"
-                                max={item.coord_r3_max} // Max value based on coordinator's setting
-                                value={item.r3_mark}
-                                onChange={(e) => handleStudentReviewMarkChange(index, "r3_mark", e.target.value)}
-                                className="w-24 p-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-blue-400"
-                              />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot className="bg-gray-100 text-gray-800 uppercase text-sm leading-normal font-semibold">
-                        <tr>
-                          <td className="py-2 px-4 text-right border-t border-gray-300" colSpan="2">Total Awarded Marks (R1):</td>
-                          <td className="py-2 px-4 text-center border-t border-gray-300">{totalAwardedR1}</td>
-                          <td className="py-2 px-4 text-right border-t border-gray-300" colSpan="2">Total Awarded Marks (R2):</td>
-                          <td className="py-2 px-4 text-center border-t border-gray-300">{totalAwardedR2}</td>
-                          <td className="py-2 px-4 text-right border-t border-gray-300" colSpan="2">Total Awarded Marks (R3):</td>
-                          <td className="py-2 px-4 text-center border-t border-gray-300">{totalAwardedR3}</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-center py-4">No review items defined by the coordinator for this program. Please ensure the coordinator for {selectedProgram} has set up review items in their dashboard.</p>
-                )}
-              </>
-            )}
-
-            {savingReviewMarks && (
-              <div className="flex justify-center mt-4">
-                <p className="text-blue-600">Saving marks...</p>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setShowReviewModal(false)}
-                className="bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveStudentReviewMarks}
-                disabled={savingReviewMarks || loadingReviewData}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {savingReviewMarks ? "Saving..." : "Save Marks"}
-              </button>
-              <button
-                onClick={handleDownloadStudentReviewPDF}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75"
-              >
-                Download as PDF
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>

@@ -8,7 +8,7 @@
 /* Body Background */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(to right, #6a11cb, #2575fc);
+  background: var(--secondary-color);
   color: white;
   min-height: 100vh;
   overflow-x: hidden;
@@ -59,6 +59,7 @@ body {
 
 /* Main Container */
 .dashboard-container {
+ 
   padding-top: 80px;
   display: flex;
   justify-content: center;
@@ -70,7 +71,7 @@ body {
 
 /* Dashboard Box */
 .dashboard-content {
-  background: rgba(255, 255, 255, 0.12);
+  background-color: orange;
   backdrop-filter: blur(20px);
   border-radius: 16px;
   padding: 30px;
