@@ -301,21 +301,39 @@ function CoordinatorDashboard() {
       {/* Buttons for program selection */}
       {!selectedProgram && (
   <div className="programs-grid">
-    {allPrograms.map((program) => (
-      <div
-        key={program}
-        className="program-card"
-        onClick={() => setSelectedProgram(program)}
-        style={{
-          opacity: !assignedCourses.includes(program) ? 0.5 : 1,
-          pointerEvents: !assignedCourses.includes(program) ? "none" : "auto",
-        }}
-      >
-        <h3>{program}</h3>
-        <p>{assignedCourses.includes(program) ? "Click to manage" : "Access Denied"}</p>
-      </div>
-    ))}
-  </div>
+  {allPrograms.map((program) => (
+    <div
+      key={program}
+      className="program-card"
+      onClick={() => setSelectedProgram(program)}
+      style={{
+        opacity: !assignedCourses.includes(program) ? 0.5 : 1,
+        pointerEvents: !assignedCourses.includes(program) ? "none" : "auto",
+        border: "2px solid orange",
+        borderRadius: "8px",
+        transition: "border-color 0.3s ease"
+      }}
+      onMouseEnter={(e) => {
+        if (assignedCourses.includes(program)) {
+          e.currentTarget.style.borderColor = "darkorange";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (assignedCourses.includes(program)) {
+          e.currentTarget.style.borderColor = "orange";
+        }
+      }}
+    >
+      <h3>{program}</h3>
+      <p>
+        {assignedCourses.includes(program)
+          ? "Click to manage"
+          : "Access Denied"}
+      </p>
+    </div>
+  ))}
+</div>
+
 )}
 
       {/* Conditional rendering of the review mark entry UI */}

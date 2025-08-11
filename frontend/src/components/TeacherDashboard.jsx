@@ -119,17 +119,19 @@ function TeacherDashboard() {
 
         {/* Program Filter Dropdown */}
         <select
-          value={programFilter}
-          onChange={(e) => setProgramFilter(e.target.value)}
-          className="program-dropdown"
-        >
-          <option value="">🎓 All Programs</option>
-          {allPrograms.map(program => (
-            <option key={program} value={program}>
-              {program}
-            </option>
-          ))}
-        </select>
+  value={programFilter}
+  onChange={(e) => setProgramFilter(e.target.value)}
+  className="program-dropdown"
+  style={{ color: programFilter === "" ? "black" : "initial" }}
+>
+  <option value="">🎓 All Programs</option>
+  {allPrograms.map(program => (
+    <option key={program} value={program}>
+      {program}
+    </option>
+  ))}
+</select>
+
 
         <form onSubmit={handleAnnouncementSubmit}>
           <textarea

@@ -173,13 +173,25 @@ function HODDashboard() {
 
       {!selectedProgram && (
         <div className="programs-grid">
-          {allPrograms.map((program) => (
-            <div key={program} className="program-card" onClick={() => handleProgramClick(program)}>
-              <h3>{program}</h3>
-              <p>{programCounts[program] || 0} Students</p>
-            </div>
-          ))}
-        </div>
+  {allPrograms.map((program) => (
+    <div
+      key={program}
+      className="program-card"
+      style={{
+        border: "2px solid orange",
+        borderRadius: "8px",
+        transition: "border-color 0.3s ease"
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "darkorange")}
+      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "orange")}
+      onClick={() => handleProgramClick(program)}
+    >
+      <h3>{program}</h3>
+      <p>{programCounts[program] || 0} Students</p>
+    </div>
+  ))}
+</div>
+
       )}
 
       {selectedProgram && (
