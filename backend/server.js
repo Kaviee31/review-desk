@@ -851,6 +851,124 @@ app.get("/ug-projects-by-program/:programName", async (req, res) => {
 });
 
 
+
+
+app.get('/ug-projects/:programName', async (req, res) => {
+  const { programName } = req.params;
+  try {
+    const projects = await Enrollment.aggregate([
+      {
+        $match: {
+          courseName: programName,
+          projectName: { $ne: null }
+        }
+      },
+      {
+        $group: {
+          _id: "$projectName",
+          projectMembers: {
+            $push: {
+              studentName: "$studentName",
+              registerNumber: "$registerNumber",
+            }
+          },
+          teacherName: { $first: "$teacherName" },
+          zerothReviewComment: { $first: "$zerothReviewComment" },
+          Assessment1: { $first: "$Assessment1" }, // Added marks
+          Assessment2: { $first: "$Assessment2" },
+          Assessment3: { $first: "$Assessment3" },
+          Total: { $first: "$Total" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          projectName: "$_id",
+          projectMembers: 1,
+          teacherName: 1,
+          zerothReviewComment: 1,
+          Assessment1: 1, // Projecting marks
+          Assessment2: 1,
+          Assessment3: 1,
+          Total: 1
+        }
+      }
+    ]);
+    res.json(projects);
+  } catch (error) {
+    console.error(`Error fetching UG projects for HOD:`, error);
+    res.status(500).json({ error: "Failed to fetch UG projects" });
+  }
+});
+
+app.get('/teacher-ug-projects/:teacherEmail/:programName', async (req, res) => {
+  const { teacherEmail, programName } = req.params;
+  try {
+    const projects = await Enrollment.aggregate([
+      {
+        $match: {
+          courseName: programName,
+          teacherEmail: teacherEmail
+        }
+      },
+      {
+        $group: {
+          _id: "$projectName",
+          projectMembers: {
+            $push: {
+              studentName: "$studentName",
+              registerNumber: "$registerNumber",
+              email: "$email",
+              teacherName: "$teacherName", // Added for consistency
+              teacherEmail: "$teacherEmail", // Added for consistency
+              courseName: "$courseName",
+              Assessment1: "$Assessment1",
+              Assessment2: "$Assessment2",
+              Assessment3: "$Assessment3",
+              Total: "$Total",
+              viva: "$viva",
+              viva_total_awarded: "$viva_total_awarded",
+              zerothReviewComment: "$zerothReviewComment", // Added
+              reviewsAssessment: "$reviewsAssessment",
+              Contact: null
+            }
+          },
+          Assessment1: { $first: "$Assessment1" },
+          Assessment2: { $first: "$Assessment2" },
+          Assessment3: { $first: "$Assessment3" },
+          Total: { $first: "$Total" },
+          viva_total_awarded: { $first: "$viva_total_awarded" },
+          groupRegisterNumbers: { $addToSet: "$registerNumber" },
+          reviewsAssessment: { $first: "$reviewsAssessment" },
+          zerothReviewComment: { $first: "$zerothReviewComment" }, // Added to the project level
+          teacherName: { $first: "$teacherName" }, // Added to the project level
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          projectName: "$_id",
+          projectMembers: 1,
+          Assessment1: 1,
+          Assessment2: 1,
+          Assessment3: 1,
+          Total: 1,
+          viva_total_awarded: 1,
+          groupRegisterNumbers: 1,
+          reviewsAssessment: 1,
+          zerothReviewComment: 1, // Projecting the comment
+          teacherName: 1, // Projecting the teacher's name
+        }
+      }
+    ]);
+    res.json(projects);
+  } catch (error) {
+    console.error(`Error fetching UG projects for program ${programName}:`, error);
+    res.status(500).json({ error: "Failed to fetch UG projects" });
+  }
+});
+
+
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

@@ -254,7 +254,6 @@ useEffect(() => {
         const response = await axios.get(`${API_BASE_URL}/teacher-ug-projects/${teacherEmail}/${selectedProgram}`);
         const projects = response.data;
         setUgProjects(projects);
-
         // **NEW: Map comments for all students in the fetched projects**
         if (projects.length > 0) {
           const commentsMap = projects.flatMap(p => p.projectMembers).reduce((acc, member) => {
@@ -264,7 +263,6 @@ useEffect(() => {
           }, {});
           setZerothReviewComments(commentsMap);
         }
-        
         console.log("Fetched UG Projects:", projects);
       } catch (err) {
         console.error(`Error fetching UG projects for ${selectedProgram}:`, err);
@@ -394,9 +392,10 @@ useEffect(() => {
     doc.text(`${courseName} Marks Report`, 14, 22);
     doc.setFontSize(11);
     doc.setTextColor(100);
-    const tableColumn = ["Register Number", "Assess1", "Assess2", "Assess3", "Total"];
+    const tableColumn = ["Register Number","Project Name", "Assess1", "Assess2", "Assess3", "Total"];
     const tableRows = students.map((student) => [
       student.registerNumber,
+      student.projectName,
       student.marks1,
       student.marks2,
       student.marks3,
@@ -785,9 +784,10 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
     const studentName = currentStudentForReview.studentName;
     const registerNumber = currentStudentForReview.registerNumber;
     const programName = selectedProgram;
+    const projectName = currentStudentForReview.projectName; // Get project name
     const currentDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }); // DD/MM/YYYY format
 
-    // Resembling the "Semester Fee Receipt" structure
+    
     doc.setFont('helvetica'); // Use a standard font
     doc.setFontSize(10);
     doc.text('PROGRESS THROUGH KNOWLEDGE', 14, 15);
@@ -801,6 +801,10 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
     doc.text(`Name: ${studentName}`, 14, 55);
     doc.text(`Program: ${programName}`, 14, 50);
     doc.text(`Report Generated On: ${currentDate}`, 14, 60);
+
+    // Add project name as a heading
+    doc.setFontSize(12);
+    doc.text(`Project Name: ${projectName}`, 14, 65);
 
     const tableColumn = [
       "Review Item (R1)", "R1 Max", "R1 Awarded",
@@ -834,7 +838,7 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
-      startY: 70, // Adjust start position based on new header info
+      startY: 75, // Adjust start position based on new header info
       theme: 'grid', // Add grid theme for better visual separation
       styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
       headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0], fontStyle: 'bold' },
@@ -846,19 +850,19 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
         doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
       }
     });
-// Add VIVA marks section to PDF
- autoTable(doc, {
-     startY: doc.lastAutoTable.finalY + 10,
-     head: [['Viva Voce Component', 'Marks Awarded']],
-     body: [
-         ['Guide', vivaMarks.guide.toString()],
-         ['Panel Members', vivaMarks.panel.toString()],
-         ['External', vivaMarks.external.toString()],
-         [{ content: 'Total Viva Marks', styles: { fontStyle: 'bold' } }, { content: totalViva.toString(), styles: { fontStyle: 'bold' } }]
-     ],
-     theme: 'grid',
-     headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0], fontStyle: 'bold' },
- });
+    // Add VIVA marks section to PDF
+    autoTable(doc, {
+      startY: doc.lastAutoTable.finalY + 10,
+      head: [['Viva Voce Component', 'Marks Awarded']],
+      body: [
+          ['Guide', vivaMarks.guide.toString()],
+          ['Panel Members', vivaMarks.panel.toString()],
+          ['External', vivaMarks.external.toString()],
+          [{ content: 'Total Viva Marks', styles: { fontStyle: 'bold' } }, { content: totalViva.toString(), styles: { fontStyle: 'bold' } }]
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0], fontStyle: 'bold' },
+    });
     doc.save(`${studentName.replace(/[^a-zA-Z0-9]/g, '_')}_${registerNumber}_Review_Marks.pdf`);
     toast.success("Student review marks PDF downloaded successfully!");
   };

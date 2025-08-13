@@ -19,6 +19,7 @@ function AdminDashboard() {
   const [pgStudentRegNo, setPgStudentRegNo] = useState('');
   const [pgTeacherEmail, setPgTeacherEmail] = useState('');
   const [pgStudentCourseName, setPgStudentCourseName] = useState(''); // State for student's course name (PG)
+  const [pgProjectName, setPgProjectName] = useState(''); // New state for PG Project Name
   const [loadingPgEnroll, setLoadingPgEnroll] = useState(false); // Loading state for PG enrollment process
 
   // States for UG student enrollment
@@ -58,7 +59,7 @@ function AdminDashboard() {
     setLoadingPgEnroll(true);
     toast.dismiss();
 
-    if (!pgStudentRegNo || !pgTeacherEmail || !pgStudentCourseName) {
+    if (!pgStudentRegNo || !pgTeacherEmail || !pgStudentCourseName || !pgProjectName) {
       toast.error("Please fill all fields for PG student enrollment.");
       setLoadingPgEnroll(false);
       return;
@@ -92,16 +93,18 @@ function AdminDashboard() {
       await axios.post("http://localhost:5000/enroll", {
         studentName: fetchedStudentName,
         registerNumber: pgStudentRegNo,
-         email: studentEmail,
+        email: studentEmail,
         courseName: pgStudentCourseName,
         teacherName: teacherName, // Use fetched teacher name
         teacherEmail: pgTeacherEmail,
+        projectName: pgProjectName, // New field for PG project name
       });
 
       toast.success(`PG Student ${fetchedStudentName} enrolled successfully!`);
       setPgStudentRegNo('');
       setPgTeacherEmail('');
       setPgStudentCourseName('');
+      setPgProjectName(''); // Reset project name field
     } catch (error) {
       console.error("Error during PG student enrollment:", error);
       toast.error(`Error enrolling PG student: ${error.response?.data?.error || error.message}`);
@@ -245,6 +248,15 @@ function AdminDashboard() {
                 id="pgStudentRegNo"
                 value={pgStudentRegNo}
                 onChange={(e) => setPgStudentRegNo(e.target.value)}
+                required
+              />
+               <label htmlFor="pgProjectName">Project Name:</label>
+              <input
+                type="text"
+                id="pgProjectName"
+                value={pgProjectName}
+                onChange={(e) => setPgProjectName(e.target.value)}
+                placeholder="Enter project name"
                 required
               />
               <label htmlFor="pgTeacherEmail">Teacher Email:</label>
