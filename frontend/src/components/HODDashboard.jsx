@@ -122,38 +122,52 @@ function HODDashboard() {
     }
   };
   
-  const fetchUgProjectsByProgram = async (programName) => {
-    setLoadingStudents(true);
-    setUgProjects([]);
-    try {
-      const response = await axios.get(`${API_BASE_URL}/ug-projects-by-program/${programName}`);
-      const projectsWithTeacherNames = await Promise.all(response.data.map(async (project) => {
-        let teacherDisplayName = 'N/A';
-        const teacherEmail = project.teacherEmail;
-        if (teacherEmail) {
-            const usersRef = collection(db, "users");
-            const q = query(usersRef, where("email", "==", teacherEmail));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-                const teacherData = querySnapshot.docs[0].data();
-                teacherDisplayName = teacherData.username || teacherEmail;
-            } else {
-                teacherDisplayName = teacherEmail;
-            }
+// In HODDashboard.jsx
+
+const fetchUgProjectsByProgram = async (programName) => {
+  setLoadingStudents(true);
+  setUgProjects([]);
+  try {
+    const response = await axios.get(`${API_BASE_URL}/ug-projects-by-program/${programName}`);
+    
+    const projectsWithDetails = await Promise.all(response.data.map(async (project) => {
+      let teacherDisplayName = 'N/A';
+      const teacherEmail = project.teacherEmail;
+
+      if (teacherEmail) {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", teacherEmail));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const teacherData = querySnapshot.docs[0].data();
+          teacherDisplayName = teacherData.username || teacherEmail;
+        } else {
+          teacherDisplayName = teacherEmail; // Fallback to email if user not found in 'users' collection
         }
-        return {
-            ...project,
-            teacherDisplayName,
-        };
-      }));
-      setUgProjects(projectsWithTeacherNames);
-    } catch (error) {
-      console.error("Error fetching UG projects:", error);
-      toast.error("Failed to load projects.");
-    } finally {
-      setLoadingStudents(false);
-    }
-  };
+      }
+      
+      // Explicitly map all required properties and provide fallbacks for safety.
+      return {
+        projectName: project.projectName || "Unnamed Project",
+        groupRegisterNumbers: project.groupRegisterNumbers || [],
+        teacherDisplayName: teacherDisplayName,
+        zerothReviewComment: project.zerothReviewComment || "No comment submitted",
+        Assessment1: project.Assessment1 || 0,
+        Assessment2: project.Assessment2 || 0,
+        Assessment3: project.Assessment3 || 0,
+        Total: project.Total || 0,
+        viva_total_awarded: project.viva_total_awarded || 0,
+      };
+    }));
+
+    setUgProjects(projectsWithDetails);
+  } catch (error) {
+    console.error("Error fetching UG projects:", error);
+    toast.error("Failed to load projects.");
+  } finally {
+    setLoadingStudents(false);
+  }
+};
 
   const handleProgramClick = (program) => {
     setSelectedProgram(program);

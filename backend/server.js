@@ -347,65 +347,7 @@ app.get("/students-by-program/:programName", async (req, res) => {
 });
 
 // NEW ENDPOINT: Get UG projects for a teacher by courseName
-app.get("/teacher-ug-projects/:teacherEmail/:courseName", async (req, res) => {
-  const { teacherEmail, courseName } = req.params;
 
-  try {
-    const projects = await Enrollment.aggregate([
-      {
-        $match: {
-          teacherEmail: teacherEmail,
-          courseName: courseName,
-          projectName: { $ne: null, $exists: true, $ne: '' } // Only consider entries with a project name
-        }
-      },
-      {
-        $group: {
-          _id: "$projectName", // Group by project name
-          projectMembers: { $addToSet: { // Collect unique student details for the group
-            registerNumber: "$registerNumber",
-            studentName: "$studentName",
-            teacherEmail: "$teacherEmail", // Include teacherEmail for consistency
-            courseName: "$courseName",
-            Assessment1: "$Assessment1",
-            Assessment2: "$Assessment2",
-            Assessment3: "$Assessment3",
-            Total: "$Total",
-            viva: "$viva", // MODIFIED: Include the full viva object for each member
-            viva_total_awarded: "$viva_total_awarded", // Include viva marks for each member
-            Contact: null // Placeholder, you might want to fetch this
-          }},
-         
-          Assessment1: { $first: "$Assessment1" },
-          Assessment2: { $first: "$Assessment2" },
-          Assessment3: { $first: "$Assessment3" },
-          Total: { $first: "$Total" }, // Include Total as per request for consistency
-          viva_total_awarded: { $first: "$viva_total_awarded" }, // Get the first viva total for the project
-          groupRegisterNumbers: { $addToSet: "$registerNumber" },
-          reviewsAssessment: { $first: "$reviewsAssessment" } // Get the first reviewsAssessment found for the project
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          projectName: "$_id",
-          projectMembers: 1, // Array of { registerNumber, studentName, ... }
-          Assessment1: 1, // Use the fetched Assessment1
-          Assessment2: 1, // Use the fetched Assessment2
-          Assessment3: 1, // Use the fetched Assessment3
-          Total: 1,
-          viva_total_awarded: 1, // Pass through the viva total
-          groupRegisterNumbers: 1,
-          reviewsAssessment: 1 // Pass through the first found reviewsAssessment
-        }
-      }
-    ]);
-    res.json(projects);
-  } catch (error) {
-    console.error(`Error fetching UG projects for teacher ${teacherEmail} in ${courseName}:`, error);
-    res.status(500).json({ error: `Failed to fetch UG projects for ${courseName}.` });
-  }
-});
 
 
 // Update assessment marks (can be extended to update reviewsAssessment)
@@ -724,69 +666,55 @@ app.get("/students-by-program/:programName", async (req, res) => {
   }
 });
 
-// NEW ENDPOINT: Get UG projects for a teacher by courseName
-app.get("/teacher-ug-projects/:teacherEmail/:courseName", async (req, res) => {
-  const { teacherEmail, courseName } = req.params;
+
+app.get("/ug-projects-by-program/:programName", async (req, res) => {
+  const { programName } = req.params;
 
   try {
     const projects = await Enrollment.aggregate([
       {
         $match: {
-          teacherEmail: teacherEmail,
-          courseName: courseName,
-          projectName: { $ne: null, $exists: true, $ne: '' } // Only consider entries with a project name
+          courseName: programName,
+          projectName: { $ne: null, $exists: true, $ne: '' }
         }
       },
       {
         $group: {
-          _id: "$projectName", // Group by project name
-          projectMembers: {
-            $addToSet: { // Collect unique student details for the group
-              registerNumber: "$registerNumber",
-              studentName: "$studentName",
-              teacherEmail: "$teacherEmail", // Include teacherEmail for consistency
-              courseName: "$courseName",
-              Assessment1: "$Assessment1",
-              Assessment2: "$Assessment2",
-              Assessment3: "$Assessment3",
-              Total: "$Total",
-              viva: "$viva", // MODIFIED: Include the full viva object for each member
-              viva_total_awarded: "$viva_total_awarded", // Include viva marks for each member
-              Contact: null // Placeholder, you might want to fetch this
-            }
-          },
-
+          _id: "$projectName",
+          groupRegisterNumbers: { $addToSet: "$registerNumber" },
+          // ADDED: Get the teacher's email for the project.
+          teacherEmail: { $first: "$teacherEmail" },
+          // ADDED: Get the zeroth review comment for the project.
+          zerothReviewComment: { $first: "$zerothReviewComment" },
           Assessment1: { $first: "$Assessment1" },
           Assessment2: { $first: "$Assessment2" },
           Assessment3: { $first: "$Assessment3" },
-          Total: { $first: "$Total" }, // Include Total as per request for consistency
-          viva_total_awarded: { $first: "$viva_total_awarded" }, // Get the first viva total for the project
-          groupRegisterNumbers: { $addToSet: "$registerNumber" },
-          reviewsAssessment: { $first: "$reviewsAssessment" } // Get the first reviewsAssessment found for the project
+          Total: { $first: "$Total" },
+          viva_total_awarded: { $first: "$viva_total_awarded" },
         }
       },
       {
         $project: {
           _id: 0,
           projectName: "$_id",
-          projectMembers: 1, // Array of { registerNumber, studentName, ... }
-          Assessment1: 1, // Use the fetched Assessment1
-          Assessment2: 1, // Use the fetched Assessment2
-          Assessment3: 1, // Use the fetched Assessment3
-          Total: 1,
-          viva_total_awarded: 1, // Pass through the viva total
           groupRegisterNumbers: 1,
-          reviewsAssessment: 1 // Pass through the first found reviewsAssessment
+          // ADDED: Make sure the new fields are included in the final output.
+          teacherEmail: 1,
+          zerothReviewComment: 1,
+          Assessment1: 1,
+          Assessment2: 1,
+          Assessment3: 1,
+          Total: 1,
+          viva_total_awarded: 1,
         }
       }
     ]);
     res.json(projects);
   } catch (error) {
-    console.error(`Error fetching UG projects for teacher ${teacherEmail} in ${courseName}:`, error);
-    res.status(500).json({ error: `Failed to fetch UG projects for ${courseName}.` });
+    console.error(`Error fetching UG projects for program ${programName}:`, error);
+    res.status(500).json({ error: `Failed to fetch UG projects for program ${programName}.` });
   }
 });
-
 // =====================================================================================
 // === NEW ROUTE FOR COORDINATOR STUDENT VIEW ===
 // =====================================================================================
