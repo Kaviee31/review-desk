@@ -5,7 +5,7 @@ import { db } from '../firebase'; // Import db from your firebase.js config
 import { collection, query, where, getDocs } from 'firebase/firestore'; // Import Firestore functions
 import { toast } from 'react-toastify'; // For notifications
 import 'react-toastify/dist/ReactToastify.css';
-import '../styles/AdminDashboard.css'; // Assuming this CSS provides styling
+import '../styles/AdminDashboard.css'; // Import the stylesheet
 
 function AdminDashboard() {
   useEffect(() => {
@@ -13,47 +13,49 @@ function AdminDashboard() {
   }, []);
 
   // State to manage the selected student type (UG or PG)
-  const [studentType, setStudentType] = useState('PG'); // Default to PG, as current form is for PG
+  const [studentType, setStudentType] = useState('PG');
 
   // States for PG student enrollment
   const [pgStudentRegNo, setPgStudentRegNo] = useState('');
   const [pgTeacherEmail, setPgTeacherEmail] = useState('');
-  const [pgStudentCourseName, setPgStudentCourseName] = useState(''); // State for student's course name (PG)
-  const [pgProjectName, setPgProjectName] = useState(''); // New state for PG Project Name
-  const [loadingPgEnroll, setLoadingPgEnroll] = useState(false); // Loading state for PG enrollment process
+  const [pgTeacherName, setPgTeacherName] = useState(''); // State to hold fetched teacher name (not displayed)
+  const [pgStudentCourseName, setPgStudentCourseName] = useState('');
+  const [pgProjectName, setPgProjectName] = useState('');
+  const [loadingPgEnroll, setLoadingPgEnroll] = useState(false);
 
   // States for UG student enrollment
-  const [ugStudentRegNos, setUgStudentRegNos] = useState(['']); // State for dynamic UG student register numbers
+  const [ugStudentRegNos, setUgStudentRegNos] = useState(['']);
   const [ugTeacherEmail, setUgTeacherEmail] = useState('');
-  const [ugStudentCourseName, setUgStudentCourseName] = useState(''); // State for student's course name (UG)
-  const [ugProjectName, setUgProjectName] = useState(''); // New state for UG Project Name
-  const [loadingUgEnroll, setLoadingUgEnroll] = useState(false); // Loading state for UG enrollment process
+  const [ugTeacherName, setUgTeacherName] = useState(''); // State to hold fetched teacher name (not displayed)
+  const [ugStudentCourseName, setUgStudentCourseName] = useState('');
+  const [ugProjectName, setUgProjectName] = useState('');
+  const [loadingUgEnroll, setLoadingUgEnroll] = useState(false);
 
-  // Define available course options for the admin to assign
+  // Course options
   const pgCourses = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
-  const ugCourses = ["B.TECH(IT)" , "B.TECH(IT) SS"]; // Sample UG courses
+  const ugCourses = ["B.TECH(IT)", "B.TECH(IT) SS"];
 
-  // Function to fetch teacher's name from Firestore
+  // Fetches a teacher's name from Firestore based on their email.
   const fetchTeacherName = async (teacherEmailToSearch) => {
     try {
       const usersRef = collection(db, "users");
-      const q = query(usersRef, 
-        where("email", "==", teacherEmailToSearch), 
+      const q = query(usersRef,
+        where("email", "==", teacherEmailToSearch),
         where("userType", "==", "Faculty")
       );
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        return querySnapshot.docs[0].data().username; // Return the teacher's username
+        return querySnapshot.docs[0].data().username;
       }
-      return null; // Teacher not found
+      return null;
     } catch (error) {
       console.error("Error fetching teacher name:", error);
       return null;
     }
   };
 
-
+  // Handles the submission of the PG student enrollment form.
   const handlePgSubmit = async (event) => {
     event.preventDefault();
     setLoadingPgEnroll(true);
@@ -65,15 +67,13 @@ function AdminDashboard() {
       return;
     }
 
-    // Fetch teacher's name
-    const teacherName = await fetchTeacherName(pgTeacherEmail);
-    if (!teacherName) {
-      toast.error(`No teacher found with email: ${pgTeacherEmail}. Please ensure the teacher has signed up.`);
+    const fetchedTeacherName = await fetchTeacherName(pgTeacherEmail);
+    if (!fetchedTeacherName) {
+      toast.error(`No teacher found with email: ${pgTeacherEmail}.`);
       setLoadingPgEnroll(false);
       return;
     }
-
-    let fetchedStudentName = 'Unknown Student';
+    setPgTeacherName(fetchedTeacherName); // Store name in state, but don't display it
 
     try {
       const usersRef = collection(db, "users");
@@ -81,30 +81,30 @@ function AdminDashboard() {
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
-        toast.error(`No student found with Register Number: ${pgStudentRegNo}. Please ensure the student has signed up.`);
+        toast.error(`No student found with Register Number: ${pgStudentRegNo}.`);
         setLoadingPgEnroll(false);
         return;
       }
 
       const studentDoc = querySnapshot.docs[0].data();
-      fetchedStudentName = studentDoc.username;
+      const studentName = studentDoc.username;
       const studentEmail = studentDoc.email;
 
       await axios.post("http://localhost:5000/enroll", {
-        studentName: fetchedStudentName,
+        studentName: studentName,
         registerNumber: pgStudentRegNo,
         email: studentEmail,
         courseName: pgStudentCourseName,
-        teacherName: teacherName, // Use fetched teacher name
+        teacherName: fetchedTeacherName, // Use fetched name for the request
         teacherEmail: pgTeacherEmail,
-        projectName: pgProjectName, // New field for PG project name
+        projectName: pgProjectName,
       });
 
-      toast.success(`PG Student ${fetchedStudentName} enrolled successfully!`);
+      toast.success(`PG Student ${studentName} enrolled successfully!`);
       setPgStudentRegNo('');
       setPgTeacherEmail('');
       setPgStudentCourseName('');
-      setPgProjectName(''); // Reset project name field
+      setPgProjectName('');
     } catch (error) {
       console.error("Error during PG student enrollment:", error);
       toast.error(`Error enrolling PG student: ${error.response?.data?.error || error.message}`);
@@ -113,13 +113,11 @@ function AdminDashboard() {
     }
   };
 
-  // Function to add a new student register number input field
   const handleAddUgStudentInput = () => {
     setUgStudentRegNos([...ugStudentRegNos, '']);
   };
 
   const handleRemoveUgStudentInput = () => {
-    // Only remove if there's more than one input field
     if (ugStudentRegNos.length > 1) {
       setUgStudentRegNos(ugStudentRegNos.slice(0, -1));
     } else {
@@ -127,33 +125,33 @@ function AdminDashboard() {
     }
   };
 
-  // Function to handle changes in a specific student register number input
   const handleUgRegNoChange = (index, value) => {
     const newRegNos = [...ugStudentRegNos];
     newRegNos[index] = value;
     setUgStudentRegNos(newRegNos);
   };
 
+  // Handles the submission of the UG student enrollment form.
   const handleUgSubmit = async (event) => {
     event.preventDefault();
     setLoadingUgEnroll(true);
     toast.dismiss();
 
-    const registerNumbersToEnroll = ugStudentRegNos.filter(Boolean); // Filter out empty strings
+    const registerNumbersToEnroll = ugStudentRegNos.filter(Boolean);
 
     if (registerNumbersToEnroll.length === 0 || !ugTeacherEmail || !ugStudentCourseName || !ugProjectName) {
-      toast.error("Please fill Project Name, at least one student register number, teacher email, and UG Course for enrollment.");
+      toast.error("Please fill all required fields for UG enrollment.");
       setLoadingUgEnroll(false);
       return;
     }
 
-    // Fetch teacher's name for UG enrollment
-    const teacherName = await fetchTeacherName(ugTeacherEmail);
-    if (!teacherName) {
-      toast.error(`No teacher found with email: ${ugTeacherEmail}. Please ensure the teacher has signed up.`);
+    const fetchedTeacherName = await fetchTeacherName(ugTeacherEmail);
+    if (!fetchedTeacherName) {
+      toast.error(`No teacher found with email: ${ugTeacherEmail}.`);
       setLoadingUgEnroll(false);
       return;
     }
+    setUgTeacherName(fetchedTeacherName); // Store name in state, not for display
 
     let allSuccess = true;
     let successCount = 0;
@@ -166,73 +164,63 @@ function AdminDashboard() {
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-          toast.error(`Student with Register Number: ${regNo} not found. Skipped enrollment.`);
           failedRegNos.push(regNo);
           allSuccess = false;
           continue;
         }
 
-       const studentDoc = querySnapshot.docs[0].data();
-       const  fetchedStudentName = studentDoc.username;
+        const studentDoc = querySnapshot.docs[0].data();
+        const studentName = studentDoc.username;
         const studentEmail = studentDoc.email;
 
-
         await axios.post("http://localhost:5000/enroll", {
-          studentName: fetchedStudentName,
+          studentName: studentName,
           registerNumber: regNo,
           email: studentEmail,
           courseName: ugStudentCourseName,
-          teacherName: teacherName, // Use fetched teacher name
+          teacherName: fetchedTeacherName, // Use fetched name for the request
           teacherEmail: ugTeacherEmail,
           projectName: ugProjectName,
           groupRegisterNumbers: registerNumbersToEnroll,
         });
         successCount++;
-        toast.success(`UG Student ${fetchedStudentName} (${regNo}) enrolled successfully!`);
       } catch (error) {
         console.error(`Error enrolling UG student ${regNo}:`, error);
-        toast.error(`Error enrolling UG student ${regNo}: ${error.response?.data?.error || error.message}`);
         failedRegNos.push(regNo);
         allSuccess = false;
       }
     }
 
-    if (allSuccess) {
-      toast.success(`All ${successCount} UG students enrolled successfully!`);
-    } else {
-      toast.warn(`Enrolled ${successCount} UG students. Failed to enroll: ${failedRegNos.join(', ')}`);
+    if (successCount > 0) {
+        toast.success(`Successfully enrolled ${successCount} UG student(s).`);
+    }
+    if (!allSuccess) {
+        toast.warn(`Failed to enroll: ${failedRegNos.join(', ')}.`);
     }
 
-    setUgStudentRegNos(['']); // Reset to one empty input field
+    setUgStudentRegNos(['']);
     setUgTeacherEmail('');
     setUgStudentCourseName('');
     setUgProjectName('');
     setLoadingUgEnroll(false);
   };
 
-
   return (
     <div className='cont'>
       <div className="admin-sidebar">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">Admin Panel</h2>
-        <div className="flex flex-col space-y-4 w-full">
-          <button
-            onClick={() => setStudentType('UG')}
-            className={`py-2 px-4 rounded-md font-semibold transition duration-200
-              ${studentType === 'UG' ? 'bg-blue-600 text-white shadow-md active' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}
-            `}
-          >
-            UG Students
-          </button>
-          <button
-            onClick={() => setStudentType('PG')}
-            className={`py-2 px-4 rounded-md font-semibold transition duration-200
-              ${studentType === 'PG' ? 'bg-blue-600 text-white shadow-md active' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}
-            `}
-          >
-            PG Students
-          </button>
-        </div>
+        <h2>Admin Panel</h2>
+        <button
+          onClick={() => setStudentType('UG')}
+          className={studentType === 'UG' ? 'active' : ''}
+        >
+          UG Students
+        </button>
+        <button
+          onClick={() => setStudentType('PG')}
+          className={studentType === 'PG' ? 'active' : ''}
+        >
+          PG Students
+        </button>
       </div>
 
       <div className="dashboard-content">
@@ -248,9 +236,10 @@ function AdminDashboard() {
                 id="pgStudentRegNo"
                 value={pgStudentRegNo}
                 onChange={(e) => setPgStudentRegNo(e.target.value)}
+                placeholder="Enter student's register number"
                 required
               />
-               <label htmlFor="pgProjectName">Project Name:</label>
+              <label htmlFor="pgProjectName">Project Name:</label>
               <input
                 type="text"
                 id="pgProjectName"
@@ -265,6 +254,7 @@ function AdminDashboard() {
                 id="pgTeacherEmail"
                 value={pgTeacherEmail}
                 onChange={(e) => setPgTeacherEmail(e.target.value)}
+                placeholder="Enter teacher's email"
                 required
               />
               <label htmlFor="pgStudentCourseName">PG Course Name:</label>
@@ -280,7 +270,7 @@ function AdminDashboard() {
                 ))}
               </select>
               <button type="submit" disabled={loadingPgEnroll}>
-                {loadingPgEnroll ? 'Enrolling PG...' : 'Enroll PG Student'}
+                {loadingPgEnroll ? 'Enrolling...' : 'Enroll PG Student'}
               </button>
             </form>
           </div>
@@ -300,28 +290,28 @@ function AdminDashboard() {
                 required
               />
               {ugStudentRegNos.map((regNo, index) => (
-                <div className="form-group" key={index}>
+                <div key={index}>
                   <label htmlFor={`ugStudentRegNo${index}`}>Student Register Number {index + 1}:</label>
                   <input
                     type="text"
                     id={`ugStudentRegNo${index}`}
                     value={regNo}
                     onChange={(e) => handleUgRegNoChange(index, e.target.value)}
+                    placeholder="Enter student's register number"
                   />
                 </div>
               ))}
-              <button type="button" onClick={handleAddUgStudentInput} className="add-student-button">
-                Add Student
-              </button>
-              <button type="button" onClick={handleRemoveUgStudentInput} className="add-student-button">
-                Remove Student
-              </button>
+              <div className="ug-button-group" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                 <button type="button" onClick={handleAddUgStudentInput} className="add-student-button">Add Student</button>
+                 <button type="button" onClick={handleRemoveUgStudentInput} className="remove-student-button">Remove</button>
+              </div>
               <label htmlFor="ugTeacherEmail">Teacher Email:</label>
               <input
                 type="email"
                 id="ugTeacherEmail"
                 value={ugTeacherEmail}
                 onChange={(e) => setUgTeacherEmail(e.target.value)}
+                placeholder="Enter teacher's email"
                 required
               />
               <label htmlFor="ugStudentCourseName">UG Course Name:</label>
@@ -338,7 +328,7 @@ function AdminDashboard() {
               </select>
               
               <button type="submit" disabled={loadingUgEnroll}>
-                {loadingUgEnroll ? 'Enrolling UG...' : 'Enroll UG Students'}
+                {loadingUgEnroll ? 'Enrolling...' : 'Enroll UG Students'}
               </button>
             </form>
           </div>
