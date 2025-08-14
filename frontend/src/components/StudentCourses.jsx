@@ -9,7 +9,7 @@ import '../styles/StudentCourses.css';
 
 const UNSEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/134/134935.png";
 const SEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/2462/2462719.png";
-
+const BASE_URL ="http://localhost:5000"
 function StudentCourses() {
   const [courses, setCourses] = useState([]);
   const [registerNumber, setRegisterNumber] = useState("");
@@ -48,9 +48,9 @@ function StudentCourses() {
     const fetchCourses = async () => {
       if (registerNumber) {
         try {
-          const response = await axios.get(`http://localhost:5000/student-courses/${registerNumber}`);
+          const response = await axios.get(`${BASE_URL}/student-courses/${registerNumber}`);
           setCourses(response.data);
-          const reviewResponse = await axios.get(`http://localhost:5000/student-zeroth-review/${registerNumber}`);
+          const reviewResponse = await axios.get(`${BASE_URL}/student-zeroth-review/${registerNumber}`);
           setZerothReviewComment(reviewResponse.data.comment || "No comment submitted yet.");
         } catch (error) {
           console.error("Error fetching student courses:", error);
