@@ -1153,6 +1153,8 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
                       <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Total</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Viva</th>
                     </tr>
                   </thead>
                   <tbody className="text-gray-600 text-sm font-light">
@@ -1175,6 +1177,8 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
                           <td className="py-3 px-6 text-center">{project.Assessment1 || 0}</td>
                           <td className="py-3 px-6 text-center">{project.Assessment2 || 0}</td>
                           <td className="py-3 px-6 text-center">{project.Assessment3 || 0}</td>
+                          <td className="py-3 px-6 text-center">{project.Total || 0}</td>
+                          <td className="py-3 px-6 text-center">{(project.viva_total_awarded)/3 || 0}</td>
                         </tr>
                       ))
                     ) : (
@@ -1213,7 +1217,8 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
                       <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
                       <th className="py-3 px-6 text-center border-b border-300">Assessment 3</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Average</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Total</th>
+                      <th className="py-3 px-6 text-center border-b border-gray-300">Viva</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">Zeroth Review</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">First Review</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">Second Review</th>
@@ -1239,6 +1244,7 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
                           <td className="py-3 px-6 text-center">{student.Assessment2 || 0}</td>
                           <td className="py-3 px-6 text-center">{student.Assessment3 || 0}</td>
                           <td className="py-3 px-6 text-center">{student.Total || 0}</td>
+                          <td className="py-3 px-6 text-center">{(student.viva_total_awarded)/3 || 0}</td>
                            {/* Display all three file types for Zeroth Review */}
                           <td className="py-3 px-6 text-center">
                             {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && (
