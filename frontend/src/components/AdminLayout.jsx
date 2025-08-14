@@ -39,7 +39,7 @@ function AdminLayout() {
             className={isActive("/admin/report") ? "active" : ""}
             onClick={() => navigate("/admin/report")}
           >
-            <BarChart2 size={18} /> Report
+            <BarChart2 size={18} /> Schedule
           </button>
           {/* New "Assign coordinator" button */}
           <button

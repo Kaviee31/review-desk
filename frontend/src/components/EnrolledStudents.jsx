@@ -959,8 +959,8 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
       <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
       <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
       <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
-      <th className="py-3 px-6 text-center border-b border-gray-300">Average</th>
-      <th className="py-3 px-6 text-center border-b border-gray-300">Viva Marks</th>
+      <th className="py-3 px-6 text-center border-b border-gray-300">Total</th>
+      <th className="py-3 px-6 text-center border-b border-gray-300">Viva</th>
       <th className="py-3 px-6 text-center border-b border-gray-300">Zeroth Review</th>
       <th className="py-3 px-6 text-center border-b border-gray-300">First Review</th>
       <th className="py-3 px-6 text-center border-b border-gray-300">Second Review</th>
@@ -1014,7 +1014,7 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
           </td>
         <td className="py-3 px-6 text-center">
           <input
-            value={student.viva_total_awarded || 0}
+            value={student.viva_total_awarded/3 || 0}
             readOnly
             className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed font-semibold"
           />
@@ -1544,7 +1544,7 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
       <th className="py-2 px-4 text-left border-b">Review Item (R3)</th>
       <th className="py-2 px-4 text-center border-b">R3 Max</th>
       <th className="py-2 px-4 text-center border-b">R3 Awarded</th>
-      <th className="py-2 px-4 text-center border-b">VIVA</th>
+      
     </tr>
   </thead>
 
@@ -1590,43 +1590,21 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
           />
         </td>
 
-        {/* Viva column only once (in first row) */}
-        {index === 0 ? (
-          <td className="py-2 px-4 text-center" rowSpan={studentReviewMarks.length}>
-            <div className="flex flex-col gap-2 items-center">
-              <div>
-                <label className="block text-xs mb-1 text-gray-600">Guide</label>
-                <input
-                  type="number"
-                  value={vivaMarks.guide}
-                  onChange={(e) => handleVivaMarkChange('guide', e.target.value)}
-                  className="w-20 p-1 border rounded text-center"
-                />
-              </div>
-              <div>
-                <label className="block text-xs mb-1 text-gray-600">External</label>
-                <input
-                  type="number"
-                  value={vivaMarks.external}
-                  onChange={(e) => handleVivaMarkChange('external', e.target.value)}
-                  className="w-20 p-1 border rounded text-center"
-                />
-              </div>
-              <div>
-                <label className="block text-xs mb-1 text-gray-600">Panel</label>
-                <input
-                  type="number"
-                  value={vivaMarks.panel}
-                  onChange={(e) => handleVivaMarkChange('panel', e.target.value)}
-                  className="w-20 p-1 border rounded text-center"
-                />
-              </div>
-            </div>
-          </td>
-        ) : null}
+
       </tr>
     ))}
   </tbody>
+  <tfoot className="bg-gray-100 font-bold">
+                        <tr>
+                            <td className="py-2 px-4 text-right" colSpan="2">Total Awarded (R1):</td>
+                            <td className="py-2 px-4 text-center">{totalAwardedR1}</td>
+                            <td className="py-2 px-4 text-right" colSpan="2">Total Awarded (R2):</td>
+                            <td className="py-2 px-4 text-center">{totalAwardedR2}</td>
+                            <td className="py-2 px-4 text-right" colSpan="2">Total Awarded (R3):</td>
+                            <td className="py-2 px-4 text-center">{totalAwardedR3}</td>
+                            <td className="py-2 px-4 text-center">{totalViva/3}</td>
+                        </tr>
+                    </tfoot>
 </table>
 
 

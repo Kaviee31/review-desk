@@ -897,6 +897,43 @@ app.get('/teacher-ug-projects/:teacherEmail/:programName', async (req, res) => {
 });
 
 
+app.post("/update-viva-marks", async (req, res) => {
+  const { registerNumber, courseName, viva } = req.body;
+
+  if (!registerNumber || !courseName || !viva) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+
+  try {
+    const totalViva = (Number(viva.guide) || 0) + (Number(viva.panel) || 0) + (Number(viva.external) || 0);
+    
+    // Find the student to check if they are part of a UG project
+    const student = await Enrollment.findOne({ registerNumber, courseName });
+
+    if (!student) {
+      return res.status(404).json({ error: "Student not found." });
+    }
+
+    // If the student is in a project (has a projectName), update all project members
+    if (student.projectName && student.groupRegisterNumbers?.length > 0) {
+      await Enrollment.updateMany(
+        { projectName: student.projectName, courseName: courseName },
+        { $set: { viva: viva, viva_total_awarded: totalViva } }
+      );
+    } else { // Otherwise, just update the single PG student
+      await Enrollment.findOneAndUpdate(
+        { registerNumber, courseName },
+        { $set: { viva: viva, viva_total_awarded: totalViva } }
+      );
+    }
+
+    res.json({ message: "Viva marks updated successfully!" });
+  } catch (error) {
+    console.error("Error updating viva marks:", error);
+    res.status(500).json({ error: "Failed to update viva marks" });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
