@@ -113,23 +113,25 @@ function TeacherDashboard() {
   };
 
   return (
-    <div className="cont">
+    <div className="containers">
       <div className="dashboard-content">
         <h2>📣 Send Announcement to Students</h2>
 
         {/* Program Filter Dropdown */}
         <select
-          value={programFilter}
-          onChange={(e) => setProgramFilter(e.target.value)}
-          className="program-dropdown"
-        >
-          <option value="">🎓 All Programs</option>
-          {allPrograms.map(program => (
-            <option key={program} value={program}>
-              {program}
-            </option>
-          ))}
-        </select>
+  value={programFilter}
+  onChange={(e) => setProgramFilter(e.target.value)}
+  className="program-dropdown"
+  style={{ color: programFilter === "" ? "black" : "initial" }}
+>
+  <option value="">🎓 All Programs</option>
+  {allPrograms.map(program => (
+    <option key={program} value={program}>
+      {program}
+    </option>
+  ))}
+</select>
+
 
         <form onSubmit={handleAnnouncementSubmit}>
           <textarea

@@ -7,7 +7,7 @@ export function redirectToDashboard(navigate, role) {
       navigate("/teacher/dashboard");
       break;
     case "Coordinator":
-      navigate("/teacher/coordinator-dashboard");  // 🔥 this is the key fix
+      navigate("/coordinator/dashboard");  // 🔥 this is the key fix
       break;
     case "Student":
       navigate("/student/dashboard");

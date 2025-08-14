@@ -8,7 +8,7 @@
 /* Body Background */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(to right, #6a11cb, #2575fc);
+  background: var(--secondary-color);
   color: white;
   min-height: 100vh;
   overflow-x: hidden;
@@ -59,6 +59,7 @@ body {
 
 /* Main Container */
 .dashboard-container {
+ 
   padding-top: 80px;
   display: flex;
   justify-content: center;
@@ -70,7 +71,7 @@ body {
 
 /* Dashboard Box */
 .dashboard-content {
-  background: rgba(255, 255, 255, 0.12);
+  background-color: #fffdd0;
   backdrop-filter: blur(20px);
   border-radius: 16px;
   padding: 30px;
@@ -88,7 +89,7 @@ body {
   text-align: center;
   font-size: 26px;
   margin-bottom: 10px;
-  color: #fff;
+  color: black;
 }
 
 /* Inputs */
@@ -100,7 +101,7 @@ body {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
-  color: white;
+  color:black;
   font-size: 15px;
   outline: none;
   transition: all 0.4s ease;
@@ -109,24 +110,26 @@ body {
 
 .dashboard-content input[type="file"] {
   padding: 12px 10px;
+  color: black;
 }
 
 .dashboard-content input::placeholder,
 .dashboard-content textarea::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(3, 3, 3, 0.6);
 }
 
 .dashboard-content input:focus,
 .dashboard-content textarea:focus {
   border-color: #00c3ff;
   box-shadow: 0 0 12px rgba(0, 195, 255, 0.7), inset 0 0 8px rgba(0, 195, 255, 0.4);
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 /* Textarea specific beautiful design */
 .dashboard-content textarea {
   min-height: 130px;
   resize: vertical;
+  color: black;
 }
 
 /* Submit Button */
@@ -136,7 +139,7 @@ body {
   background: linear-gradient(135deg, #00c3ff, #007bff);
   border: none;
   border-radius: 10px;
-  color: white;
+  color: black;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
@@ -161,7 +164,7 @@ table {
 th, td {
   padding: 12px;
   text-align: center;
-  color: white;
+  color: black;
   border-bottom: 1px solid rgba(255,255,255,0.2);
 }
 
@@ -181,14 +184,14 @@ thead {
 .announcement-section h3 {
   font-size: 20px;
   margin-bottom: 15px;
-  color: #fff;
+  color: black;
 }
 
 .announcement-item {
   padding: 8px 0;
   border-bottom: 1px solid rgba(255,255,255,0.15);
   font-size: 15px;
-  color: rgba(255,255,255,0.9);
+  color:black;
 }
 
 /* Responsive */
@@ -217,7 +220,7 @@ thead {
   border: 2px solid #6366f1;
   border-radius: 8px;
   background: linear-gradient(to right, #c084fc, #6366f1);
-  color: white;
+  color: black;
   outline: none;
   appearance: none;
 }

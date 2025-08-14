@@ -16,7 +16,8 @@ function RoleSwitcherDropdown() {
         navigate("/teacher/dashboard");
         break;
       case "Coordinator":
-        navigate("/teacher/coordinator-dashboard");
+        // Navigating to the base coordinator path will render the CoordinatorLayout
+        navigate("/coordinator/dashboard");
         break;
       case "Admin":
         navigate("/admin/dashboard");

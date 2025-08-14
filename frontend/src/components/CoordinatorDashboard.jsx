@@ -300,29 +300,41 @@ function CoordinatorDashboard() {
 
       {/* Buttons for program selection */}
       {!selectedProgram && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 w-full max-w-4xl">
-          {allPrograms.map((program) => (
-            <button
-              key={program}
-              onClick={() => setSelectedProgram(program)}
-              // Disable button if the program is NOT included in assignedCourses
-              disabled={!assignedCourses.includes(program)}
-              className={`font-semibold py-4 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-75
-                ${program === "MCA(R)" ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500" :
-                  program === "MCA(SS)" ? "bg-green-600 hover:bg-green-700 focus:ring-green-500" :
-                    program === "MTECH(R)" ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" :
-                      program === "MTECH(SS)" ? "bg-red-600 hover:bg-red-700 focus:ring-red-500" :
-                        program === "B.TECH(IT)" ? "bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500" :
-                        "bg-teal-600 hover:bg-teal-700 focus:ring-teal-500"
-                }
-                ${!assignedCourses.includes(program) ? "opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400" : "text-white"}
-              `}
-            >
-              {program}
-            </button>
-          ))}
-        </div>
-      )}
+  <div className="programs-grid">
+  {allPrograms.map((program) => (
+    <div
+      key={program}
+      className="program-card"
+      onClick={() => setSelectedProgram(program)}
+      style={{
+        opacity: !assignedCourses.includes(program) ? 0.5 : 1,
+        pointerEvents: !assignedCourses.includes(program) ? "none" : "auto",
+        border: "2px solid orange",
+        borderRadius: "8px",
+        transition: "border-color 0.3s ease"
+      }}
+      onMouseEnter={(e) => {
+        if (assignedCourses.includes(program)) {
+          e.currentTarget.style.borderColor = "darkorange";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (assignedCourses.includes(program)) {
+          e.currentTarget.style.borderColor = "orange";
+        }
+      }}
+    >
+      <h3>{program}</h3>
+      <p>
+        {assignedCourses.includes(program)
+          ? "Click to manage"
+          : "Access Denied"}
+      </p>
+    </div>
+  ))}
+</div>
+
+)}
 
       {/* Conditional rendering of the review mark entry UI */}
       {selectedProgram && (

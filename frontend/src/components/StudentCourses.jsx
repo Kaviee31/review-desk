@@ -16,6 +16,7 @@ function StudentCourses() {
   const [studentName, setStudentName] = useState(""); // kept if needed later
   const [selectedTeacherEmail, setSelectedTeacherEmail] = useState(null);
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
+  const [zerothReviewComment, setZerothReviewComment] = useState("");
 
   useEffect(() => {
     document.title = "Student Courses";
@@ -49,6 +50,8 @@ function StudentCourses() {
         try {
           const response = await axios.get(`http://localhost:5000/student-courses/${registerNumber}`);
           setCourses(response.data);
+          const reviewResponse = await axios.get(`http://localhost:5000/student-zeroth-review/${registerNumber}`);
+          setZerothReviewComment(reviewResponse.data.comment || "No comment submitted yet.");
         } catch (error) {
           console.error("Error fetching student courses:", error);
         }
@@ -111,6 +114,15 @@ function StudentCourses() {
       {courses.length > 0 ? (
         courses.map((course, index) => (
           <div key={index} style={{ marginBottom: "20px" }}>
+            <h3 className="text-xl font-bold mb-2">Guide's Zeroth Review</h3>
+            <table border="1" className="min-w-full mb-6">
+              <thead>
+                <tr>
+                  <th>Comment: {zerothReviewComment}</th>
+                </tr>
+              </thead>
+              
+            </table>
             <h2>Project Review Marks</h2>
             <table border="1">
               <thead>

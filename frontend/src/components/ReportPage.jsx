@@ -16,6 +16,7 @@ function ReportPage() {
     const [zerothReviewDate, setZerothReviewDate] = useState('');
     const [firstReviewDate, setFirstReviewDate] = useState('');
     const [secondReviewDate, setSecondReviewDate] = useState('');
+    const [thirdReviewDate, setThirdReviewDate] = useState(''); // NEW: State for third review date
     const [loading, setLoading] = useState(false);
 
     // Define all programs
@@ -34,11 +35,13 @@ function ReportPage() {
                         setZerothReviewDate(response.data.zerothReviewDeadline ? new Date(response.data.zerothReviewDeadline).toISOString().split('T')[0] : '');
                         setFirstReviewDate(response.data.firstReviewDeadline ? new Date(response.data.firstReviewDeadline).toISOString().split('T')[0] : '');
                         setSecondReviewDate(response.data.secondReviewDeadline ? new Date(response.data.secondReviewDeadline).toISOString().split('T')[0] : '');
+                        setThirdReviewDate(response.data.thirdReviewDeadline ? new Date(response.data.thirdReviewDeadline).toISOString().split('T')[0] : ''); // NEW: Set third review date
                     } else {
                         // If no deadlines exist for the selected program, clear the fields
                         setZerothReviewDate('');
                         setFirstReviewDate('');
                         setSecondReviewDate('');
+                        setThirdReviewDate(''); // NEW: Clear third review date
                     }
                 } catch (error) {
                     console.error("Error fetching review dates:", error);
@@ -46,6 +49,7 @@ function ReportPage() {
                     setZerothReviewDate('');
                     setFirstReviewDate('');
                     setSecondReviewDate('');
+                    setThirdReviewDate(''); // NEW: Clear third review date
                 }
             }
         };
@@ -69,6 +73,11 @@ function ReportPage() {
             toast.warning("Second Review must be after First Review.");
             return;
         }
+        // NEW: Validation for third review date
+        if (thirdReviewDate && secondReviewDate && new Date(thirdReviewDate) <= new Date(secondReviewDate)) {
+            toast.warning("Third Review must be after Second Review.");
+            return;
+        }
 
         setLoading(true);
 
@@ -78,6 +87,7 @@ function ReportPage() {
                 zerothReviewDeadline: zerothReviewDate,
                 firstReviewDeadline: firstReviewDate,
                 secondReviewDeadline: secondReviewDate,
+                thirdReviewDeadline: thirdReviewDate, // NEW: Send third review deadline
             });
 
             toast.success(`Review deadlines for ${selectedProgram} updated successfully!`);
@@ -107,7 +117,8 @@ function ReportPage() {
             🗓️ Zeroth Review: ${zerothReviewDate ? new Date(zerothReviewDate).toLocaleDateString('en-GB') : 'Not Set'}
             🗓️ First Review: ${firstReviewDate ? new Date(firstReviewDate).toLocaleDateString('en-GB') : 'Will be Announced later'}
             🗓️ Second Review: ${secondReviewDate ? new Date(secondReviewDate).toLocaleDateString('en-GB') : 'Will be Announced later'}
-
+            🗓️ Third Review: ${thirdReviewDate ? new Date(thirdReviewDate).toLocaleDateString('en-GB') : 'Will be Announced later'}
+            
             Please plan your reviews accordingly.
             `;
 
@@ -183,6 +194,17 @@ function ReportPage() {
                                     type="date"
                                     value={secondReviewDate}
                                     onChange={(e) => setSecondReviewDate(e.target.value)}
+                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                />
+                            </div>
+
+                            {/* NEW: Third Review Deadline Input */}
+                            <div className="form-group mb-6">
+                                <label className="block text-gray-700 text-sm font-bold mb-2">Third Review Deadline:</label>
+                                <input
+                                    type="date"
+                                    value={thirdReviewDate}
+                                    onChange={(e) => setThirdReviewDate(e.target.value)}
                                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                                 />
                             </div>

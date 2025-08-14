@@ -9,14 +9,13 @@ import ChatUser from "./models/ChatUser.js";
 import bot from './telegramBot.js';
 import TelegramBot from "node-telegram-bot-api";
 
-
-
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use("/uploads", express.static("uploads")); // Serve static files from the 'uploads' directory
+
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
@@ -36,7 +35,7 @@ const enrollmentSchema = new mongoose.Schema({
   Assessment3: { type: Number, default: 0 },
   Total: { type: Number, default: 0 },
   reviews: [{ // For uploaded review documents (PDFs, PPTs, Other)
-    reviewType: String, // e.g., "zeroth", "first", "second"
+    reviewType: String, // e.g., "zeroth", "first", "second", "third"
     pdfPath: String,    // Path for PDF file
     pptPath: String,    // Path for PPT file
     otherPath: String,  // Path for any other document
@@ -48,9 +47,17 @@ const enrollmentSchema = new mongoose.Schema({
     r2_mark: { type: Number, default: 0 },
     r3_mark: { type: Number, default: 0 },
   }],
+  // NEW: Fields for Viva Voce marks
+  viva: {
+    guide: { type: Number, default: 0 },
+    panel: { type: Number, default: 0 },
+    external: { type: Number, default: 0 },
+  },
+  viva_total_awarded: { type: Number, default: 0 },
   // NEW FIELDS FOR UG STUDENTS' PROJECT DATA
   projectName: { type: String }, // Stores the project name for the group
-  groupRegisterNumbers: { type: [String], default: [] } // Stores all register numbers in the UG group
+  groupRegisterNumbers: { type: [String], default: [] },// Stores all register numbers in the UG group
+  zerothReviewComment: { type: String, default: "" }
 });
 
 const messageSchema = new mongoose.Schema({
@@ -58,12 +65,13 @@ const messageSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now, expires: 60 * 60 * 24 },
 });
 
-// MODIFIED: reviewDeadlineSchema to include courseName
+// MODIFIED: reviewDeadlineSchema to include courseName and third review deadline
 const reviewDeadlineSchema = new mongoose.Schema({
   courseName: { type: String, required: true, unique: true }, // Each course has its own deadlines
   zerothReviewDeadline: Date,
   firstReviewDeadline: Date,
   secondReviewDeadline: Date,
+  thirdReviewDeadline: Date, // NEW: Third review deadline
 }, { timestamps: true });
 
 // SCHEMA for Coordinator Review Data (defines the structure of review items)
@@ -219,6 +227,62 @@ app.post("/api/send-telegram", async (req, res) => {
 });
 
 
+
+app.get("/student-zeroth-review/:registerNumber", async (req, res) => {
+  const { registerNumber } = req.params;
+
+  try {
+    const student = await Enrollment.findOne({
+      $or: [
+        { registerNumber: registerNumber },
+        { "projectMembers.registerNumber": registerNumber }
+      ]
+    });
+    
+    if (!student) {
+      return res.status(404).json({ error: "Student not found." });
+    }
+
+    // Return the comment if it exists, otherwise an empty string
+    res.status(200).json({ comment: student.zerothReviewComment || "" });
+  } catch (error) {
+    console.error("Error fetching student zeroth review comment:", error);
+    res.status(500).json({ error: "Failed to fetch student zeroth review comment." });
+  }
+});
+
+app.post("/zeroth-review/submit", async (req, res) => {
+  const { registerNumber, projectName, comment, teacherEmail } = req.body;
+  try {
+    let result;
+    if (registerNumber) {
+      // Logic for PG students
+      result = await Enrollment.findOneAndUpdate(
+        { registerNumber },
+        { $set: { zerothReviewComment: comment } },
+        { new: true }
+      );
+    } else if (projectName) {
+      // Logic for UG projects, update all students in the project
+      result = await Enrollment.updateMany(
+        { projectName },
+        { $set: { zerothReviewComment: comment } },
+        { new: true }
+      );
+    } else {
+      return res.status(400).json({ error: "Invalid request. Must provide either registerNumber or projectName." });
+    }
+
+    if (!result) {
+      return res.status(404).json({ error: "Student or project not found." });
+    }
+    res.status(200).json({ message: "Zeroth review comment submitted successfully." });
+  } catch (error) {
+    console.error("Error submitting zeroth review comment:", error);
+    res.status(500).json({ error: "Failed to submit zeroth review comment." });
+  }
+});
+
 app.get("/student-courses/:registerNumber", async (req, res) => {
   try {
     const courses = await Enrollment.find({ registerNumber: req.params.registerNumber });
@@ -283,61 +347,7 @@ app.get("/students-by-program/:programName", async (req, res) => {
 });
 
 // NEW ENDPOINT: Get UG projects for a teacher by courseName
-app.get("/teacher-ug-projects/:teacherEmail/:courseName", async (req, res) => {
-  const { teacherEmail, courseName } = req.params;
 
-  try {
-    const projects = await Enrollment.aggregate([
-      {
-        $match: {
-          teacherEmail: teacherEmail,
-          courseName: courseName,
-          projectName: { $ne: null, $exists: true, $ne: '' } // Only consider entries with a project name
-        }
-      },
-      {
-        $group: {
-          _id: "$projectName", // Group by project name
-          projectMembers: { $addToSet: { // Collect unique student details for the group
-            registerNumber: "$registerNumber",
-            studentName: "$studentName",
-            teacherEmail: "$teacherEmail", // Include teacherEmail for consistency
-            courseName: "$courseName",
-            Assessment1: "$Assessment1",
-            Assessment2: "$Assessment2",
-            Assessment3: "$Assessment3",
-            Total: "$Total",
-    
-            Contact: null // Placeholder, you might want to fetch this
-          }},
-         
-          Assessment1: { $first: "$Assessment1" },
-          Assessment2: { $first: "$Assessment2" },
-          Assessment3: { $first: "$Assessment3" },
-          Total: { $first: "$Total" }, // Include Total as per request for consistency
-          groupRegisterNumbers: { $addToSet: "$registerNumber" },
-          reviewsAssessment: { $first: "$reviewsAssessment" } // Get the first reviewsAssessment found for the project
-        }
-      },
-      {
-        $project: {
-          projectName: "$_id",
-          projectMembers: 1, // Array of { registerNumber, studentName, ... }
-          Assessment1: 1, // Use the fetched Assessment1
-          Assessment2: 1, // Use the fetched Assessment2
-          Assessment3: 1, // Use the fetched Assessment3
-          Total: 1,
-          groupRegisterNumbers: 1,
-          reviewsAssessment: 1 // Pass through the first found reviewsAssessment
-        }
-      }
-    ]);
-    res.json(projects);
-  } catch (error) {
-    console.error(`Error fetching UG projects for teacher ${teacherEmail} in ${courseName}:`, error);
-    res.status(500).json({ error: `Failed to fetch UG projects for ${courseName}.` });
-  }
-});
 
 
 // Update assessment marks (can be extended to update reviewsAssessment)
@@ -345,19 +355,29 @@ app.post("/update-marks", async (req, res) => {
   try {
     const { students } = req.body; // 'students' is an array of student objects to update
     for (const student of students) {
-      // Find the existing enrollment by registerNumber and courseName
+       // MODIFIED: Prepare a dynamic update object
+      const updateFields = {
+        Assessment1: Number(student.Assessment1) || 0,
+        Assessment2: Number(student.Assessment2) || 0,
+        Assessment3: Number(student.Assessment3) || 0,
+        Total: Number(student.Total) || 0,
+      };
+
+      // If reviewsAssessment is passed, include it in the update
+      if (student.reviewsAssessment && Array.isArray(student.reviewsAssessment)) {
+        updateFields.reviewsAssessment = student.reviewsAssessment;
+      }
+
+      // If viva marks are passed, include them and calculate the total
+      if (student.viva) {
+        updateFields.viva = student.viva;
+        updateFields.viva_total_awarded = (Number(student.viva.guide) || 0) + (Number(student.viva.panel) || 0) + (Number(student.viva.external) || 0);
+      }
+
+      // Find the existing enrollment by registerNumber and courseName and update it
       await Enrollment.findOneAndUpdate(
         { registerNumber: student.registerNumber, courseName: student.courseName },
-        {
-          $set: {
-            Assessment1: Number(student.Assessment1) || 0,
-            Assessment2: Number(student.Assessment2) || 0,
-            Assessment3: Number(student.Assessment3) || 0,
-            Total: Number(student.Total) || 0,
-            // Only set reviewsAssessment if it's explicitly provided and valid
-            ...(Array.isArray(student.reviewsAssessment) && { reviewsAssessment: student.reviewsAssessment })
-          }
-        },
+        { $set: updateFields },
         { new: true, upsert: false } // upsert: false because enrollment should already exist
       );
     }
@@ -367,6 +387,7 @@ app.post("/update-marks", async (req, res) => {
     res.status(500).json({ error: "Failed to update marks" });
   }
 });
+
 
 // Post a chat message
 app.post("/post-message", async (req, res) => {
@@ -389,7 +410,7 @@ app.get("/all-messages", async (req, res) => {
   }
 });
 
-// MODIFIED: Upload review document to handle multiple file types
+// MODIFIED: Upload review document to handle multiple file types including third review
 app.post("/upload-review", upload.fields([
   { name: 'zerothPdf', maxCount: 1 },
   { name: 'zerothPpt', maxCount: 1 },
@@ -400,8 +421,11 @@ app.post("/upload-review", upload.fields([
   { name: 'secondPdf', maxCount: 1 },
   { name: 'secondPpt', maxCount: 1 },
   { name: 'secondOther', maxCount: 1 },
+  { name: 'thirdPdf', maxCount: 1 }, // NEW: Third review PDF
+  { name: 'thirdPpt', maxCount: 1 }, // NEW: Third review PPT
+  { name: 'thirdOther', maxCount: 1 }, // NEW: Third review Other
 ]), async (req, res) => {
-  const { registerNumber, reviewType } = req.body; // reviewType will be 'zeroth', 'first', or 'second'
+  const { registerNumber, reviewType } = req.body; // reviewType will be 'zeroth', 'first', 'second', or 'third'
   const files = req.files;
 
   if (!registerNumber || !reviewType) {
@@ -478,16 +502,16 @@ app.get("/get-latest-review/:registerNumber/:reviewType", async (req, res) => {
 });
 
 
-// MODIFIED: Set review deadlines - now requires courseName
+// MODIFIED: Set review deadlines - now requires courseName and includes third review deadline
 app.post("/set-review-dates", async (req, res) => {
-  const { courseName, zerothReviewDeadline, firstReviewDeadline, secondReviewDeadline } = req.body;
+  const { courseName, zerothReviewDeadline, firstReviewDeadline, secondReviewDeadline, thirdReviewDeadline } = req.body;
   if (!courseName) {
     return res.status(400).json({ error: "Course name is required to set review deadlines." });
   }
   try {
     await ReviewDeadline.updateOne(
       { courseName: courseName }, // Find by courseName
-      { zerothReviewDeadline, firstReviewDeadline, secondReviewDeadline },
+      { zerothReviewDeadline, firstReviewDeadline, secondReviewDeadline, thirdReviewDeadline }, // Include third review deadline
       { upsert: true } // Create if not exists
     );
     res.json({ message: `Review deadlines for ${courseName} updated successfully!` });
@@ -497,7 +521,7 @@ app.post("/set-review-dates", async (req, res) => {
   }
 });
 
-// MODIFIED: Get review deadlines - now requires courseName as query param
+// MODIFIED: Get review deadlines - now requires courseName as query param and includes third review deadline
 app.get("/get-review-dates", async (req, res) => {
   const { courseName } = req.query; // Get courseName from query parameter
   if (!courseName) {
@@ -561,45 +585,46 @@ app.get("/coordinator-reviews/:coordinatorId/:program", async (req, res) => {
 });
 
 
+// MODIFIED: Get student review marks, now includes viva marks
 app.get("/student-review-marks/:registerNumber/:courseName", async (req, res) => {
   const { registerNumber, courseName } = req.params;
   try {
-    // First, find the current student's enrollment
     const currentStudentEnrollment = await Enrollment.findOne({ registerNumber, courseName });
-
     if (!currentStudentEnrollment) {
       return res.status(404).json({ error: "Student enrollment not found for this course." });
     }
 
-    // If it's a UG project student and has a project name and group members
-    if (currentStudentEnrollment.projectName && currentStudentEnrollment.groupRegisterNumbers && currentStudentEnrollment.groupRegisterNumbers.length > 0) {
-     
+    if (currentStudentEnrollment.projectName && currentStudentEnrollment.groupRegisterNumbers?.length > 0) {
       const projectMemberWithReview = await Enrollment.findOne({
         projectName: currentStudentEnrollment.projectName,
         courseName: courseName,
-        reviewsAssessment: { $exists: true, $not: { $size: 0 } } // Find one with non-empty reviewsAssessment
+        reviewsAssessment: { $exists: true, $not: { $size: 0 } }
       });
 
       if (projectMemberWithReview) {
-        return res.status(200).json({ reviewsAssessment: projectMemberWithReview.reviewsAssessment || [] });
+        return res.status(200).json({
+          reviewsAssessment: projectMemberWithReview.reviewsAssessment || [],
+          viva: projectMemberWithReview.viva || { guide: 0, panel: 0, external: 0 },
+          viva_total_awarded: projectMemberWithReview.viva_total_awarded || 0,
+        });
       }
-      // If no member of the project has reviewsAssessment, return empty
-      return res.status(200).json({ reviewsAssessment: [] });
-
+      return res.status(200).json({ reviewsAssessment: [], viva: { guide: 0, panel: 0, external: 0 }, viva_total_awarded: 0 });
     } else {
-      // For PG students or UG students not part of a group/project
-      return res.status(200).json({ reviewsAssessment: currentStudentEnrollment.reviewsAssessment || [] });
+      return res.status(200).json({
+        reviewsAssessment: currentStudentEnrollment.reviewsAssessment || [],
+        viva: currentStudentEnrollment.viva || { guide: 0, panel: 0, external: 0 },
+        viva_total_awarded: currentStudentEnrollment.viva_total_awarded || 0,
+      });
     }
-
   } catch (error) {
     console.error("Error fetching student review marks:", error);
     res.status(500).json({ error: "Failed to fetch student review marks." });
   }
 });
 
-// POST/PUT student's review marks for a specific program
+// MODIFIED: POST student's review marks, now includes viva marks
 app.post("/student-review-marks", async (req, res) => {
-  const { registerNumber, courseName, reviewsAssessment } = req.body;
+  const { registerNumber, courseName, reviewsAssessment, viva, viva_total_awarded } = req.body;
   if (!registerNumber || !courseName || !Array.isArray(reviewsAssessment)) {
     return res.status(400).json({ error: "Missing required fields or invalid format." });
   }
@@ -607,18 +632,267 @@ app.post("/student-review-marks", async (req, res) => {
   try {
     const updatedEnrollment = await Enrollment.findOneAndUpdate(
       { registerNumber, courseName },
-      { $set: { reviewsAssessment: reviewsAssessment } },
-      { new: true, upsert: false } // upsert: false because enrollment should already exist
+      { 
+        $set: { 
+          reviewsAssessment: reviewsAssessment,
+          viva: viva,
+          viva_total_awarded: viva_total_awarded,
+        } 
+      },
+      { new: true, upsert: false }
     );
 
     if (!updatedEnrollment) {
       return res.status(404).json({ error: "Student enrollment not found for this course." });
     }
 
-    res.status(200).json({ message: "Student review marks saved successfully!", data: updatedEnrollment.reviewsAssessment });
+    res.status(200).json({ message: "Student review marks saved successfully!", data: updatedEnrollment });
   } catch (error) {
     console.error("Error saving student review marks:", error);
     res.status(500).json({ error: "Failed to save student review marks." });
+  }
+});
+
+
+
+app.get("/students-by-program/:programName", async (req, res) => {
+  const { programName } = req.params;
+  try {
+    const students = await Enrollment.find({ courseName: programName });
+    res.json(students);
+  } catch (error) {
+    console.error(`Error fetching students for program ${programName}:`, error);
+    res.status(500).json({ error: `Failed to fetch students for program ${programName}.` });
+  }
+});
+
+
+app.get("/ug-projects-by-program/:programName", async (req, res) => {
+  const { programName } = req.params;
+
+  try {
+    const projects = await Enrollment.aggregate([
+      {
+        $match: {
+          courseName: programName,
+          projectName: { $ne: null, $exists: true, $ne: '' }
+        }
+      },
+      {
+        $group: {
+          _id: "$projectName",
+          groupRegisterNumbers: { $addToSet: "$registerNumber" },
+          // ADDED: Get the teacher's email for the project.
+          teacherEmail: { $first: "$teacherEmail" },
+          // ADDED: Get the zeroth review comment for the project.
+          zerothReviewComment: { $first: "$zerothReviewComment" },
+          Assessment1: { $first: "$Assessment1" },
+          Assessment2: { $first: "$Assessment2" },
+          Assessment3: { $first: "$Assessment3" },
+          Total: { $first: "$Total" },
+          viva_total_awarded: { $first: "$viva_total_awarded" },
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          projectName: "$_id",
+          groupRegisterNumbers: 1,
+          // ADDED: Make sure the new fields are included in the final output.
+          teacherEmail: 1,
+          zerothReviewComment: 1,
+          Assessment1: 1,
+          Assessment2: 1,
+          Assessment3: 1,
+          Total: 1,
+          viva_total_awarded: 1,
+        }
+      }
+    ]);
+    res.json(projects);
+  } catch (error) {
+    console.error(`Error fetching UG projects for program ${programName}:`, error);
+    res.status(500).json({ error: `Failed to fetch UG projects for program ${programName}.` });
+  }
+});
+// =====================================================================================
+// === NEW ROUTE FOR COORDINATOR STUDENT VIEW ===
+// =====================================================================================
+app.get("/ug-projects-by-program/:programName", async (req, res) => {
+  const { programName } = req.params;
+
+  try {
+    const projects = await Enrollment.aggregate([
+      {
+        $match: {
+          courseName: programName,
+          projectName: { $ne: null, $exists: true, $ne: '' } // Only consider entries with a project name
+        }
+      },
+      {
+        $group: {
+          _id: "$projectName", // Group by project name
+          projectMembers: {
+            $addToSet: { // Collect unique student details for the group
+              registerNumber: "$registerNumber",
+              studentName: "$studentName",
+              teacherEmail: "$teacherEmail",
+              courseName: "$courseName",
+              Assessment1: "$Assessment1",
+              Assessment2: "$Assessment2",
+              Assessment3: "$Assessment3",
+              Total: "$Total",
+              viva: "$viva",
+              viva_total_awarded: "$viva_total_awarded",
+              Contact: null
+            }
+          },
+          Assessment1: { $first: "$Assessment1" },
+          Assessment2: { $first: "$Assessment2" },
+          Assessment3: { $first: "$Assessment3" },
+          Total: { $first: "$Total" },
+          viva_total_awarded: { $first: "$viva_total_awarded" },
+          groupRegisterNumbers: { $addToSet: "$registerNumber" },
+          reviewsAssessment: { $first: "$reviewsAssessment" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          projectName: "$_id",
+          projectMembers: 1,
+          Assessment1: 1,
+          Assessment2: 1,
+          Assessment3: 1,
+          Total: 1,
+          viva_total_awarded: 1,
+          groupRegisterNumbers: 1,
+          reviewsAssessment: 1
+        }
+      }
+    ]);
+    res.json(projects);
+  } catch (error) {
+    console.error(`Error fetching UG projects for program ${programName}:`, error);
+    res.status(500).json({ error: `Failed to fetch UG projects for program ${programName}.` });
+  }
+});
+
+
+
+
+app.get('/ug-projects/:programName', async (req, res) => {
+  const { programName } = req.params;
+  try {
+    const projects = await Enrollment.aggregate([
+      {
+        $match: {
+          courseName: programName,
+          projectName: { $ne: null }
+        }
+      },
+      {
+        $group: {
+          _id: "$projectName",
+          projectMembers: {
+            $push: {
+              studentName: "$studentName",
+              registerNumber: "$registerNumber",
+            }
+          },
+          teacherName: { $first: "$teacherName" },
+          zerothReviewComment: { $first: "$zerothReviewComment" },
+          Assessment1: { $first: "$Assessment1" }, // Added marks
+          Assessment2: { $first: "$Assessment2" },
+          Assessment3: { $first: "$Assessment3" },
+          Total: { $first: "$Total" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          projectName: "$_id",
+          projectMembers: 1,
+          teacherName: 1,
+          zerothReviewComment: 1,
+          Assessment1: 1, // Projecting marks
+          Assessment2: 1,
+          Assessment3: 1,
+          Total: 1
+        }
+      }
+    ]);
+    res.json(projects);
+  } catch (error) {
+    console.error(`Error fetching UG projects for HOD:`, error);
+    res.status(500).json({ error: "Failed to fetch UG projects" });
+  }
+});
+
+app.get('/teacher-ug-projects/:teacherEmail/:programName', async (req, res) => {
+  const { teacherEmail, programName } = req.params;
+  try {
+    const projects = await Enrollment.aggregate([
+      {
+        $match: {
+          courseName: programName,
+          teacherEmail: teacherEmail
+        }
+      },
+      {
+        $group: {
+          _id: "$projectName",
+          projectMembers: {
+            $push: {
+              studentName: "$studentName",
+              registerNumber: "$registerNumber",
+              email: "$email",
+              teacherName: "$teacherName", // Added for consistency
+              teacherEmail: "$teacherEmail", // Added for consistency
+              courseName: "$courseName",
+              Assessment1: "$Assessment1",
+              Assessment2: "$Assessment2",
+              Assessment3: "$Assessment3",
+              Total: "$Total",
+              viva: "$viva",
+              viva_total_awarded: "$viva_total_awarded",
+              zerothReviewComment: "$zerothReviewComment", // Added
+              reviewsAssessment: "$reviewsAssessment",
+              Contact: null
+            }
+          },
+          Assessment1: { $first: "$Assessment1" },
+          Assessment2: { $first: "$Assessment2" },
+          Assessment3: { $first: "$Assessment3" },
+          Total: { $first: "$Total" },
+          viva_total_awarded: { $first: "$viva_total_awarded" },
+          groupRegisterNumbers: { $addToSet: "$registerNumber" },
+          reviewsAssessment: { $first: "$reviewsAssessment" },
+          zerothReviewComment: { $first: "$zerothReviewComment" }, // Added to the project level
+          teacherName: { $first: "$teacherName" }, // Added to the project level
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          projectName: "$_id",
+          projectMembers: 1,
+          Assessment1: 1,
+          Assessment2: 1,
+          Assessment3: 1,
+          Total: 1,
+          viva_total_awarded: 1,
+          groupRegisterNumbers: 1,
+          reviewsAssessment: 1,
+          zerothReviewComment: 1, // Projecting the comment
+          teacherName: 1, // Projecting the teacher's name
+        }
+      }
+    ]);
+    res.json(projects);
+  } catch (error) {
+    console.error(`Error fetching UG projects for program ${programName}:`, error);
+    res.status(500).json({ error: "Failed to fetch UG projects" });
   }
 });
 

@@ -21,6 +21,7 @@ function StudentDashboard() {
     zerothReviewDeadline: null,
     firstReviewDeadline: null,
     secondReviewDeadline: null,
+    thirdReviewDeadline: null, // NEW: Third review deadline
   });
   // States for file inputs
   const [zerothPdfFile, setZerothPdfFile] = useState(null);
@@ -35,6 +36,11 @@ function StudentDashboard() {
   const [secondPptFile, setSecondPptFile] = useState(null);
   const [secondOtherFile, setSecondOtherFile] = useState(null);
 
+  // NEW: States for third review file inputs
+  const [thirdPdfFile, setThirdPdfFile] = useState(null);
+  const [thirdPptFile, setThirdPptFile] = useState(null);
+  const [thirdOtherFile, setThirdOtherFile] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const BASE_URL = "http://localhost:5000";
@@ -43,6 +49,7 @@ function StudentDashboard() {
   const [uploadedZerothReview, setUploadedZerothReview] = useState({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
   const [uploadedFirstReview, setUploadedFirstReview] = useState({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
   const [uploadedSecondReview, setUploadedSecondReview] = useState({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
+  const [uploadedThirdReview, setUploadedThirdReview] = useState({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null }); // NEW: Uploaded third review paths
 
   // Refs for file inputs to clear them
   const zerothPdfInputRef = useRef();
@@ -57,6 +64,11 @@ function StudentDashboard() {
   const secondPptInputRef = useRef();
   const secondOtherInputRef = useRef();
 
+  // NEW: Refs for third review file inputs
+  const thirdPdfInputRef = useRef();
+  const thirdPptInputRef = useRef();
+  const thirdOtherInputRef = useRef();
+
 
   // Moved fetchReviewDeadlines outside of any useEffect to make it globally accessible within the component
   const fetchReviewDeadlines = async (courseName) => {
@@ -68,6 +80,7 @@ function StudentDashboard() {
         zerothReviewDeadline: response.data?.zerothReviewDeadline || null,
         firstReviewDeadline: response.data?.firstReviewDeadline || null,
         secondReviewDeadline: response.data?.secondReviewDeadline || null,
+        thirdReviewDeadline: response.data?.thirdReviewDeadline || null, // NEW: Fetch third review deadline
       });
     } catch (error) {
       console.error("Error fetching review deadlines:", error);
@@ -150,6 +163,15 @@ function StudentDashboard() {
         console.warn("No second review found or error fetching:", error.message);
         setUploadedSecondReview({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
       }
+
+      // NEW: Fetch third review
+      try {
+        const thirdResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/third`);
+        setUploadedThirdReview(thirdResponse.data || { pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
+      } catch (error) {
+        console.warn("No third review found or error fetching:", error.message);
+        setUploadedThirdReview({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
+      }
     };
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -199,11 +221,11 @@ function StudentDashboard() {
       alert("Only PPT/PPTX files are allowed for PPT upload.");
       return;
     }
-    // For 'other', allow a broad range but exclude known types for specific inputs
-    if (fileType === "other" && (file.type === "application/pdf" || file.type.includes("powerpoint"))) {
-      alert("Please use the specific PDF or PPT upload for those file types.");
-      return;
-    }
+    // For 'other', allow a broad range now. The previous restriction is removed.
+    // if (fileType === "other" && (file.type === "application/pdf" || file.type.includes("powerpoint"))) {
+    //   alert("Please use the specific PDF or PPT upload for those file types.");
+    //   return;
+    // }
 
     if (file.size > 10 * 1024 * 1024) { // 10MB limit
       alert("File size must be less than 10MB.");
@@ -232,6 +254,8 @@ function StudentDashboard() {
         setUploadedFirstReview(prev => ({ ...prev, ...newFilePaths }));
       } else if (reviewType === "second") {
         setUploadedSecondReview(prev => ({ ...prev, ...newFilePaths }));
+      } else if (reviewType === "third") { // NEW: Handle third review
+        setUploadedThirdReview(prev => ({ ...prev, ...newFilePaths }));
       }
 
       // Clear input after successful upload
@@ -251,6 +275,10 @@ function StudentDashboard() {
         if (fileType === "pdf") setSecondPdfFile(null);
         if (fileType === "ppt") setSecondPptFile(null);
         if (fileType === "other") setSecondOtherFile(null);
+      } else if (reviewType === "third") { // NEW: Reset third review file states
+        if (fileType === "pdf") setThirdPdfFile(null);
+        if (fileType === "ppt") setThirdPptFile(null);
+        if (fileType === "other") setThirdOtherFile(null);
       }
 
     } catch (error) {
@@ -397,6 +425,21 @@ function StudentDashboard() {
                     </td>
                     <td>{deadlines.secondReviewDeadline ? new Date(deadlines.secondReviewDeadline).toLocaleDateString() : "Not Set"}</td>
                   </tr>
+
+                  {/* NEW: Third Review Row */}
+                  <tr>
+                    <td>Third Review</td>
+                    <td>
+                      {renderFileUploadControls("third", "pdf", thirdPdfFile, setThirdPdfFile, uploadedThirdReview, thirdPdfInputRef, deadlines.thirdReviewDeadline)}
+                    </td>
+                    <td>
+                      {renderFileUploadControls("third", "ppt", thirdPptFile, setThirdPptFile, uploadedThirdReview, thirdPptInputRef, deadlines.thirdReviewDeadline)}
+                    </td>
+                    <td>
+                      {renderFileUploadControls("third", "other", thirdOtherFile, setThirdOtherFile, uploadedThirdReview, thirdOtherInputRef, deadlines.thirdReviewDeadline)}
+                    </td>
+                    <td>{deadlines.thirdReviewDeadline ? new Date(deadlines.thirdReviewDeadline).toLocaleDateString() : "Not Set"}</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -410,3 +453,4 @@ function StudentDashboard() {
 }
 
 export default StudentDashboard;
+

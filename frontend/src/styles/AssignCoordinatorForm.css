@@ -8,7 +8,7 @@
 }
 
 body {
-  background: linear-gradient(135deg, #3b2f80, #4a63e7, #2f58a7);
+  background: #fffdd0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
   padding: 0;
@@ -30,7 +30,7 @@ body {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.18);
   text-align: center;
-  color: #fff;
+  color: #ccaeae;
 }
 
 .assign-coordinator-container h2 {
@@ -45,7 +45,7 @@ body {
   text-align: left;
   margin: 15px 0 8px;
   font-weight: 600;
-  color: #fff;
+  color: #070707;
 }
 
 .assign-coordinator-form input,
@@ -55,7 +55,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.15);
-  color: #fff;
+  color: #000000;
   font-size: 16px;
   backdrop-filter: blur(10px);
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
@@ -96,8 +96,8 @@ body {
 }
 
 .assign-coordinator-form select option {
-  background-color: rgba(67, 101, 248, 0.8);
-  color: #fff;
+  background-color:#fffdd0;
+  color: #000000;
 }
 
 /* Button */
@@ -105,18 +105,18 @@ body {
   margin-top: 30px;
   width: 100%;
   padding: 16px;
-  background: linear-gradient(135deg, #00e676, #00c853);
+  background: rgba(0, 123, 255, 0.8);
   border: none;
   border-radius: 12px;
   font-size: 18px;
   font-weight: bold;
   color: white;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(0, 200, 83, 0.6);
+  box-shadow: 0 8px 20px rgba(143, 6, 2, 0.6);
   transition: 0.3s ease;
 }
 
 .assign-coordinator-form button:hover {
   transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 10px 25px rgba(0, 200, 83, 0.8);
+  box-shadow: 0 10px 25px rgba(105, 13, 1, 0.8);
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Outlet } from "react-router-dom";
 import { LogOut, LayoutDashboard, KeyRound, Users } from "lucide-react";
 import { getAuth } from "firebase/auth";
 import RoleSwitcherDropdown from "../components/RoleSwitcherDropdown";
