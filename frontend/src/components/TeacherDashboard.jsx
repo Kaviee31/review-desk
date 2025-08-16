@@ -6,14 +6,13 @@ import emailjs from '@emailjs/browser';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/TeacherDashboard.css';
-
+export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function TeacherDashboard() {
   const [announcement, setAnnouncement] = useState('');
   const [teacherEmail, setTeacherEmail] = useState('');
   const [programFilter, setProgramFilter] = useState('');
   const navigate = useNavigate();
-  const BASE_URL = "http://localhost:5000";
-
+  
   const allPrograms = [
     "MCA(R)",
     "MCA(SS)",
@@ -45,7 +44,7 @@ function TeacherDashboard() {
     }
 
     try {
-      const response = await axios.get(`${BASE_URL}/teacher-courses/${teacherEmail}`);
+      const response = await axios.get(`${API_BASE_URL}/teacher-courses/${teacherEmail}`);
       let enrolledStudents = response.data;
 
       if (programFilter) {
@@ -91,7 +90,7 @@ function TeacherDashboard() {
 
       // Send Telegram
       if (mode === 'telegram' || mode === 'both') {
-        const telegramRes = await axios.post(`${BASE_URL}/api/send-telegram`, {
+        const telegramRes = await axios.post(`${API_BASE_URL}/api/send-telegram`, {
           message: announcement,
           registerNumbers: registerNumbers,
         });

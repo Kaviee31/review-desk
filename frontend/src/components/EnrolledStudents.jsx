@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/EnrolledStudents.css';
 
+export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 const UNSEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/134/134935.png";
 const SEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/2462/2462719.png";
 
@@ -63,7 +64,7 @@ const [vivaMarks, setVivaMarks] = useState({ guide: 0, panel: 0, external: 0 });
   const pgPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
   const ugPrograms = ["B.TECH(IT)", "B.TECH(IT) SS"];
   const allPrograms = [...pgPrograms, ...ugPrograms];
-  const API_BASE_URL = "http://localhost:5000";
+
   
 
   // Effect to set teacher email and UID on auth state change

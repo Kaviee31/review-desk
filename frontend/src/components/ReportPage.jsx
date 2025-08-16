@@ -6,7 +6,7 @@ import { db } from '../firebase';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/AdminDashboard.css'; // Assuming this CSS is for general dashboard styling
-const BASE_URL="http://localhost:5000"
+export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function ReportPage() {
     useEffect(() => {
         document.title = "Set Review Deadlines";
@@ -30,7 +30,7 @@ function ReportPage() {
         const fetchReviewDates = async () => {
             if (selectedProgram) {
                 try {
-                    const response = await axios.get(`${BASE_URL}/get-review-dates?courseName=${selectedProgram}`);
+                    const response = await axios.get(`${API_BASE_URL}/get-review-dates?courseName=${selectedProgram}`);
                     if (response.data) {
                         setZerothReviewDate(response.data.zerothReviewDeadline ? new Date(response.data.zerothReviewDeadline).toISOString().split('T')[0] : '');
                         setFirstReviewDate(response.data.firstReviewDeadline ? new Date(response.data.firstReviewDeadline).toISOString().split('T')[0] : '');
@@ -82,7 +82,7 @@ function ReportPage() {
         setLoading(true);
 
         try {
-            await axios.post(`${BASE_URL}/set-review-dates`, {
+            await axios.post(`${API_BASE_URL}/set-review-dates`, {
                 courseName: selectedProgram, // Send selected course name
                 zerothReviewDeadline: zerothReviewDate,
                 firstReviewDeadline: firstReviewDate,
@@ -103,7 +103,7 @@ function ReportPage() {
     // New function to send email to students of a specific course
     const sendEmailToStudentsByCourse = async (courseName) => {
         try {
-            const response = await axios.get(`${BASE_URL}/student-emails-by-course/${courseName}`);
+            const response = await axios.get(`${API_BASE_URL}/student-emails-by-course/${courseName}`);
             const bccEmails = response.data;
 
             if (bccEmails.length === 0) {

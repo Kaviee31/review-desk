@@ -5,7 +5,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { toast } from 'react-toastify'; // For notifications
 import 'react-toastify/dist/ReactToastify.css';
 import "../styles/CoordinatorDashboard.css"; // Assuming this CSS provides styling
-
+export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function CoordinatorDashboard() {
   const [selectedProgram, setSelectedProgram] = useState(null);
   // Changed assignedCourse to assignedCourses (array)
@@ -25,7 +25,7 @@ function CoordinatorDashboard() {
   const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)","B.TECH(IT)","B.TECH(IT) SS"];
 
   // Base URL for your backend API
-  const API_BASE_URL = "http://localhost:5000"; // Ensure this matches your backend server URL
+ // Ensure this matches your backend server URL
 
   useEffect(() => {
     document.title = "Coordinator Dashboard";

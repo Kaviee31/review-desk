@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import '../styles/HODDashboard.css';
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
+export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 
 function HODDashboard() {
   const [username, setUsername] = useState('HOD');
@@ -23,7 +24,7 @@ function HODDashboard() {
   const pgPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
   const ugPrograms = ["B.TECH(IT)", "B.TECH(IT) SS"];
   const allPrograms = [...pgPrograms, ...ugPrograms];
-  const API_BASE_URL = "http://localhost:5000";
+  
 
   useEffect(() => {
     document.title = "HOD Dashboard";

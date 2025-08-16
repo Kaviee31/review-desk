@@ -4,7 +4,7 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { toast } from 'react-toastify';
-
+export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function CoordinatorStudentsView() {
   const [coordinatorUid, setCoordinatorUid] = useState(null);
   const [assignedCourses, setAssignedCourses] = useState([]);
@@ -36,8 +36,7 @@ function CoordinatorStudentsView() {
 
   const [latestReviewFiles, setLatestReviewFiles] = useState({});
 
-  const API_BASE_URL = "http://localhost:5000";
-  const pgPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
+   const pgPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
   const ugPrograms = ["B.TECH(IT)", "B.TECH(IT) SS"];
 
   useEffect(() => {

@@ -7,7 +7,7 @@ import { toast } from 'react-toastify'; // For notifications
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/AdminDashboard.css'; // Import the stylesheet
 
-const BASE_URL= "http://localhost:5000";
+export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function AdminDashboard() {
   useEffect(() => {
     document.title = "Admin Dashboard";
@@ -91,7 +91,7 @@ function AdminDashboard() {
       const studentName = studentDoc.username;
       const studentEmail = studentDoc.email;
 
-      await axios.post(`${BASE_URL}/enroll`, {
+      await axios.post(`${API_BASE_URL}/enroll`, {
         studentName: studentName,
         registerNumber: pgStudentRegNo,
         email: studentEmail,
@@ -174,7 +174,7 @@ function AdminDashboard() {
         const studentName = studentDoc.username;
         const studentEmail = studentDoc.email;
 
-        await axios.post(`${BASE_URL}/enroll`, {
+        await axios.post(`${API_BASE_URL}/enroll`, {
           studentName: studentName,
           registerNumber: regNo,
           email: studentEmail,
