@@ -6,6 +6,7 @@ import emailjs from '@emailjs/browser';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/TeacherDashboard.css';
+import { courses } from "../constants/courses";
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function TeacherDashboard() {
   const [announcement, setAnnouncement] = useState('');
@@ -13,15 +14,7 @@ function TeacherDashboard() {
   const [programFilter, setProgramFilter] = useState('');
   const navigate = useNavigate();
   
-  const allPrograms = [
-    "MCA(R)",
-    "MCA(SS)",
-    "MTECH(R)",
-    "MTECH(SS)",
-    "B.TECH(IT)",
-    "B.TECH(IT) SS"
-  ];
-
+  const allPrograms = courses;
   useEffect(() => {
     document.title = "Guide Dashboard";
     const auth = getAuth();

@@ -10,6 +10,7 @@ import { collection, query, orderBy, limit, where, getDocs, doc, getDoc } from "
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/EnrolledStudents.css';
+import { pgCourses, ugCourses, courses } from "../constants/courses";
 
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 const UNSEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/134/134935.png";
@@ -61,9 +62,9 @@ const [vivaMarks, setVivaMarks] = useState({ guide: 0, panel: 0, external: 0 });
   const [zerothReviewComments, setZerothReviewComments] = useState({});
   const [newComments, setNewComments] = useState({});
   // Ensure these program names are consistent across AdminDashboard and CoordinatorDashboard
-  const pgPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
-  const ugPrograms = ["B.TECH(IT)", "B.TECH(IT) SS"];
-  const allPrograms = [...pgPrograms, ...ugPrograms];
+  const pgPrograms = pgCourses;
+  const ugPrograms = ugCourses;
+  const allPrograms = courses;
 
   
 

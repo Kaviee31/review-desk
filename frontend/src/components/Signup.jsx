@@ -6,6 +6,7 @@ import { setDoc, doc, collection, query, where, getDocs } from "firebase/firesto
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "../styles/Signup.css";
+import { courses } from "../constants/courses";
 
 function Signup() {
   useEffect(() => { document.title = "Signup"; }, []);
@@ -169,15 +170,19 @@ function Signup() {
             <label>Register Number</label>
             <input type="text" value={registerNumber} onChange={(e) => setRegisterNumber(e.target.value)} required />
             <label>Course Type</label>
-            <select value={courseType} onChange={(e) => setCourseType(e.target.value)} required>
-              <option value="">Select Course</option>
-              <option value="MCA(R)">MCA(R)</option>
-              <option value="MCA(SS)">MCA(SS)</option>
-              <option value="MTECH(R)">MTECH(R)</option>
-              <option value="MTECH(SS)">MTECH(SS)</option>
-              <option value="B.TECH(IT)">B.TECH(IT)</option>
-              <option value="B.TECH(IT) SS">B.TECH(IT) SS</option>
-            </select>
+            <select 
+                value={courseType} 
+                onChange={(e) => setCourseType(e.target.value)} 
+                required
+              >
+                <option value="">Select Course</option>
+                {courses.map(course => (
+                  <option key={course} value={course}>
+                    {course}
+                  </option>
+                ))}
+              </select>
+
           </>
         )}
 

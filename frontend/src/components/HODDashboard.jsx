@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import '../styles/HODDashboard.css';
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
+import { pgCourses, ugCourses, courses } from "../constants/courses";
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 
 function HODDashboard() {
@@ -21,9 +22,9 @@ function HODDashboard() {
   const [programCounts, setProgramCounts] = useState({});
   const navigate = useNavigate();
   const firstRender = useRef(true);
-  const pgPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
-  const ugPrograms = ["B.TECH(IT)", "B.TECH(IT) SS"];
-  const allPrograms = [...pgPrograms, ...ugPrograms];
+  const pgPrograms = pgCourses;
+  const ugPrograms = ugCourses;
+  const allPrograms = courses;
   
 
   useEffect(() => {

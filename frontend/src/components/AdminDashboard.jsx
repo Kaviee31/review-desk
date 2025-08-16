@@ -5,7 +5,9 @@ import { db } from '../firebase'; // Import db from your firebase.js config
 import { collection, query, where, getDocs } from 'firebase/firestore'; // Import Firestore functions
 import { toast } from 'react-toastify'; // For notifications
 import 'react-toastify/dist/ReactToastify.css';
-import '../styles/AdminDashboard.css'; // Import the stylesheet
+import '../styles/AdminDashboard.css';
+import { pgCourses, ugCourses } from "../constants/courses";
+
 
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function AdminDashboard() {
@@ -32,10 +34,7 @@ function AdminDashboard() {
   const [ugProjectName, setUgProjectName] = useState('');
   const [loadingUgEnroll, setLoadingUgEnroll] = useState(false);
 
-  // Course options
-  const pgCourses = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
-  const ugCourses = ["B.TECH(IT)", "B.TECH(IT) SS"];
-
+ 
   // Fetches a teacher's name from Firestore based on their email.
   const fetchTeacherName = async (teacherEmailToSearch) => {
     try {

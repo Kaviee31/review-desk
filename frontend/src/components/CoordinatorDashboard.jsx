@@ -4,7 +4,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { toast } from 'react-toastify'; // For notifications
 import 'react-toastify/dist/ReactToastify.css';
-import "../styles/CoordinatorDashboard.css"; // Assuming this CSS provides styling
+import "../styles/CoordinatorDashboard.css"; 
+import { pgCourses, ugCourses, courses } from "../constants/courses";// Assuming this CSS provides styling
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function CoordinatorDashboard() {
   const [selectedProgram, setSelectedProgram] = useState(null);
@@ -22,7 +23,7 @@ function CoordinatorDashboard() {
   const [loadingReviews, setLoadingReviews] = useState(false); // New loading state for reviews
   const [savingReviews, setSavingReviews] = useState(false); // New saving state for reviews
 
-  const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)","B.TECH(IT)","B.TECH(IT) SS"];
+  const allPrograms = courses;
 
   // Base URL for your backend API
  // Ensure this matches your backend server URL

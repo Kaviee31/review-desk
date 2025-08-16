@@ -14,13 +14,14 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/AssignCoordinatorForm.css';
 
+import { pgCourses, ugCourses, courses } from "../constants/courses";
 function AssignCoordinatorForm() {
   const [guideEmailId, setGuideEmailId] = useState('');
   const [guideName, setGuideName] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const courses = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)","B.TECH(IT)","B.TECH(IT) SS"];
+ 
 
   const generatePassword = () => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';

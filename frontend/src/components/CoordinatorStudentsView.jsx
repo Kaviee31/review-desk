@@ -4,6 +4,7 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { toast } from 'react-toastify';
+import { pgCourses, ugCourses, courses } from "../constants/courses";
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function CoordinatorStudentsView() {
   const [coordinatorUid, setCoordinatorUid] = useState(null);
@@ -36,8 +37,8 @@ function CoordinatorStudentsView() {
 
   const [latestReviewFiles, setLatestReviewFiles] = useState({});
 
-   const pgPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)"];
-  const ugPrograms = ["B.TECH(IT)", "B.TECH(IT) SS"];
+   const pgPrograms = pgCourses;
+  const ugPrograms = ugCourses;
 
   useEffect(() => {
     document.title = "Coordinator View Students";
@@ -404,7 +405,7 @@ function CoordinatorStudentsView() {
                     ${pgPrograms.includes(program) ?
                       (program === "MCA(R)" ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500" :
                         program === "MCA(SS)" ? "bg-green-600 hover:bg-green-700 focus:ring-green-500" :
-                          program === "MTECH(R)" ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" :
+                          program === "MTECH(IT)" ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" :
                             "bg-red-600 hover:bg-red-700 focus:ring-red-500") :
                       (ugPrograms.includes(program) ? "bg-orange-500 hover:bg-orange-600 focus:ring-orange-400" : "")
                     } text-white`}
