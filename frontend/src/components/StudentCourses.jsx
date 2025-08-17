@@ -16,7 +16,7 @@ function StudentCourses() {
   const [studentName, setStudentName] = useState(""); // kept if needed later
   const [selectedTeacherEmail, setSelectedTeacherEmail] = useState(null);
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
-  const [zerothReviewComment, setZerothReviewComment] = useState("");
+  const [reviewComments, setReviewComments] = useState({});
 
   useEffect(() => {
     document.title = "Student Courses";
@@ -50,8 +50,17 @@ function StudentCourses() {
         try {
           const response = await axios.get(`${API_BASE_URL}/student-courses/${registerNumber}`);
           setCourses(response.data);
-          const reviewResponse = await axios.get(`${API_BASE_URL}/student-zeroth-review/${registerNumber}`);
-          setZerothReviewComment(reviewResponse.data.comment || "No comment submitted yet.");
+
+          // Extract all comments from the first course object
+          if (response.data.length > 0) {
+            const courseData = response.data[0];
+            setReviewComments({
+              zeroth: courseData.zerothReviewComment || "No comment yet.",
+              first: courseData.firstReviewComment || "No comment yet.",
+              second: courseData.secondReviewComment || "No comment yet.",
+              third: courseData.thirdReviewComment || "No comment yet.",
+            });
+          }
         } catch (error) {
           console.error("Error fetching student courses:", error);
         }
@@ -59,7 +68,7 @@ function StudentCourses() {
     };
 
     fetchCourses();
-  }, [registerNumber]);
+}, [registerNumber]);
 
   const handleCloseChat = () => {
     setSelectedTeacherEmail(null);
@@ -107,61 +116,77 @@ function StudentCourses() {
     }));
   };
 
-  return (
-    <div>
-      <h2>{registerNumber || "Loading..."}</h2>
+  // StudentCourses.jsx
+
+return (
+    <div className="student-courses-container">
+      <h1 className="main-title">Project Dashboard</h1>
+      <h2 className="register-number-title">{registerNumber || "Loading..."}</h2>
 
       {courses.length > 0 ? (
         courses.map((course, index) => (
-          <div key={index} style={{ marginBottom: "20px" }}>
-            <h3 className="text-xl font-bold mb-2">Guide's Zeroth Review</h3>
-            <table border="1" className="min-w-full mb-6">
-              <thead>
-                <tr>
-                  <th>Comment: {zerothReviewComment}</th>
-                </tr>
-              </thead>
-              
-            </table>
-            <h2>Project Review Marks</h2>
-            <table border="1">
-              <thead>
-                <tr>
-                  <th>Register Number</th>
-                  <th>Assessment 1</th>
-                  <th>Assessment 2</th>
-                  <th>Assessment 3</th>
-                  <th>Average</th>
-                  <th>Contact</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{registerNumber}</td>
-                  <td>{course.Assessment1}</td>
-                  <td>{course.Assessment2}</td>
-                  <td>{course.Assessment3}</td>
-                  <td>{course.Total}</td>
-                  <td>
-                    <img
-                      src={
-                        unseenMessagesStatus[course.teacherEmail]
-                          ? UNSEEN_MESSAGE_ICON_URL
-                          : SEEN_MESSAGE_ICON_URL
-                      }
-                      alt="Chat"
-                      width="20"
-                      style={{ cursor: "pointer" }}
-                      onClick={() => openChatWindow(course.teacherEmail)}
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div key={index}>
+
+            {/* Review Comments Card */}
+            <div className="card comments-card">
+              <h3 className="card-title">Guide's Review Comments</h3>
+              <div className="comments-grid">
+                {['zeroth', 'first', 'second', 'third'].map((reviewType) => (
+                  <div className="comment-item" key={reviewType}>
+                    <strong className="comment-title">{reviewType.charAt(0).toUpperCase() + reviewType.slice(1)} Review:</strong>
+                    <p className="comment-text">{reviewComments[reviewType]}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Marks Card */}
+            {/* StudentCourses.jsx */}
+
+{/* Marks Card */}
+<div className="card marks-card">
+  <h3 className="card-title">Project Review Marks</h3>
+  <div className="table-responsive">
+    <table className="marks-table">
+      <thead>
+        <tr>
+          <th>Register Number</th>
+          <th>Assessment 1</th>
+          <th>Assessment 2</th>
+          <th>Assessment 3</th>
+          <th>Average</th>
+          <th>Contact Guide</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{registerNumber}</td>
+          <td>{course.Assessment1}</td>
+          <td>{course.Assessment2}</td>
+          <td>{course.Assessment3}</td>
+          <td>{course.Total}</td>
+          <td className="contact-cell">
+            <img
+              src={
+                unseenMessagesStatus[course.teacherEmail]
+                  ? UNSEEN_MESSAGE_ICON_URL
+                  : SEEN_MESSAGE_ICON_URL
+              }
+              alt="Chat with Guide"
+              className="chat-icon"
+              onClick={() => openChatWindow(course.teacherEmail)}
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
           </div>
         ))
       ) : (
-        <p>Loading courses...</p>
+        <p className="loading-text">Loading project details...</p>
       )}
 
       {selectedTeacherEmail && (

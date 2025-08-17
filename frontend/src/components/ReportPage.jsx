@@ -21,8 +21,8 @@ function ReportPage() {
 
     // Define all programs
     const allPrograms = [
-        "MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)",
-        "B.TECH(IT)", "B.TECH(IT) SS"
+        "MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(AI_DS)",
+        "B.TECH(IT) BATCH1", "B.TECH(IT) BATCH2"
     ];
 
     // Effect to fetch review dates for the selected program

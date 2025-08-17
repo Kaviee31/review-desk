@@ -59,7 +59,7 @@ const [vivaMarks, setVivaMarks] = useState({ guide: 0, panel: 0, external: 0 });
 
 
   
-  const [zerothReviewComments, setZerothReviewComments] = useState({});
+  const [reviewComments, setReviewComments] = useState({});
   const [newComments, setNewComments] = useState({});
   // Ensure these program names are consistent across AdminDashboard and CoordinatorDashboard
   const pgPrograms = pgCourses;
@@ -122,90 +122,82 @@ const [vivaMarks, setVivaMarks] = useState({ guide: 0, panel: 0, external: 0 });
     }
   }, [API_BASE_URL]);
 
-useEffect(() => {
-    if (selectedProgram) {
-      fetchStudents();
+
+
+  
+
+ 
+
+ const handleCommentChange = (identifier, reviewType, value) => {
+  setNewComments((prev) => ({
+    ...prev,
+    [identifier]: {
+      ...prev[identifier],
+      [reviewType]: value,
+    },
+  }));
+};
+
+  const handleSubmitComment = async (identifier, reviewType) => {
+  try {
+    const comment = newComments[identifier]?.[reviewType];
+    if (!comment || !comment.trim()) {
+      toast.warn("Comment cannot be empty!");
+      return;
     }
-  }, [selectedProgram]);
 
-  const fetchStudents = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/students?program=${selectedProgram}`);
-      const studentData = res.data;
-      setStudents(studentData);
-      fetchZerothReviewComments(studentData);
-    } catch (err) {
-      console.error("Error fetching students:", err);
-    }
-  };
+    let payload = {
+      comment,
+      teacherEmail,
+      reviewType,
+    };
 
-  const fetchZerothReviewComments = async (students) => {
-    try {
-      const registerNumbers = students.map((s) => s.registerNumber);
-      const res = await axios.post(`${API_BASE_URL}/zeroth-review/comments`, { registerNumbers });
-      const commentsMap = res.data.reduce((acc, item) => {
-        acc[item.registerNumber] = item.comment;
-        return acc;
-      }, {});
-      setZerothReviewComments(commentsMap);
-    } catch (err) {
-      console.error("Error fetching zeroth review comments:", err);
-    }
-  };
-
-  const handleCommentChange = (identifier, value) => {
-    setNewComments((prev) => ({ ...prev, [identifier]: value }));
-  };
-
-  const handleSubmitComment = async (identifier) => {
-    try {
-      const comment = newComments[identifier];
-      if (!comment || !comment.trim()) {
-        toast.warn("Comment cannot be empty!");
-        return;
-      }
-
-      // **THIS IS THE FIX:** We determine what to send to the backend.
-      let payload = {
-        comment,
-        teacherEmail,
-      };
-
-      if (pgPrograms.includes(selectedProgram)) {
-        // For PG students, the identifier is the registerNumber
-        payload.registerNumber = identifier;
-      } else if (ugPrograms.includes(selectedProgram) && selectedProject) {
-        // For UG students, we use the selectedProject's projectName.
-        // The 'identifier' in this case is still the student's registerNumber,
-        // but the key information for the group is the projectName.
-        payload.projectName = selectedProject.projectName;
+    if (pgPrograms.includes(selectedProgram)) {
+      payload.registerNumber = identifier;
+    } else if (ugPrograms.includes(selectedProgram)) {
+      const project = ugProjects.find(p => p.projectMembers.some(m => m.registerNumber === identifier));
+      if (project) {
+        payload.projectName = project.projectName;
       } else {
-        toast.error("Could not determine program type to submit comment.");
-        return;
+         toast.error("Could not find the project for this student.");
+         return;
       }
-
-      await axios.post(`${API_BASE_URL}/zeroth-review/submit`, payload);
-      
-      // Update the local state for immediate feedback
-      if (ugPrograms.includes(selectedProgram) && selectedProject) {
-        // For UG, we need to update the comment for all project members locally
-        const updatedComments = { ...zerothReviewComments };
-        selectedProject.projectMembers.forEach(member => {
-            updatedComments[member.registerNumber] = comment;
-        });
-        setZerothReviewComments(updatedComments);
-
-      } else {
-         setZerothReviewComments((prev) => ({ ...prev, [identifier]: comment }));
-      }
-
-      setNewComments((prev) => ({ ...prev, [identifier]: "" }));
-      toast.success("Comment submitted successfully!");
-
-    } catch (err) {
-      console.error("Error submitting zeroth review comment:", err);
-      toast.error(err.response?.data?.error || "Error submitting comment.");
+    } else {
+      toast.error("Could not determine program type to submit comment.");
+      return;
     }
+
+    await axios.post(`${API_BASE_URL}/review/submit`, payload);
+
+    setReviewComments((prev) => {
+        const updatedComments = { ...prev };
+        if (payload.projectName) {
+            const project = ugProjects.find(p => p.projectName === payload.projectName);
+            project?.projectMembers.forEach(member => {
+                if (!updatedComments[member.registerNumber]) updatedComments[member.registerNumber] = {};
+                updatedComments[member.registerNumber][reviewType] = comment;
+            });
+        } else {
+            if (!updatedComments[identifier]) updatedComments[identifier] = {};
+            updatedComments[identifier][reviewType] = comment;
+        }
+        return updatedComments;
+    });
+
+    setNewComments((prev) => ({
+      ...prev,
+      [identifier]: {
+        ...prev[identifier],
+        [reviewType]: "",
+      },
+    }));
+
+    toast.success("Comment submitted successfully!");
+
+  } catch (err) {
+    console.error(`Error submitting ${reviewType} review comment:`, err);
+    toast.error(err.response?.data?.error || "Error submitting comment.");
+  }
 };
 
 
@@ -235,10 +227,17 @@ useEffect(() => {
         updatedStudents.sort((a, b) => a.registerNumber.localeCompare(b.registerNumber));
         setStudents(updatedStudents);
         const commentsMap = updatedStudents.reduce((acc, student) => {
-        acc[student.registerNumber] = student.zerothReviewComment;
-        return acc;
-      }, {});
-      setZerothReviewComments(commentsMap);
+    acc[student.registerNumber] = {
+        zeroth: student.zerothReviewComment || "",
+        first: student.firstReviewComment || "",
+        second: student.secondReviewComment || "",
+        third: student.thirdReviewComment || ""
+    };
+    return acc;
+}, {});
+setReviewComments(commentsMap);
+
+      
         console.log("Fetched PG Students:", updatedStudents);
       } catch (err) {
         console.error(`Error fetching students for ${selectedProgram}:`, err);
@@ -258,13 +257,17 @@ useEffect(() => {
         setUgProjects(projects);
         // **NEW: Map comments for all students in the fetched projects**
         if (projects.length > 0) {
-          const commentsMap = projects.flatMap(p => p.projectMembers).reduce((acc, member) => {
-            // The comment is the same for all members, so we get it from their record
-            acc[member.registerNumber] = member.zerothReviewComment || "";
-            return acc;
-          }, {});
-          setZerothReviewComments(commentsMap);
-        }
+  const commentsMap = projects.flatMap(p => p.projectMembers).reduce((acc, member) => {
+    acc[member.registerNumber] = {
+        zeroth: member.zerothReviewComment || "",
+        first: member.firstReviewComment || "",
+        second: member.secondReviewComment || "",
+        third: member.thirdReviewComment || ""
+    };
+    return acc;
+  }, {});
+  setReviewComments(commentsMap);
+}
         console.log("Fetched UG Projects:", projects);
       } catch (err) {
         console.error(`Error fetching UG projects for ${selectedProgram}:`, err);
@@ -501,9 +504,14 @@ useEffect(() => {
     setVivaMarks(student.viva || { guide: 0, panel: 0, external: 0 });
     
     setNewComments(prev => ({
-      ...prev,
-      [student.registerNumber]: zerothReviewComments[student.registerNumber] || ''
-    }));
+  ...prev,
+  [student.registerNumber]: {
+    zeroth: reviewComments[student.registerNumber]?.zeroth || '',
+    first: reviewComments[student.registerNumber]?.first || '',
+    second: reviewComments[student.registerNumber]?.second || '',
+    third: reviewComments[student.registerNumber]?.third || ''
+  }
+}));
     
     try {
       // 1. Find the UID of the coordinator for the selectedProgram
@@ -1180,7 +1188,7 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
                           <td className="py-3 px-6 text-center">{project.Assessment2 || 0}</td>
                           <td className="py-3 px-6 text-center">{project.Assessment3 || 0}</td>
                           <td className="py-3 px-6 text-center">{project.Total || 0}</td>
-                          <td className="py-3 px-6 text-center">{(project.viva_total_awarded)/3 || 0}</td>
+                          <td className="py-3 px-6 text-center">{Math.round((project.viva_total_awarded)/3) || 0}</td>
                         </tr>
                       ))
                     ) : (
@@ -1246,7 +1254,7 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
                           <td className="py-3 px-6 text-center">{student.Assessment2 || 0}</td>
                           <td className="py-3 px-6 text-center">{student.Assessment3 || 0}</td>
                           <td className="py-3 px-6 text-center">{student.Total || 0}</td>
-                          <td className="py-3 px-6 text-center">{(student.viva_total_awarded)/3 || 0}</td>
+                          <td className="py-3 px-6 text-center">{Math.round((student.viva_total_awarded)/3) || 0}</td>
                            {/* Display all three file types for Zeroth Review */}
                           <td className="py-3 px-6 text-center">
                             {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && (
@@ -1489,33 +1497,105 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
             </h3>
             <p className="text-gray-600 mb-4">
               Program: {selectedProgram}
-            </p>            <table className="mt-4 w-full border border-gray-300 rounded-md">
-  <thead className="bg-gray-100 text-sm text-gray-700">
-    <tr>
+            </p>            
      
-      <th className="p-2 text-left">Enter Comment For Zeroth Review</th>
-    </tr>
-  </thead>
+
+<table className="w-full mt-4 border-separate border-spacing-4">
   <tbody>
     <tr>
-      
-      <td className="p-2">
+      {/* Zeroth Review */}
+      <td className="border border-gray-300 rounded-md p-3 align-top">
+        <h4 className="font-semibold capitalize text-gray-700 mb-2">Zeroth Review Comment</h4>
         <input
           type="text"
-          placeholder="Enter comment"
-          value={newComments[currentStudentForReview.registerNumber] || ""}
-          onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, e.target.value)}
-          className="w-96 p-2 border border-gray-300 rounded-md text-sm"
+          placeholder="Enter zeroth review comment"
+          value={newComments[currentStudentForReview.registerNumber]?.['zeroth'] || ""}
+          onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'zeroth', e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-md text-sm"
+          style={{ width: '100%' }}
         />
         <button
-          onClick={() => handleSubmitComment(currentStudentForReview.registerNumber)}
-          className="mt-1 text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded"
+          onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'zeroth')}
+          className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
         >
           Submit
         </button>
-        {zerothReviewComments[currentStudentForReview.registerNumber] && (
+        {reviewComments[currentStudentForReview.registerNumber]?.['zeroth'] && (
           <p className="mt-1 text-xs text-gray-600 italic">
-            Saved: {zerothReviewComments[currentStudentForReview.registerNumber]}
+            Saved: {reviewComments[currentStudentForReview.registerNumber]?.['zeroth']}
+          </p>
+        )}
+      </td>
+
+      {/* First Review */}
+      <td className="border border-gray-300 rounded-md p-3 align-top">
+        <h4 className="font-semibold capitalize text-gray-700 mb-2">First Review Comment</h4>
+        <input
+          type="text"
+          placeholder="Enter first review comment"
+          value={newComments[currentStudentForReview.registerNumber]?.['first'] || ""}
+          onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'first', e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-md text-sm"
+          style={{ width: '100%' }}
+        />
+        <button
+          onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'first')}
+          className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+        >
+          Submit
+        </button>
+        {reviewComments[currentStudentForReview.registerNumber]?.['first'] && (
+          <p className="mt-1 text-xs text-gray-600 italic">
+            Saved: {reviewComments[currentStudentForReview.registerNumber]?.['first']}
+          </p>
+        )}
+      </td>
+    </tr>
+    <tr>
+      {/* Second Review */}
+      <td className="border border-gray-300 rounded-md p-3 align-top">
+        <h4 className="font-semibold capitalize text-gray-700 mb-2">Second Review Comment</h4>
+        <input
+          type="text"
+          placeholder="Enter second review comment"
+          value={newComments[currentStudentForReview.registerNumber]?.['second'] || ""}
+          onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'second', e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-md text-sm"
+          style={{ width: '100%' }}
+        />
+        <button
+          onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'second')}
+          className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+        >
+          Submit
+        </button>
+        {reviewComments[currentStudentForReview.registerNumber]?.['second'] && (
+          <p className="mt-1 text-xs text-gray-600 italic">
+            Saved: {reviewComments[currentStudentForReview.registerNumber]?.['second']}
+          </p>
+        )}
+      </td>
+
+      {/* Third Review */}
+      <td className="border border-gray-300 rounded-md p-3 align-top">
+        <h4 className="font-semibold capitalize text-gray-700 mb-2">Third Review Comment</h4>
+        <input
+          type="text"
+          placeholder="Enter third review comment"
+          value={newComments[currentStudentForReview.registerNumber]?.['third'] || ""}
+          onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'third', e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-md text-sm"
+          style={{ width: '100%' }}
+        />
+        <button
+          onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'third')}
+          className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+        >
+          Submit
+        </button>
+        {reviewComments[currentStudentForReview.registerNumber]?.['third'] && (
+          <p className="mt-1 text-xs text-gray-600 italic">
+            Saved: {reviewComments[currentStudentForReview.registerNumber]?.['third']}
           </p>
         )}
       </td>

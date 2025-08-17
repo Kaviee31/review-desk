@@ -255,7 +255,7 @@ const fetchUgProjectsByProgram = async (programName) => {
               <td>{student.marks2}</td>
               <td>{student.marks3}</td>
               <td>{student.marks4}</td>
-              <td>{student.viva_total_awarded || 0}</td>
+              <td>{Math.round(student.viva_total_awarded/3) || 0}</td>
               <td>{student.teacherDisplayName}</td>
               <td>{student.zerothReviewComment || "No comment submitted"}</td>
             </tr>
@@ -296,7 +296,7 @@ const fetchUgProjectsByProgram = async (programName) => {
               <td>{project.Assessment2}</td>
               <td>{project.Assessment3}</td>
               <td>{project.Total}</td>
-              <td>{project.viva_total_awarded || 0}</td>
+              <td>{Math.round(project.viva_total_awarded / 3) || 0}</td>
               <td>{project.teacherDisplayName || 'N/A'}</td>
               <td>{project.zerothReviewComment || "No comment submitted"}</td>
             </tr>

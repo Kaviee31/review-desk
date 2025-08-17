@@ -57,7 +57,10 @@ const enrollmentSchema = new mongoose.Schema({
   // NEW FIELDS FOR UG STUDENTS' PROJECT DATA
   projectName: { type: String }, // Stores the project name for the group
   groupRegisterNumbers: { type: [String], default: [] },// Stores all register numbers in the UG group
-  zerothReviewComment: { type: String, default: "" }
+  zerothReviewComment: { type: String, default: "" },
+  firstReviewComment: { type: String, default: "" },
+  secondReviewComment: { type: String, default: "" },
+  thirdReviewComment: { type: String, default: "" }
 });
 
 const messageSchema = new mongoose.Schema({
@@ -251,22 +254,28 @@ app.get("/student-zeroth-review/:registerNumber", async (req, res) => {
   }
 });
 
-app.post("/zeroth-review/submit", async (req, res) => {
-  const { registerNumber, projectName, comment, teacherEmail } = req.body;
+app.post("/review/submit", async (req, res) => {
+  const { registerNumber, projectName, comment, reviewType } = req.body;
+
+  if (!reviewType || !['zeroth', 'first', 'second', 'third'].includes(reviewType)) {
+    return res.status(400).json({ error: "Invalid review type provided." });
+  }
+
   try {
+    const commentField = `${reviewType}ReviewComment`;
+    const update = { $set: { [commentField]: comment } };
+
     let result;
     if (registerNumber) {
-      // Logic for PG students
       result = await Enrollment.findOneAndUpdate(
         { registerNumber },
-        { $set: { zerothReviewComment: comment } },
+        update,
         { new: true }
       );
     } else if (projectName) {
-      // Logic for UG projects, update all students in the project
       result = await Enrollment.updateMany(
         { projectName },
-        { $set: { zerothReviewComment: comment } },
+        update,
         { new: true }
       );
     } else {
@@ -276,10 +285,10 @@ app.post("/zeroth-review/submit", async (req, res) => {
     if (!result) {
       return res.status(404).json({ error: "Student or project not found." });
     }
-    res.status(200).json({ message: "Zeroth review comment submitted successfully." });
+    res.status(200).json({ message: "Review comment submitted successfully." });
   } catch (error) {
-    console.error("Error submitting zeroth review comment:", error);
-    res.status(500).json({ error: "Failed to submit zeroth review comment." });
+    console.error("Error submitting review comment:", error);
+    res.status(500).json({ error: "Failed to submit review comment." });
   }
 });
 

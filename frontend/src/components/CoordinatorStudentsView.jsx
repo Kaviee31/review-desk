@@ -454,7 +454,7 @@ function CoordinatorStudentsView() {
                           <td className="py-3 px-6 text-center">{student.marks2}</td>
                           <td className="py-3 px-6 text-center">{student.marks3}</td>
                           <td className="py-3 px-6 text-center">{student.marks4}</td>
-                          <td className="py-3 px-6 text-center">{student.viva_total_awarded/3 || 0}</td>
+                          <td className="py-3 px-6 text-center">{Math.round(student.viva_total_awarded/3) || 0}</td>
                           {renderStudentReviewCell(student, "zeroth", reviewDeadlines.zerothReviewDeadline)}
                           {renderStudentReviewCell(student, "first", reviewDeadlines.firstReviewDeadline)}
                           {renderStudentReviewCell(student, "second", reviewDeadlines.secondReviewDeadline)}
@@ -498,7 +498,7 @@ function CoordinatorStudentsView() {
                           <td className="py-3 px-6 text-center">{project.Assessment2 || 0}</td>
                           <td className="py-3 px-6 text-center">{project.Assessment3 || 0}</td>
                           <td className="py-3 px-6 text-center">{project.Total || 0}</td>
-                          <td className="py-3 px-6 text-center">{project.viva_total_awarded/3 || 0}</td>
+                          <td className="py-3 px-6 text-center">{Math.round(project.viva_total_awarded/3) || 0}</td>
                           {renderProjectReviewCell(project, "zeroth", reviewDeadlines.zerothReviewDeadline)}
                           {renderProjectReviewCell(project, "first", reviewDeadlines.firstReviewDeadline)}
                           {renderProjectReviewCell(project, "second", reviewDeadlines.secondReviewDeadline)}
