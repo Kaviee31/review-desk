@@ -18,6 +18,7 @@ function ReportPage() {
     const [secondReviewDate, setSecondReviewDate] = useState('');
     const [thirdReviewDate, setThirdReviewDate] = useState(''); // NEW: State for third review date
     const [loading, setLoading] = useState(false);
+    const today = new Date().toISOString().split('T')[0];
 
     // Define all programs
     const allPrograms = [
@@ -65,6 +66,16 @@ function ReportPage() {
             toast.warning("Zeroth Review Deadline is required.");
             return;
         }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); 
+        const selectedZerothDate = new Date(zerothReviewDate);
+
+        if (selectedZerothDate < today) {
+            toast.warning("Zeroth Review Deadline cannot be a past date.");
+            return;
+        }
+
         if (firstReviewDate && new Date(firstReviewDate) <= new Date(zerothReviewDate)) {
             toast.warning("First Review must be after Zeroth Review.");
             return;
@@ -174,6 +185,7 @@ function ReportPage() {
                                     value={zerothReviewDate}
                                     onChange={(e) => setZerothReviewDate(e.target.value)}
                                     required
+                                    min={today}
                                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                                 />
                             </div>

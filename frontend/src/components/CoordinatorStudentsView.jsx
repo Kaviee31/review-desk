@@ -134,11 +134,12 @@ function CoordinatorStudentsView() {
     if (selectedProgram) {
       if (pgPrograms.includes(selectedProgram)) {
         fetchPgStudents(selectedProgram);
-        setUgProjects([]);
+        setUgProjects([]); // Clear UG state
         setUgCurrentView('projects');
       } else if (ugPrograms.includes(selectedProgram)) {
+        // For UG, fetch both the projects AND the full student list for name lookups
         fetchUgProjects(selectedProgram);
-        setStudents([]);
+        fetchPgStudents(selectedProgram); // This populates the 'students' state
         setUgCurrentView('projects');
       }
     } else {
@@ -191,20 +192,28 @@ function CoordinatorStudentsView() {
   const handleViewProjectStudents = (project) => {
     setSelectedProject(project);
     let members = [];
+  
+    // Ideal case: projectMembers is already populated with full details.
     if (Array.isArray(project.projectMembers) && project.projectMembers.length > 0) {
       members = project.projectMembers;
-    } else if (Array.isArray(project.groupRegisterNumbers)) {
-      toast.warn("Student names not available. Backend data for project members might be incomplete.");
-      members = project.groupRegisterNumbers.map(regNo => ({
-        registerNumber: regNo,
-        studentName: 'N/A',
-        Assessment1: project.Assessment1,
-        Assessment2: project.Assessment2,
-        Assessment3: project.Assessment3,
-        Total: project.Total || ((project.Assessment1 || 0) + (project.Assessment2 || 0) + (project.Assessment3 || 0)) / 3,
-      }));
+    } 
+    // Fallback case: Use the 'students' state as a lookup table for names.
+    else if (Array.isArray(project.groupRegisterNumbers)) {
+      members = project.groupRegisterNumbers.map(regNo => {
+        const studentDetails = students.find(s => s.registerNumber === regNo);
+        return {
+          registerNumber: regNo,
+          studentName: studentDetails ? studentDetails.studentName : 'Name not found',
+          // Carry over project-level assessments
+          Assessment1: project.Assessment1,
+          Assessment2: project.Assessment2,
+          Assessment3: project.Assessment3,
+          Total: project.Total,
+          courseName: selectedProgram, // Important for the review modal
+        };
+      });
     }
-
+  
     setStudentsInSelectedProject(members.sort((a, b) => a.registerNumber.localeCompare(b.registerNumber)));
     setUgCurrentView('students_in_project');
   };
@@ -225,9 +234,9 @@ function CoordinatorStudentsView() {
     if (uploadDate > deadlineDate) {
       const diffTime = Math.abs(uploadDate - deadlineDate);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return `${diffDays} day(s) late`;
+      return `(${diffDays} day(s) late)`;
     }
-    return "On Time";
+    return "(On Time)";
   };
   
   const handleOpenReviewModal = async (student) => {
@@ -482,10 +491,8 @@ function CoordinatorStudentsView() {
                       <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">Total</th>
                       <th className="py-3 px-6 text-center border-b border-gray-300">Viva</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Zeroth Review</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">First Review</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Second Review</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Third Review</th>
+                      
+                      
                     </tr>
                   </thead>
                   <tbody className="text-gray-600 text-sm font-light">
@@ -499,10 +506,7 @@ function CoordinatorStudentsView() {
                           <td className="py-3 px-6 text-center">{project.Assessment3 || 0}</td>
                           <td className="py-3 px-6 text-center">{project.Total || 0}</td>
                           <td className="py-3 px-6 text-center">{Math.round(project.viva_total_awarded/3) || 0}</td>
-                          {renderProjectReviewCell(project, "zeroth", reviewDeadlines.zerothReviewDeadline)}
-                          {renderProjectReviewCell(project, "first", reviewDeadlines.firstReviewDeadline)}
-                          {renderProjectReviewCell(project, "second", reviewDeadlines.secondReviewDeadline)}
-                          {renderProjectReviewCell(project, "third", reviewDeadlines.thirdReviewDeadline)}
+                          
                         </tr>
                       ))
                     ) : (<tr><td colSpan="10" className="py-4 text-center text-gray-500">No UG projects found for this program.</td></tr>)}
@@ -632,7 +636,7 @@ function CoordinatorStudentsView() {
                             <td className="py-2 px-4 text-center">{totalAwardedR2}</td>
                             <td className="py-2 px-4 text-right" colSpan="2">Total Awarded (R3):</td>
                             <td className="py-2 px-4 text-center">{totalAwardedR3}</td>
-                            <td className="py-2 px-4 text-center">{totalViva/3}</td>
+                            <td className="py-2 px-4 text-center">{Math.round(totalViva/3)}</td>
                         </tr>
                     </tfoot>
                   </table>
