@@ -125,4 +125,60 @@ body {
   font-size: 0.95rem;
   color: #333; /* or #6a1b9a for purple tone */
 }
+.main-heading {
+  width: 100%;
+  text-align: center;
+  font-size: 2.5rem; /* Or your desired size */
+  color: #6a1b9a;
+  margin-bottom: 1rem;
+}
 
+/* Modify .login-page to stack items vertically */
+.login-page {
+  display: flex;
+  flex-direction: column; /* Stack heading on top of content */
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Add this new class for the content wrapper */
+.login-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 3rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.login-left {
+  flex: 1;
+  max-width: 500px;
+  /* The h1 is no longer in here, so you can remove any heading-specific styles if you had them */
+}
+
+/* ... (the rest of your CSS for .login-right, .login-form, etc. can stay the same) */
+
+
+/* Update your responsive tweaks for the new structure */
+@media (max-width: 768px) {
+  .login-page {
+    padding: 1rem;
+  }
+  
+  /* Make the content wrapper stack vertically on small screens */
+  .login-content {
+    flex-direction: column;
+  }
+
+  .login-left {
+    max-width: 300px;
+  }
+
+  .login-right {
+    width: 90%;
+  }
+}

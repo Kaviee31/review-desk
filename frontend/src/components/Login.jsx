@@ -62,35 +62,39 @@ function Login() {
     redirectToDashboard(navigate, role);
   };
 
-  return (
+return (
     <div className="login-page">
-      <div className="login-left">
-        <Lottie animationData={animationData} loop />
+      {/* 1. Moved the heading here, to the top level */}
+      <h1 className="main-heading">IST's Review Desk</h1>
+
+      {/* 2. New wrapper for the side-by-side content */}
+      <div className="login-content">
+        <div className="login-left">
+          {/* The Lottie animation stays in the left column */}
+          <Lottie animationData={animationData} loop />
+        </div>
         
-      </div>
-       
-        
-      <div className="login-right">
-        
-        {roleSelection.length === 0 ? (
-          <form className="login-form" onSubmit={handleLogin}>
-            <h2>Log In</h2>
-            <label>Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <label>Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            <button type="submit">Login</button>
-            <p>Don't have an account? <Link to="/signup">Sign up</Link></p>
-            <p><Link to="/forgot-password">Forgot password?</Link></p>
-          </form>
-        ) : (
-          <div className="role-selection">
-            <h2>Select Role</h2>
-            {roleSelection.map((role, index) => (
-              <button key={index} onClick={() => handleRoleSelect(role)}>{role}</button>
-            ))}
-          </div>
-        )}
+        <div className="login-right">
+          {roleSelection.length === 0 ? (
+            <form className="login-form" onSubmit={handleLogin}>
+              <h2>Log In</h2>
+              <label>Email</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <label>Password</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <button type="submit">Login</button>
+              <p>Don't have an account? <Link to="/signup">Sign up</Link></p>
+              <p><Link to="/forgot-password">Forgot password?</Link></p>
+            </form>
+          ) : (
+            <div className="role-selection">
+              <h2>Select Role</h2>
+              {roleSelection.map((role, index) => (
+                <button key={index} onClick={() => handleRoleSelect(role)}>{role}</button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
