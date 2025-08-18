@@ -133,7 +133,7 @@ body {
   margin-bottom: 1rem;
 }
 
-/* Modify .login-page to stack items vertically */
+
 .login-page {
   display: flex;
   flex-direction: column; /* Stack heading on top of content */
@@ -144,7 +144,7 @@ body {
   box-sizing: border-box;
 }
 
-/* Add this new class for the content wrapper */
+
 .login-content {
   display: flex;
   justify-content: center;
@@ -157,13 +157,11 @@ body {
 .login-left {
   flex: 1;
   max-width: 500px;
-  /* The h1 is no longer in here, so you can remove any heading-specific styles if you had them */
 }
 
-/* ... (the rest of your CSS for .login-right, .login-form, etc. can stay the same) */
 
 
-/* Update your responsive tweaks for the new structure */
+
 @media (max-width: 768px) {
   .login-page {
     padding: 1rem;
