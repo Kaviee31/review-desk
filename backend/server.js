@@ -942,6 +942,27 @@ app.post("/update-viva-marks", async (req, res) => {
     res.status(500).json({ error: "Failed to update viva marks" });
   }
 });
+app.post("/bulk-enroll", async (req, res) => {
+  try {
+    const { students } = req.body; // array of student objects
+    const results = [];
+    for (const s of students) {
+      const exists = await Enrollment.findOne({ registerNumber: s.registerNumber, courseName: s.courseName });
+      if (exists) {
+        results.push({ regNo: s.registerNumber, status: "exists" });
+        continue;
+      }
+      const newEnrollment = new Enrollment(s);
+      await newEnrollment.save();
+      results.push({ regNo: s.registerNumber, status: "enrolled" });
+    }
+    res.json({ message: "Bulk enrollment completed", results });
+  } catch (err) {
+    console.error("Bulk enroll error:", err);
+    res.status(500).json({ error: "Failed to bulk enroll" });
+  }
+});
+
 
 // Start server
 const PORT = process.env.PORT || 5000;
