@@ -1087,40 +1087,56 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
 )}
           </td>
           <td className="py-3 px-6 text-center">
-            {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
-              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block">PDF</a>
-            )}
-            {latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && (
-              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">PPT</a>
-            )}
-            {latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && (
-              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">Other</a>
-            )}
-            {(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
-              <span className="text-gray-500 text-xs">No Files</span>
-            ) : (
-              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) || "On Time"}
-              </span>
-            )}
+            <div className="flex justify-center items-center gap-3 h-6 mb-1">
+  {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
+    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`} target="_blank" rel="noopener noreferrer">
+      {pdfIcon}
+    </a>
+  )}
+  {latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && (
+    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`} target="_blank" rel="noopener noreferrer">
+      {pptIcon}
+    </a>
+  )}
+  {latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && (
+    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`} target="_blank" rel="noopener noreferrer">
+      {otherIcon}
+    </a>
+  )}
+</div>
+{(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
+  <span className="text-gray-500 text-xs">No Files</span>
+) : (
+  <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+    {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) || "On Time"}
+  </span>
+)}
           </td>
           <td className="py-3 px-6 text-center">
-            {latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && (
-              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pdfPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block">PDF</a>
-            )}
-            {latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && (
-              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pptPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">PPT</a>
-            )}
-            {latestReviewFiles[`${student.registerNumber}_third`]?.otherPath && (
-              <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].otherPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline block mt-1">Other</a>
-            )}
-            {(!latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_third`]?.otherPath) ? (
-              <span className="text-gray-500 text-xs">No Files</span>
-            ) : (
-              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) || "On Time"}
-              </span>
-            )}
+            <div className="flex justify-center items-center gap-3 h-6 mb-1">
+  {latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && (
+    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pdfPath}`} target="_blank" rel="noopener noreferrer">
+      {pdfIcon}
+    </a>
+  )}
+  {latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && (
+    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pptPath}`} target="_blank" rel="noopener noreferrer">
+      {pptIcon}
+    </a>
+  )}
+  {latestReviewFiles[`${student.registerNumber}_third`]?.otherPath && (
+    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].otherPath}`} target="_blank" rel="noopener noreferrer">
+      {otherIcon}
+    </a>
+  )}
+</div>
+{(!latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_third`]?.otherPath) ? (
+  <span className="text-gray-500 text-xs">No Files</span>
+) : (
+  <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+    {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) || "On Time"}
+  </span>
+)}
           </td>
           <td className="py-3 px-6 text-center">
             <img
@@ -1277,173 +1293,182 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
                           <td className="py-3 px-6 text-center">{student.Total || 0}</td>
                           <td className="py-3 px-6 text-center">{Math.round((student.viva_total_awarded)/3) || 0}</td>
                            {/* Display all three file types for Zeroth Review */}
+                          
                           <td className="py-3 px-6 text-center">
-                            {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pdfPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block"
-                              >
-                                PDF
-                              </a>
-                            )}
-                            {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pptPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                PPT
-                              </a>
-                            )}
-                            {latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].otherPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                Other
-                              </a>
-                            )}
-                            {(!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath &&
-                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath) ? (
-                              <span className="text-gray-500 text-xs">No Files</span>
-                            ) : (
-                              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) || "On Time"}
-                              </span>
-                            )}
-                          </td>
+  {/* Flex container to hold icons in a single row */}
+  <div className="flex justify-center items-center gap-3 h-6 mb-1">
+    {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && (
+      <a
+        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pdfPath}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {pdfIcon}
+      </a>
+    )}
+    {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && (
+      <a
+        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pptPath}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {pptIcon}
+      </a>
+    )}
+    {latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && (
+      <a
+        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].otherPath}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {otherIcon}
+      </a>
+    )}
+  </div>
+
+  {/* Status text (No Files or On Time/Late) */}
+  {(!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath &&
+   !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath &&
+   !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath) ? (
+    <span className="text-gray-500 text-xs">No Files</span>
+  ) : (
+    <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+      {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) || "On Time"}
+    </span>
+  )}
+</td>
                           {/* Display all three file types for First Review and late status */}
                           <td className="py-3 px-6 text-center">
-                            {latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pdfPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block"
-                              >
-                                PDF
-                              </a>
-                            )}
-                            {latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pptPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                PPT
-                              </a>
-                            )}
-                            {latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].otherPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                Other
-                              </a>
-                            )}
-                            {(!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath &&
-                             !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath) ? (
-                              <span className="text-gray-500 text-xs">No Files</span>
-                            ) : (
-                              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) || "On Time"}
-                              </span>
-                            )}
-                          </td>
+  {/* Flex container to hold icons in a single row */}
+  <div className="flex justify-center items-center gap-3 h-6 mb-1">
+    {latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && (
+      <a
+        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pdfPath}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {pdfIcon}
+      </a>
+    )}
+    {latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && (
+      <a
+        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pptPath}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {pptIcon}
+      </a>
+    )}
+    {latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && (
+      <a
+        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].otherPath}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {otherIcon}
+      </a>
+    )}
+  </div>
+
+  {/* Status text (No Files or On Time/Late) */}
+  {(!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath &&
+   !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath &&
+   !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath) ? (
+    <span className="text-gray-500 text-xs">No Files</span>
+  ) : (
+    <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+      {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) || "On Time"}
+    </span>
+  )}
+</td>
                           {/* Display all three file types for Second Review and late status */}
                           <td className="py-3 px-6 text-center">
-                            {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block"
-                              >
-                                PDF
-                              </a>
-                            )}
-                            {latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                                >
-                                PPT
-                              </a>
-                            )}
-                            {latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                Other
-                              </a>
-                            )}
-                            {(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath &&
-                             !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
-                              <span className="text-gray-500 text-xs">No Files</span>
-                            ) : (
-                              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) || "On Time"}
-                              </span>
-                            )}
-                          </td>
+  {/* Flex container to hold icons in a single row */}
+  <div className="flex justify-center items-center gap-3 h-6 mb-1">
+    {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
+      <a
+        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {pdfIcon}
+      </a>
+    )}
+    {latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && (
+      <a
+        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {pptIcon}
+      </a>
+    )}
+    {latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && (
+      <a
+        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {otherIcon}
+      </a>
+    )}
+  </div>
+
+  {/* Status text (No Files or On Time/Late) */}
+  {(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath &&
+   !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath &&
+   !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
+    <span className="text-gray-500 text-xs">No Files</span>
+  ) : (
+    <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+      {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) || "On Time"}
+    </span>
+  )}
+</td>
                           {/* NEW: Display all three file types for Third Review and late status */}
                           <td className="py-3 px-6 text-center">
-                            {latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pdfPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block"
-                              >
-                                PDF
-                              </a>
-                            )}
-                            {latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pptPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                PPT
-                              </a>
-                            )}
-                            {latestReviewFiles[`${student.registerNumber}_third`]?.otherPath && (
-                              <a
-                                href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].otherPath}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline block mt-1"
-                              >
-                                Other
-                              </a>
-                            )}
-                            {(!latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath &&
-                             !latestReviewFiles[`${student.registerNumber}_third`]?.pptPath &&
-                             !latestReviewFiles[`${student.registerNumber}_third`]?.otherPath) ? (
-                              <span className="text-gray-500 text-xs">No Files</span>
-                            ) : (
-                              <span className={`block mt-1 text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-                                {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) || "On Time"}
-                              </span>
-                            )}
-                          </td>
+  {/* Flex container to hold icons in a single row */}
+  <div className="flex justify-center items-center gap-3 h-6 mb-1">
+    {latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && (
+      <a
+        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pdfPath}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {pdfIcon}
+      </a>
+    )}
+    {latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && (
+      <a
+        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pptPath}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {pptIcon}
+      </a>
+    )}
+    {latestReviewFiles[`${student.registerNumber}_third`]?.otherPath && (
+      <a
+        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].otherPath}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {otherIcon}
+      </a>
+    )}
+  </div>
+
+  {/* Status text (No Files or On Time/Late) */}
+  {(!latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath &&
+   !latestReviewFiles[`${student.registerNumber}_third`]?.pptPath &&
+   !latestReviewFiles[`${student.registerNumber}_third`]?.otherPath) ? (
+    <span className="text-gray-500 text-xs">No Files</span>
+  ) : (
+    <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+      {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) || "On Time"}
+    </span>
+  )}
+</td>
                           <td className="py-3 px-6 text-center">
                             <img
                               src={unseenMessagesStatus[student.registerNumber] ? UNSEEN_MESSAGE_ICON_URL : SEEN_MESSAGE_ICON_URL}

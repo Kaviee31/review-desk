@@ -163,7 +163,8 @@ const handleExcelUpload = async (e) => {
       }
     }
 
-    toast.success(`✅ Imported ${success} students. ❌ Failed: ${failed}`);
+    toast.success(`✅ Imported ${success} students. 
+      ❌ Failed: ${failed}`);
   } catch (err) {
     console.error("Excel upload error:", err);
     toast.error("Failed to process Excel file.");
