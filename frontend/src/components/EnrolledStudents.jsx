@@ -1381,7 +1381,6 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
     </span>
   )}
 </td>
-                          {/* Display all three file types for Second Review and late status */}
                           <td className="py-3 px-6 text-center">
   {/* Flex container to hold icons in a single row */}
   <div className="flex justify-center items-center gap-3 h-6 mb-1">
