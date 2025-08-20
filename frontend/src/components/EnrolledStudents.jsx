@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/EnrolledStudents.css';
 import { pgCourses, ugCourses, courses } from "../constants/courses";
+import { FaUser } from 'react-icons/fa';
 import { FaFilePdf, FaFilePowerpoint, FaFileAlt } from "react-icons/fa";
 
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
