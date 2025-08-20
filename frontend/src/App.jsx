@@ -33,25 +33,29 @@ import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import { RoleProvider } from "./contexts/RoleContext";
 
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import './App.css';
 
 function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const auth = getAuth();
-    // onAuthStateChanged returns an unsubscribe function
+    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      // Once the auth state is determined, stop loading
+    
       setLoading(false);
     });
 
-    // Cleanup subscription on component unmount
     return () => unsubscribe();
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, []); 
 
-  // While Firebase is checking the auth state, show a loading message
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="spinner-container">
+        <div className="spinner"></div>
+        <span>Loading...</span>
+      </div>
+    );
   }
 
   return (
