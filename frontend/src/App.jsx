@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -26,12 +27,33 @@ import AdminLayout from "./components/AdminLayout";
 import TeacherLayout from "./components/TeacherLayout";
 import StudentLayout from "./components/StudentLayout";
 import HODLayout from "./components/HODLayout";
-import CoordinatorLayout from "./components/CoordinatorLayout"; // ✅ NEW
+import CoordinatorLayout from "./components/CoordinatorLayout"; 
 
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import { RoleProvider } from "./contexts/RoleContext";
 
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+
 function App() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const auth = getAuth();
+    // onAuthStateChanged returns an unsubscribe function
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      // Once the auth state is determined, stop loading
+      setLoading(false);
+    });
+
+    // Cleanup subscription on component unmount
+    return () => unsubscribe();
+  }, []); // Empty dependency array ensures this runs only once on mount
+
+  // While Firebase is checking the auth state, show a loading message
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <RoleProvider>
       <Router>
