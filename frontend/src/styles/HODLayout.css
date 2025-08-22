@@ -23,11 +23,7 @@
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
-.navbar-logo {
-  font-size: 24px;
-  font-weight: bold;
-  letter-spacing: 1px;
-}
+
 
 /* Links section */
 .navbar-links {
@@ -69,4 +65,28 @@
   padding: 30px;
   box-sizing: border-box;
   background:  #fffdd0
+}
+
+
+
+.navbar-header {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Adds space between the image and the text */
+}
+
+.navbar-image {
+  height: 50px;
+  width: 50px;
+   /* Optional: gives the image rounded corners */
+}
+
+.navbar-logo-container {
+  display: flex;
+  flex-direction: column; /* This stacks the two text lines */
+}
+.navbar-logo {
+  font-size: 22px;
+  font-weight: bold;
+  font-family: 'Times New Roman', Times, serif;
 }

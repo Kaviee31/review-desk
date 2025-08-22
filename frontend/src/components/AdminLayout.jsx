@@ -27,7 +27,13 @@ function AdminLayout() {
   return (
     <div className="admin-layout">
       <nav className="admin-navbar">
-        <div className="navbar-logo">🛠️ Admin Panel</div>
+        <div className="navbar-header">
+          <img src="https://www.auegov.ac.in/Department/public/assets/img/aulogo.png" alt="Logo" className="navbar-image" />
+          <div className="navbar-logo-container">
+            <div className="navbar-logo">Information Science and Technology</div>
+            <div className="navbar-logo">Anna University</div>
+          </div>
+        </div>
         <div className="navbar-links">
           <button
             className={isActive("/admin/dashboard") ? "active" : ""}

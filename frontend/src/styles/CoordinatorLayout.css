@@ -68,3 +68,25 @@
   padding: 0;
   box-sizing: border-box;
 }
+
+.navbar-header {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Adds space between the image and the text */
+}
+
+.navbar-image {
+  height: 50px;
+  width: 50px;
+   /* Optional: gives the image rounded corners */
+}
+
+.navbar-logo-container {
+  display: flex;
+  flex-direction: column; /* This stacks the two text lines */
+}
+.navbar-logo {
+  font-size: 22px;
+  font-weight: bold;
+  font-family: 'Times New Roman', Times, serif;
+}

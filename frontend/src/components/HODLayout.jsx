@@ -23,7 +23,13 @@ function HODLayout() {
   return (
     <div className="hod-layout">
       <nav className="hod-navbar">
-        <div className="navbar-logo">🎓 HOD Panel</div>
+        <div className="navbar-header">
+          <img src="https://www.auegov.ac.in/Department/public/assets/img/aulogo.png" alt="Logo" className="navbar-image" />
+          <div className="navbar-logo-container">
+            <div className="navbar-logo">Information Science and Technology</div>
+            <div className="navbar-logo">Anna University</div>
+          </div>
+        </div>
         <div className="navbar-links">
           <button className={isActive("/hod/dashboard") ? "active" : ""}
             onClick={() => navigate("/hod/dashboard")}>
