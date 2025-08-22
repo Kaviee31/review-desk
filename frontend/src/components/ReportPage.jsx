@@ -6,7 +6,7 @@ import { db } from '../firebase';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Footer from './Footer';
-import '../styles/AdminDashboard.css'; // Assuming this CSS is for general dashboard styling
+import '../styles/ReportPage.css'; // Assuming this CSS is for general dashboard styling
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function ReportPage() {
     useEffect(() => {
