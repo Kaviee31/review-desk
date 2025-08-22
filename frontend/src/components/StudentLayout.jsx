@@ -40,7 +40,7 @@ function StudentLayout() {
             className={isActive("/student/courses") ? "active" : ""}
             onClick={() => navigate("/student/courses")}
           >
-            <User2 size={18} /> My Courses
+            <User2 size={18} /> View Marks & Comments
           </button>
           <button
   className="telegram-btn"

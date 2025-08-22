@@ -1,5 +1,3 @@
-// src/components/AssignCoordinatorForm.jsx
-
 import React, { useState } from 'react';
 import { auth, db } from '../firebase';
 import {
@@ -13,6 +11,7 @@ import emailjs from 'emailjs-com';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/AssignCoordinatorForm.css';
+import Footer from './Footer';
 
 import { pgCourses, ugCourses, courses } from "../constants/courses";
 function AssignCoordinatorForm() {
@@ -195,6 +194,7 @@ Please login using your existing credentials.`
   };
 
   return (
+    <div className='teacher-dashboard-layout'>
     <div className="assign-coordinator-container">
       <h2>Assign Coordinator</h2>
       <form className="assign-coordinator-form" onSubmit={handleSubmit}>
@@ -236,6 +236,8 @@ Please login using your existing credentials.`
           {loading ? "Assigning..." : "Assign Coordinator"}
         </button>
       </form>
+    </div>
+    <Footer />
     </div>
   );
 }

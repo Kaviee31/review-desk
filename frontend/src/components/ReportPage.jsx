@@ -5,6 +5,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Footer from './Footer';
 import '../styles/AdminDashboard.css'; // Assuming this CSS is for general dashboard styling
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function ReportPage() {
@@ -156,6 +157,7 @@ function ReportPage() {
     };
 
     return (
+        <div className='teacher-dashboard-content'>
         <div className='cont'>
             <div className="dashboard-content">
                 <h2 className="text-2xl font-bold mb-4 text-gray-700">Set Review Deadlines</h2>
@@ -241,6 +243,8 @@ function ReportPage() {
                     </>
                 )}
             </div>
+        </div>
+        <Footer />
         </div>
     );
 }

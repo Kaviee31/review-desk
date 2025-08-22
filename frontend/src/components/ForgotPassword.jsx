@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import "../styles/ForgotPassword.css"; 
 import Lottie from "lottie-react";
 import animationData from "../assets/reset-password.json";
+import Footer from './Footer';
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -25,6 +26,7 @@ function ForgotPassword() {
   };
 
   return (
+    <div className="teacher=dashboard-layout">
     <div className="forgot-password-page">
       <form className="forgot-password-form" onSubmit={handleReset}>
         <div>
@@ -51,6 +53,8 @@ function ForgotPassword() {
           <Link to="/">Back to Login</Link>
         </p>
       </form>
+    </div>
+    <Footer />
     </div>
   );
 }

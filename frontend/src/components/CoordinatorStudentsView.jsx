@@ -5,6 +5,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { toast } from 'react-toastify';
 import { pgCourses, ugCourses, courses } from "../constants/courses";
+import Footer from './Footer';
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function CoordinatorStudentsView() {
   const [coordinatorUid, setCoordinatorUid] = useState(null);
@@ -396,6 +397,7 @@ function CoordinatorStudentsView() {
   }
 
   return (
+    <div className="teacher-dashboard-layout">
     <div className="flex flex-col items-center justify-start min-h-screen p-4 bg-gray-100 font-inter">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">
         Coordinator Student View
@@ -658,6 +660,8 @@ function CoordinatorStudentsView() {
           </div>
         </div>
       )}
+    </div>
+    <Footer />
     </div>
   );
 }

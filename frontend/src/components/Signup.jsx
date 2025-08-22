@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "../styles/Signup.css";
 import { courses } from "../constants/courses";
+import Footer from './Footer';
 
 function Signup() {
   useEffect(() => { document.title = "Signup"; }, []);
@@ -115,6 +116,7 @@ function Signup() {
   };
 
   return (
+    <div className="teacher-dashboard-layout">
     <div className="signup-page">
       <form className="signup-form" onSubmit={handleSubmit}>
         <h2>Create Account</h2>
@@ -203,6 +205,8 @@ function Signup() {
         <button type="submit" disabled={loading}>{loading ? "Registering..." : "Register"}</button>
         <p>Already have an account? <Link to="/">Login</Link></p>
       </form>
+    </div>
+    <Footer />
     </div>
   );
 }

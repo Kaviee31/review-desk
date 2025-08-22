@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import '../styles/AdminDashboard.css';
 import { pgCourses, ugCourses } from "../constants/courses";
 import * as XLSX from "xlsx";
+import Footer from './Footer';
 
 
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
@@ -310,6 +311,7 @@ const handleExcelUpload = async (e) => {
 
 
   return (
+    <div className='teacher-dashboard-layout'>
   <div className='cont'>
   <div className="admin-sidebar">
     <h2>Admin Panel</h2>
@@ -498,6 +500,8 @@ const handleExcelUpload = async (e) => {
 </div>
 
   </div>
+</div>
+<Footer />
 </div>
 
   );

@@ -10,6 +10,7 @@ import '../styles/HODDashboard.css';
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
 import { pgCourses, ugCourses, courses } from "../constants/courses";
+import Footer from './Footer';
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 
 function HODDashboard() {
@@ -309,6 +310,7 @@ const fetchUgProjectsByProgram = async (programName) => {
   );
 
   return (
+   <div className='teacher-dashboard-layout'>
     <div className="hod-container">
       
 
@@ -354,6 +356,8 @@ const fetchUgProjectsByProgram = async (programName) => {
           </button>
         </div>
       )}
+    </div>
+    <Footer /> 
     </div>
   );
 }

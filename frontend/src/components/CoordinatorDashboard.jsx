@@ -5,6 +5,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { toast } from 'react-toastify'; // For notifications
 import 'react-toastify/dist/ReactToastify.css';
 import "../styles/CoordinatorDashboard.css"; 
+import Footer from './Footer';
 import { pgCourses, ugCourses, courses } from "../constants/courses";// Assuming this CSS provides styling
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function CoordinatorDashboard() {
@@ -294,6 +295,7 @@ function CoordinatorDashboard() {
   }
 
   return (
+    <div className="teacher-dashboard-layout">
     <div className="flex flex-col items-center justify-start min-h-screen p-4 bg-gray-100 font-inter">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">
         Coordinator Dashboard
@@ -476,6 +478,8 @@ function CoordinatorDashboard() {
           </div>
         </div>
       )}
+    </div>
+    <Footer />
     </div>
   );
 }

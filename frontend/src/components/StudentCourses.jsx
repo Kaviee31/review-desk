@@ -6,6 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import ChatWindow from "./ChatWindow";
 import '../styles/StudentCourses.css';
+import Footer from './Footer';
 
 const UNSEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/134/134935.png";
 const SEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/2462/2462719.png";
@@ -119,6 +120,7 @@ function StudentCourses() {
   // StudentCourses.jsx
 
 return (
+  <div className="teacher-dashboard-layout">
     <div className="student-courses-container">
       <h1 className="main-title">Project Dashboard</h1>
       <h2 className="register-number-title">{registerNumber || "Loading..."}</h2>
@@ -196,6 +198,8 @@ return (
           onClose={handleCloseChat}
         />
       )}
+    </div>
+    <Footer />
     </div>
   );
 }

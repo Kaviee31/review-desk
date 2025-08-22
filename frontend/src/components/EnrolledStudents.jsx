@@ -13,6 +13,7 @@ import '../styles/EnrolledStudents.css';
 import { pgCourses, ugCourses, courses } from "../constants/courses";
 import { FaUser } from 'react-icons/fa';
 import { FaFilePdf, FaFilePowerpoint, FaFileAlt } from "react-icons/fa";
+import Footer from './Footer';
 
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 const UNSEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/134/134935.png";
@@ -923,6 +924,7 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
 
 
   return (
+    <div className="teacher-dashboard-layout">
     <div className="flex flex-col items-center justify-start min-h-screen p-4 bg-gray-100 font-inter">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">
         Enrolled Students Dashboard
@@ -1778,6 +1780,8 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
         </div>
       )}
       
+    </div>
+    <Footer />
     </div>
   );
 }
