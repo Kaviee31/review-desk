@@ -27,12 +27,12 @@ function EnrolledStudents() {
   const [teacherUid, setTeacherUid] = useState(null);
   const [selectedStudentRegisterNumber, setSelectedStudentRegisterNumber] = useState(null);
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
-   const [loading, setLoading] = useState(true);
-    
+  const [loading, setLoading] = useState(true);
+
   // Modified to store objects with pdfPath, pptPath, otherPath, and uploadedAt
   const [latestReviewFiles, setLatestReviewFiles] = useState({});
   const [studentCounts, setStudentCounts] = useState({});
- const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const [zerothReviews, setZerothReviews] = useState({});
   // States for the student review marks modal
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -49,11 +49,13 @@ function EnrolledStudents() {
   const [selectedProject, setSelectedProject] = useState(null); // The project object selected from the projects table
   const [studentsInSelectedProject, setStudentsInSelectedProject] = useState([]); // Students belonging to the selected project
 
+  const [marksLockStatus, setMarksLockStatus] = useState('Disabled');
+
   // NEW: Consolidated state for Viva marks
-const [vivaMarks, setVivaMarks] = useState({ guide: 0, panel: 0, external: 0 });
-const pdfIcon = <FaFilePdf className="h-8 w-8 text-red-600 hover:opacity-75" title="PDF Document" />;
-const pptIcon = <FaFilePowerpoint className="h-5 w-5 text-orange-600 hover:opacity-75" title="PowerPoint Presentation" />;
-const otherIcon = <FaFileAlt className="h-5 w-5 text-gray-500 hover:opacity-75" title="Other File" />;
+  const [vivaMarks, setVivaMarks] = useState({ guide: 0, panel: 0, external: 0 });
+  const pdfIcon = <FaFilePdf className="h-8 w-8 text-red-600 hover:opacity-75" title="PDF Document" />;
+  const pptIcon = <FaFilePowerpoint className="h-5 w-5 text-orange-600 hover:opacity-75" title="PowerPoint Presentation" />;
+  const otherIcon = <FaFileAlt className="h-5 w-5 text-gray-500 hover:opacity-75" title="Other File" />;
 
 
   // Review Deadlines State
@@ -65,7 +67,7 @@ const otherIcon = <FaFileAlt className="h-5 w-5 text-gray-500 hover:opacity-75" 
   });
 
 
-  
+
   const [reviewComments, setReviewComments] = useState({});
   const [newComments, setNewComments] = useState({});
   // Ensure these program names are consistent across AdminDashboard and CoordinatorDashboard
@@ -73,7 +75,7 @@ const otherIcon = <FaFileAlt className="h-5 w-5 text-gray-500 hover:opacity-75" 
   const ugPrograms = ugCourses;
   const allPrograms = courses;
 
-  
+
 
   // Effect to set teacher email and UID on auth state change
   useEffect(() => {
@@ -91,23 +93,23 @@ const otherIcon = <FaFileAlt className="h-5 w-5 text-gray-500 hover:opacity-75" 
 
 
   useEffect(() => {
-  const fetchCounts = async () => {
-    try {
-      const counts = {};
-      for (const program of allPrograms) {
-        const response = await axios.get(`${API_BASE_URL}/teacher-students/${teacherEmail}?courseName=${program}`);
-        counts[program] = response.data.length;
+    const fetchCounts = async () => {
+      try {
+        const counts = {};
+        for (const program of allPrograms) {
+          const response = await axios.get(`${API_BASE_URL}/teacher-students/${teacherEmail}?courseName=${program}`);
+          counts[program] = response.data.length;
+        }
+        setStudentCounts(counts);
+      } catch (err) {
+        console.error("Error fetching student counts", err);
       }
-      setStudentCounts(counts);
-    } catch (err) {
-      console.error("Error fetching student counts", err);
-    }
-  };
+    };
 
-  if (teacherEmail) {
-    fetchCounts();
-  }
-}, [teacherEmail]);
+    if (teacherEmail) {
+      fetchCounts();
+    }
+  }, [teacherEmail]);
 
   useEffect(() => {
     document.title = "Enrolled Students";
@@ -124,88 +126,103 @@ const otherIcon = <FaFileAlt className="h-5 w-5 text-gray-500 hover:opacity-75" 
         secondReviewDeadline: response.data?.secondReviewDeadline || null,
         thirdReviewDeadline: response.data?.thirdReviewDeadline || null, // NEW: Fetch third review deadline
       });
+      setMarksLockStatus(response.data?.marksLockStatus || 'Disabled');
     } catch (error) {
       console.error("Error fetching review deadlines:", error);
     }
   }, [API_BASE_URL]);
 
 
-
-  
-
- 
-
- const handleCommentChange = (identifier, reviewType, value) => {
-  setNewComments((prev) => ({
-    ...prev,
-    [identifier]: {
-      ...prev[identifier],
-      [reviewType]: value,
-    },
-  }));
-};
-
-  const handleSubmitComment = async (identifier, reviewType) => {
-  try {
-    const comment = newComments[identifier]?.[reviewType];
-    if (!comment || !comment.trim()) {
-      toast.warn("Comment cannot be empty!");
-      return;
-    }
-
-    let payload = {
-      comment,
-      teacherEmail,
-      reviewType,
-    };
-
-    if (pgPrograms.includes(selectedProgram)) {
-      payload.registerNumber = identifier;
-    } else if (ugPrograms.includes(selectedProgram)) {
-      const project = ugProjects.find(p => p.projectMembers.some(m => m.registerNumber === identifier));
-      if (project) {
-        payload.projectName = project.projectName;
-      } else {
-         toast.error("Could not find the project for this student.");
-         return;
+  const handleLockMarks = async () => {
+    if (window.confirm("Are you sure you want to lock the marks? This action cannot be undone and will prevent any further changes.")) {
+      try {
+        await axios.post(`${API_BASE_URL}/update-marks-lock-status`, {
+          courseName: selectedProgram,
+          status: 'Locked',
+        });
+        setMarksLockStatus('Locked');
+        toast.success("Marks have been locked successfully!");
+      } catch (error) {
+        console.error("Error locking marks:", error);
+        toast.error("Failed to lock marks.");
       }
-    } else {
-      toast.error("Could not determine program type to submit comment.");
-      return;
     }
+  };
 
-    await axios.post(`${API_BASE_URL}/review/submit`, payload);
 
-    setReviewComments((prev) => {
-        const updatedComments = { ...prev };
-        if (payload.projectName) {
-            const project = ugProjects.find(p => p.projectName === payload.projectName);
-            project?.projectMembers.forEach(member => {
-                if (!updatedComments[member.registerNumber]) updatedComments[member.registerNumber] = {};
-                updatedComments[member.registerNumber][reviewType] = comment;
-            });
-        } else {
-            if (!updatedComments[identifier]) updatedComments[identifier] = {};
-            updatedComments[identifier][reviewType] = comment;
-        }
-        return updatedComments;
-    });
 
+
+  const handleCommentChange = (identifier, reviewType, value) => {
     setNewComments((prev) => ({
       ...prev,
       [identifier]: {
         ...prev[identifier],
-        [reviewType]: "",
+        [reviewType]: value,
       },
     }));
+  };
 
-    toast.success("Comment submitted successfully!");
+  const handleSubmitComment = async (identifier, reviewType) => {
+    try {
+      const comment = newComments[identifier]?.[reviewType];
+      if (!comment || !comment.trim()) {
+        toast.warn("Comment cannot be empty!");
+        return;
+      }
 
-  } catch (err) {
-    console.error(`Error submitting ${reviewType} review comment:`, err);
-    toast.error(err.response?.data?.error || "Error submitting comment.");
-  }
-};
+      let payload = {
+        comment,
+        teacherEmail,
+        reviewType,
+      };
+
+      if (pgPrograms.includes(selectedProgram)) {
+        payload.registerNumber = identifier;
+      } else if (ugPrograms.includes(selectedProgram)) {
+        const project = ugProjects.find(p => p.projectMembers.some(m => m.registerNumber === identifier));
+        if (project) {
+          payload.projectName = project.projectName;
+        } else {
+          toast.error("Could not find the project for this student.");
+          return;
+        }
+      } else {
+        toast.error("Could not determine program type to submit comment.");
+        return;
+      }
+
+      await axios.post(`${API_BASE_URL}/review/submit`, payload);
+
+      setReviewComments((prev) => {
+        const updatedComments = { ...prev };
+        if (payload.projectName) {
+          const project = ugProjects.find(p => p.projectName === payload.projectName);
+          project?.projectMembers.forEach(member => {
+            if (!updatedComments[member.registerNumber]) updatedComments[member.registerNumber] = {};
+            updatedComments[member.registerNumber][reviewType] = comment;
+          });
+        } else {
+          if (!updatedComments[identifier]) updatedComments[identifier] = {};
+          updatedComments[identifier][reviewType] = comment;
+        }
+        return updatedComments;
+      });
+
+      setNewComments((prev) => ({
+        ...prev,
+        [identifier]: {
+          ...prev[identifier],
+          [reviewType]: "",
+        },
+      }));
+
+      toast.success("Comment submitted successfully!");
+
+    } catch (err) {
+      console.error(`Error submitting ${reviewType} review comment:`, err);
+      toast.error(err.response?.data?.error || "Error submitting comment.");
+    }
+  };
 
 
   useEffect(() => {
@@ -234,17 +251,17 @@ const otherIcon = <FaFileAlt className="h-5 w-5 text-gray-500 hover:opacity-75" 
         updatedStudents.sort((a, b) => a.registerNumber.localeCompare(b.registerNumber));
         setStudents(updatedStudents);
         const commentsMap = updatedStudents.reduce((acc, student) => {
-    acc[student.registerNumber] = {
-        zeroth: student.zerothReviewComment || "",
-        first: student.firstReviewComment || "",
-        second: student.secondReviewComment || "",
-        third: student.thirdReviewComment || ""
-    };
-    return acc;
-}, {});
-setReviewComments(commentsMap);
+          acc[student.registerNumber] = {
+            zeroth: student.zerothReviewComment || "",
+            first: student.firstReviewComment || "",
+            second: student.secondReviewComment || "",
+            third: student.thirdReviewComment || ""
+          };
+          return acc;
+        }, {});
+        setReviewComments(commentsMap);
 
-      
+
         console.log("Fetched PG Students:", updatedStudents);
       } catch (err) {
         console.error(`Error fetching students for ${selectedProgram}:`, err);
@@ -264,17 +281,17 @@ setReviewComments(commentsMap);
         setUgProjects(projects);
         // **NEW: Map comments for all students in the fetched projects**
         if (projects.length > 0) {
-  const commentsMap = projects.flatMap(p => p.projectMembers).reduce((acc, member) => {
-    acc[member.registerNumber] = {
-        zeroth: member.zerothReviewComment || "",
-        first: member.firstReviewComment || "",
-        second: member.secondReviewComment || "",
-        third: member.thirdReviewComment || ""
-    };
-    return acc;
-  }, {});
-  setReviewComments(commentsMap);
-}
+          const commentsMap = projects.flatMap(p => p.projectMembers).reduce((acc, member) => {
+            acc[member.registerNumber] = {
+              zeroth: member.zerothReviewComment || "",
+              first: member.firstReviewComment || "",
+              second: member.secondReviewComment || "",
+              third: member.thirdReviewComment || ""
+            };
+            return acc;
+          }, {});
+          setReviewComments(commentsMap);
+        }
         console.log("Fetched UG Projects:", projects);
       } catch (err) {
         console.error(`Error fetching UG projects for ${selectedProgram}:`, err);
@@ -290,7 +307,7 @@ setReviewComments(commentsMap);
       if (pgPrograms.includes(selectedProgram)) {
         fetchPgStudents();
         setUgProjects([]); // Clear UG projects if PG is selected
-        
+
       } else if (ugPrograms.includes(selectedProgram)) {
         fetchUgProjects();
         setStudents([]); // Clear PG students if UG is selected
@@ -359,21 +376,21 @@ setReviewComments(commentsMap);
     const numericValue = Number(value);
     updatedStudents[index][field] = isNaN(numericValue) ? 0 : numericValue;
     updatedStudents[index].marks4 = Math.ceil((
-        (Number(updatedStudents[index].marks1) || 0) +
-        (Number(updatedStudents[index].marks2) || 0) +
-        (Number(updatedStudents[index].marks3) || 0)
-      ) / 3);
+      (Number(updatedStudents[index].marks1) || 0) +
+      (Number(updatedStudents[index].marks2) || 0) +
+      (Number(updatedStudents[index].marks3) || 0)
+    ) / 3);
     setStudents(updatedStudents);
   };
-  
-    // NEW: Handler for VIVA mark changes
-    const handleVivaMarkChange = (field, value) => {
-        const numericValue = Number(value);
-        setVivaMarks(prev => ({
-            ...prev,
-            [field]: isNaN(numericValue) ? 0 : numericValue
-        }));
-    };
+
+  // NEW: Handler for VIVA mark changes
+  const handleVivaMarkChange = (field, value) => {
+    const numericValue = Number(value);
+    setVivaMarks(prev => ({
+      ...prev,
+      [field]: isNaN(numericValue) ? 0 : numericValue
+    }));
+  };
 
   // Handler to save all marks to the backend (for Assessment1,2,3 from main table)
   // This currently applies to PG students. For UG, marks are saved via the review modal.
@@ -404,7 +421,7 @@ setReviewComments(commentsMap);
     doc.text(`${courseName} Marks Report`, 14, 22);
     doc.setFontSize(11);
     doc.setTextColor(100);
-    const tableColumn = ["Register Number","Project Name", "Assess1", "Assess2", "Assess3", "Total"];
+    const tableColumn = ["Register Number", "Project Name", "Assess1", "Assess2", "Assess3", "Total"];
     const tableRows = students.map((student) => [
       student.registerNumber,
       student.projectName,
@@ -509,17 +526,17 @@ setReviewComments(commentsMap);
     setLoadingReviewData(true);
     setStudentReviewMarks([]); // Clear previous marks
     setVivaMarks(student.viva || { guide: 0, panel: 0, external: 0 });
-    
+
     setNewComments(prev => ({
-  ...prev,
-  [student.registerNumber]: {
-    zeroth: reviewComments[student.registerNumber]?.zeroth || '',
-    first: reviewComments[student.registerNumber]?.first || '',
-    second: reviewComments[student.registerNumber]?.second || '',
-    third: reviewComments[student.registerNumber]?.third || ''
-  }
-}));
-    
+      ...prev,
+      [student.registerNumber]: {
+        zeroth: reviewComments[student.registerNumber]?.zeroth || '',
+        first: reviewComments[student.registerNumber]?.first || '',
+        second: reviewComments[student.registerNumber]?.second || '',
+        third: reviewComments[student.registerNumber]?.third || ''
+      }
+    }));
+
     try {
       // 1. Find the UID of the coordinator for the selectedProgram
       const usersRef = collection(db, "users");
@@ -556,7 +573,7 @@ setReviewComments(commentsMap);
 
       // 2. Fetch the coordinator's defined review structure for this program
       const coordinatorReviewResponse = await axios.get(`${API_BASE_URL}/coordinator-reviews/${programCoordinatorUid}/${selectedProgram}`);
-      const coordinatorData = coordinatorReviewResponse.data.reviewData ;
+      const coordinatorData = coordinatorReviewResponse.data.reviewData;
       setCoordinatorReviewStructure(coordinatorData);
       console.log(`Coordinator review data from backend for ${selectedProgram}:`, coordinatorData);
       if (coordinatorData.length === 0) {
@@ -608,6 +625,8 @@ setReviewComments(commentsMap);
 
   // Function to handle changes in student's review item marks
   const handleStudentReviewMarkChange = (index, reviewType, value) => {
+    if (marksLockStatus === 'Locked') return;
+
     setStudentReviewMarks(prevMarks => {
       const updatedMarks = [...prevMarks];
       // Ensure the value is treated as a number
@@ -689,35 +708,35 @@ setReviewComments(commentsMap);
 
       // Array to hold all individual update promises
       const updatePromises = studentsToUpdate.map(async (student) => {
-          // MODIFIED: 1. Save the detailed review marks AND viva marks for each student in the group
-          const reviewPayload = {
-              registerNumber: student.registerNumber,
-              courseName: selectedProgram,
-              reviewsAssessment: studentReviewMarks.map((item, index) => ({
-                  description: coordinatorReviewStructure[index]?.r1_desc || item.r1_item_desc, // Use coordinator's original description
-                  r1_mark: item.r1_mark,
-                  r2_mark: item.r2_mark,
-                  r3_mark: item.r3_mark,
-              })),
-              viva: vivaMarks,
-              viva_total_awarded: totalViva
-          };
-          await axios.post(`${API_BASE_URL}/student-review-marks`, reviewPayload);
+        // MODIFIED: 1. Save the detailed review marks AND viva marks for each student in the group
+        const reviewPayload = {
+          registerNumber: student.registerNumber,
+          courseName: selectedProgram,
+          reviewsAssessment: studentReviewMarks.map((item, index) => ({
+            description: coordinatorReviewStructure[index]?.r1_desc || item.r1_item_desc, // Use coordinator's original description
+            r1_mark: item.r1_mark,
+            r2_mark: item.r2_mark,
+            r3_mark: item.r3_mark,
+          })),
+          viva: vivaMarks,
+          viva_total_awarded: totalViva
+        };
+        await axios.post(`${API_BASE_URL}/student-review-marks`, reviewPayload);
 
-          // 2. Prepare payload for main Assessment1, 2, 3, Total and Viva
-          const assessmentUpdatePayload = {
-              students: [{
-                  registerNumber: student.registerNumber,
-                  courseName: selectedProgram,
-                  Assessment1: normalizedAssessment1,
-                  Assessment2: normalizedAssessment2,
-                  Assessment3: normalizedAssessment3,
-                  Total: newTotalAverage,
-                  viva: vivaMarks, 
-              }]
-          };
-          // 3. Send update for Assessment1, 2, 3, Total, and Viva to the backend for this student
-          await axios.post(`${API_BASE_URL}/update-marks`, assessmentUpdatePayload);
+        // 2. Prepare payload for main Assessment1, 2, 3, Total and Viva
+        const assessmentUpdatePayload = {
+          students: [{
+            registerNumber: student.registerNumber,
+            courseName: selectedProgram,
+            Assessment1: normalizedAssessment1,
+            Assessment2: normalizedAssessment2,
+            Assessment3: normalizedAssessment3,
+            Total: newTotalAverage,
+            viva: vivaMarks,
+          }]
+        };
+        // 3. Send update for Assessment1, 2, 3, Total, and Viva to the backend for this student
+        await axios.post(`${API_BASE_URL}/update-marks`, assessmentUpdatePayload);
       });
 
       await Promise.all(updatePromises); // Wait for all updates to complete
@@ -771,7 +790,7 @@ setReviewComments(commentsMap);
 
 
   // Calculate totals for the modal's footer
- const calculateModalTotals = () => {
+  const calculateModalTotals = () => {
     let totalAwardedR1 = 0;
     let totalAwardedR2 = 0;
     let totalAwardedR3 = 0;
@@ -786,9 +805,9 @@ setReviewComments(commentsMap);
     const totalViva = (Number(vivaMarks.guide) || 0) + (Number(vivaMarks.panel) || 0) + (Number(vivaMarks.external) || 0);
 
     return { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva };
-};
+  };
 
-const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateModalTotals();
+  const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateModalTotals();
 
   // Function to download the specific student's review marks as PDF
   const handleDownloadStudentReviewPDF = () => {
@@ -804,7 +823,7 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
     const projectName = currentStudentForReview.projectName; // Get project name
     const currentDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }); // DD/MM/YYYY format
 
-    
+
     doc.setFont('helvetica'); // Use a standard font
     doc.setFontSize(10);
     doc.text('PROGRESS THROUGH KNOWLEDGE', 14, 15);
@@ -872,10 +891,10 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
       startY: doc.lastAutoTable.finalY + 10,
       head: [['Viva Voce Component', 'Marks Awarded']],
       body: [
-          ['Guide', vivaMarks.guide.toString()],
-          ['Panel Members', vivaMarks.panel.toString()],
-          ['External', vivaMarks.external.toString()],
-          [{ content: 'Total Viva Marks', styles: { fontStyle: 'bold' } }, { content: totalViva.toString(), styles: { fontStyle: 'bold' } }]
+        ['Guide', vivaMarks.guide.toString()],
+        ['Panel Members', vivaMarks.panel.toString()],
+        ['External', vivaMarks.external.toString()],
+        [{ content: 'Total Viva Marks', styles: { fontStyle: 'bold' } }, { content: totalViva.toString(), styles: { fontStyle: 'bold' } }]
       ],
       theme: 'grid',
       headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0], fontStyle: 'bold' },
@@ -887,7 +906,7 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
   // Handler to view students within a selected project
   const handleViewProjectStudents = (project) => {
     setSelectedProject(project);
-    setStudentsInSelectedProject(project.projectMembers.sort((a,b) => a.registerNumber.localeCompare(b.registerNumber)));
+    setStudentsInSelectedProject(project.projectMembers.sort((a, b) => a.registerNumber.localeCompare(b.registerNumber)));
     setUgCurrentView('students_in_project');
   };
 
@@ -925,863 +944,881 @@ const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateM
 
   return (
     <div className="teacher-dashboard-layout">
-    <div className="flex flex-col items-center justify-start min-h-screen p-4 bg-gray-100 font-inter">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">
-        Enrolled Students Dashboard
-      </h1>
+      <div className="flex flex-col items-center justify-start min-h-screen p-4 bg-gray-100 font-inter">
+        <h1 className="text-3xl font-bold mb-8 text-gray-800">
+          Enrolled Students Dashboard
+        </h1>
 
-      {!selectedProgram && (
-  <div className="programs-grid">
-  {allPrograms.map((program) => (
-    <div
-      key={program}
-      className="program-card vibrant"
-      onClick={() => setSelectedProgram(program)}
-      style={{ border: '2px solid orange', borderRadius: '16px' }}
+        {!selectedProgram && (
+          <div className="programs-grid">
+            {allPrograms.map((program) => (
+              <div
+                key={program}
+                className="program-card vibrant"
+                onClick={() => setSelectedProgram(program)}
+                style={{ border: '2px solid orange', borderRadius: '16px' }}
+              >
+                <h3 style={{
+                  color: 'black',
+                  fontWeight: 'bold',
+                  fontSize: '1.6rem',
+                  textShadow: '1px 1px 3px rgba(0,0,0,0.4)'
+                }}>
+                  {program}
+                </h3>
+                <p style={{
+                  color: 'black',
+                  fontSize: '1rem',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+                }}>
+                  {studentCounts[program] ?? 0} Student{(studentCounts[program] ?? 0) === 1 ? "" : "s"}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {selectedProgram && (
+          <div className="w-full max-w-6xl bg-white p-6 rounded-lg shadow-xl" role="main">
+            {/* Display for PG Students (Existing Table) */}
+            {pgPrograms.includes(selectedProgram) && (
+              <>
+                <h2 className="text-2xl font-bold mb-4 text-gray-700">
+                  Students List for {selectedProgram}
+                </h2>
+                <div className="overflow-x-auto mb-6">
+
+                  <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                    <thead className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
+                      <tr>
+                        <th className="py-3 px-6 text-left border-b border-gray-300">Register Number</th>
+                        <th className="py-3 px-6 text-left border-b border-gray-300">Student Name</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Total</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Viva</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Zeroth Review</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">First Review</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Second Review</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Third Review</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Contact</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-gray-600 text-sm font-light">
+                      {students.length > 0 ? (
+                        students.map((student, index) => (
+                          <tr key={student.registerNumber} className="border-b border-gray-200 hover:bg-gray-100">
+                            <td className="py-3 px-6 text-left whitespace-nowrap">
+                              <span
+                                className="text-blue-600 hover:underline cursor-pointer font-medium"
+                                onClick={() => handleOpenReviewModal(student)}
+                              >
+                                {student.registerNumber}
+                              </span>
+                            </td>
+                            <td className="py-3 px-6 text-left whitespace-nowrap">{student.studentName}</td>
+                            <td className="py-3 px-6 text-center">
+                              <input
+                                type="number"
+                                value={student.marks1}
+                                readOnly={marksLockStatus === 'Locked'} // Apply condition here
+                                className={`w-20 p-1 border border-gray-300 rounded-md text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
+                              />
+                            </td>
+                            <td className="py-3 px-6 text-center">
+                              <input
+                                type="number"
+                                value={student.marks2}
+                                readOnly={marksLockStatus === 'Locked'} // Apply condition here
+                                className={`w-20 p-1 border border-gray-300 rounded-md text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
+                              />
+                            </td>
+                            <td className="py-3 px-6 text-center">
+                              <input
+                                type="number"
+                                value={student.marks3}
+                                readOnly={marksLockStatus === 'Locked'} // Apply condition here
+                                className={`w-20 p-1 border border-gray-300 rounded-md text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
+                              />
+                            </td>
+                            <td className="py-3 px-6 text-center">
+                              <input
+                                type="number"
+                                value={student.marks4}
+                                readOnly={marksLockStatus === 'Locked'} // Apply condition here
+                                className={`w-20 p-1 border border-gray-300 rounded-md text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
+                              />
+                            </td>
+                            <td className="py-3 px-6 text-center">
+                              <input
+                                type="number"
+                                value={student.viva_total_awarded / 3 || 0}
+                                readOnly={marksLockStatus === 'Locked'} // Apply condition here
+                                className={`w-20 p-1 border border-gray-300 rounded-md text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
+                              />
+
+                            </td>
+                            <td className="py-3 px-6 text-center">
+                              <div className="flex justify-center items-center gap-3 h-6 mb-1">
+                                {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && (
+                                  <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pdfPath}`} target="_blank" rel="noopener noreferrer">
+                                    {pdfIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && (
+                                  <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pptPath}`} target="_blank" rel="noopener noreferrer">
+                                    {pptIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && (
+                                  <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].otherPath}`} target="_blank" rel="noopener noreferrer">
+                                    {otherIcon}
+                                  </a>
+                                )}
+                              </div>
+                              {(!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath) ? (
+                                <span className="text-gray-500 text-xs">No Files</span>
+                              ) : (
+                                <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                  {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) || "On Time"}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-6 text-center">
+                              <div className="flex justify-center items-center gap-3 h-6 mb-1">
+                                {latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && (
+                                  <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pdfPath}`} target="_blank" rel="noopener noreferrer">
+                                    {pdfIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && (
+                                  <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pptPath}`} target="_blank" rel="noopener noreferrer">
+                                    {pptIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && (
+                                  <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].otherPath}`} target="_blank" rel="noopener noreferrer">
+                                    {otherIcon}
+                                  </a>
+                                )}
+                              </div>
+                              {(!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath) ? (
+                                <span className="text-gray-500 text-xs">No Files</span>
+                              ) : (
+                                <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                  {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) || "On Time"}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-6 text-center">
+                              <div className="flex justify-center items-center gap-3 h-6 mb-1">
+                                {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
+                                  <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`} target="_blank" rel="noopener noreferrer">
+                                    {pdfIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && (
+                                  <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`} target="_blank" rel="noopener noreferrer">
+                                    {pptIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && (
+                                  <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`} target="_blank" rel="noopener noreferrer">
+                                    {otherIcon}
+                                  </a>
+                                )}
+                              </div>
+                              {(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
+                                <span className="text-gray-500 text-xs">No Files</span>
+                              ) : (
+                                <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                  {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) || "On Time"}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-6 text-center">
+                              <div className="flex justify-center items-center gap-3 h-6 mb-1">
+                                {latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && (
+                                  <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pdfPath}`} target="_blank" rel="noopener noreferrer">
+                                    {pdfIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && (
+                                  <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pptPath}`} target="_blank" rel="noopener noreferrer">
+                                    {pptIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_third`]?.otherPath && (
+                                  <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].otherPath}`} target="_blank" rel="noopener noreferrer">
+                                    {otherIcon}
+                                  </a>
+                                )}
+                              </div>
+                              {(!latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_third`]?.otherPath) ? (
+                                <span className="text-gray-500 text-xs">No Files</span>
+                              ) : (
+                                <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                  {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) || "On Time"}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-6 text-center">
+                              <img
+                                src={unseenMessagesStatus[student.registerNumber] ? UNSEEN_MESSAGE_ICON_URL : SEEN_MESSAGE_ICON_URL}
+                                alt="Chat Bubble"
+                                width="24"
+                                height="24"
+                                className="cursor-pointer mx-auto"
+                                onClick={() => openChatWindow(student.registerNumber)}
+                              />
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="12" className="py-4 text-center text-gray-500">
+                            No students enrolled yet for this program.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                  ```
+                </div>
+
+                <div className="flex flex-wrap justify-center gap-4 mt-6">
+                  <button
+                    onClick={handleSaveAllMarks}
+                    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
+                  >
+                    Save All Marks
+                  </button>
+                  {marksLockStatus === 'Enabled' && (
+    <button
+      onClick={handleLockMarks}
+      className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
     >
-      <h3 style={{ 
-        color: 'black', 
-        fontWeight: 'bold', 
-        fontSize: '1.6rem', 
-        textShadow: '1px 1px 3px rgba(0,0,0,0.4)' 
-      }}>
-        {program}
-      </h3>
-      <p style={{ 
-        color: 'black', 
-        fontSize: '1rem', 
-        textShadow: '1px 1px 2px rgba(0,0,0,0.3)' 
-      }}>
-        {studentCounts[program] ?? 0} Student{(studentCounts[program] ?? 0) === 1 ? "" : "s"}
-      </p>
+      Lock Final Marks
+    </button>
+)}
+{marksLockStatus === 'Locked' && (
+    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded-lg" role="alert">
+      <p className="font-bold">Marks Locked</p>
+      <p>Editing is disabled for this course.</p>
     </div>
-  ))}
-</div>
 )}
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75"
+                  >
+                    Download PDF
+                  </button>
+                  <button
+                    onClick={handleDownloadSpreadsheet}
+                    className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
+                  >
+                    Download Excel Sheet
+                  </button>
+                </div>
+              </>
+            )}
 
-      {selectedProgram && (
-        <div className="w-full max-w-6xl bg-white p-6 rounded-lg shadow-xl" role="main">
-          {/* Display for PG Students (Existing Table) */}
-          {pgPrograms.includes(selectedProgram) && (
-            <>
-              <h2 className="text-2xl font-bold mb-4 text-gray-700">
-                Students List for {selectedProgram}
-              </h2>
-              <div className="overflow-x-auto mb-6">
-                
-<table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
-  <thead className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
-    <tr>
-      <th className="py-3 px-6 text-left border-b border-gray-300">Register Number</th>
-      <th className="py-3 px-6 text-left border-b border-gray-300">Student Name</th>
-      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
-      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
-      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
-      <th className="py-3 px-6 text-center border-b border-gray-300">Total</th>
-      <th className="py-3 px-6 text-center border-b border-gray-300">Viva</th>
-      <th className="py-3 px-6 text-center border-b border-gray-300">Zeroth Review</th>
-      <th className="py-3 px-6 text-center border-b border-gray-300">First Review</th>
-      <th className="py-3 px-6 text-center border-b border-gray-300">Second Review</th>
-      <th className="py-3 px-6 text-center border-b border-gray-300">Third Review</th>
-      <th className="py-3 px-6 text-center border-b border-gray-300">Contact</th>
-    </tr>
-  </thead>
-  <tbody className="text-gray-600 text-sm font-light">
-    {students.length > 0 ? (
-      students.map((student, index) => (
-        <tr key={student.registerNumber} className="border-b border-gray-200 hover:bg-gray-100">
-          <td className="py-3 px-6 text-left whitespace-nowrap">
-            <span
-              className="text-blue-600 hover:underline cursor-pointer font-medium"
-              onClick={() => handleOpenReviewModal(student)}
-            >
-              {student.registerNumber}
-            </span>
-          </td>
-          <td className="py-3 px-6 text-left whitespace-nowrap">{student.studentName}</td>
-          <td className="py-3 px-6 text-center">
-            <input
-              type="number"
-              value={student.marks1}
-              readOnly
-              className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed"
-            />
-          </td>
-          <td className="py-3 px-6 text-center">
-            <input
-              type="number"
-              value={student.marks2}
-              readOnly
-              className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed"
-            />
-          </td>
-          <td className="py-3 px-6 text-center">
-            <input
-              type="number"
-              value={student.marks3}
-              readOnly
-              className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed"
-            />
-          </td>
-          <td className="py-3 px-6 text-center">
-            <input
-              value={student.marks4}
-              readOnly
-              className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed"
-            />
-          </td>
-        <td className="py-3 px-6 text-center">
-          <input
-            value={student.viva_total_awarded/3 || 0}
-            readOnly
-            className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed font-semibold"
-          />
-        </td>
-          <td className="py-3 px-6 text-center">
-            <div className="flex justify-center items-center gap-3 h-6 mb-1">
-  {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && (
-    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pdfPath}`} target="_blank" rel="noopener noreferrer">
-      {pdfIcon}
-    </a>
-  )}
-  {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && (
-    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pptPath}`} target="_blank" rel="noopener noreferrer">
-      {pptIcon}
-    </a>
-  )}
-  {latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && (
-    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].otherPath}`} target="_blank" rel="noopener noreferrer">
-      {otherIcon}
-    </a>
-  )}
-</div>
-{(!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath) ? (
-  <span className="text-gray-500 text-xs">No Files</span>
-) : (
-  <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-    {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) || "On Time"}
-  </span>
-)}
-          </td>
-          <td className="py-3 px-6 text-center">
-            <div className="flex justify-center items-center gap-3 h-6 mb-1">
-  {latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && (
-    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pdfPath}`} target="_blank" rel="noopener noreferrer">
-      {pdfIcon}
-    </a>
-  )}
-  {latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && (
-    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pptPath}`} target="_blank" rel="noopener noreferrer">
-      {pptIcon}
-    </a>
-  )}
-  {latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && (
-    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].otherPath}`} target="_blank" rel="noopener noreferrer">
-      {otherIcon}
-    </a>
-  )}
-</div>
-{(!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath) ? (
-  <span className="text-gray-500 text-xs">No Files</span>
-) : (
-  <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-    {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) || "On Time"}
-  </span>
-)}
-          </td>
-          <td className="py-3 px-6 text-center">
-            <div className="flex justify-center items-center gap-3 h-6 mb-1">
-  {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
-    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`} target="_blank" rel="noopener noreferrer">
-      {pdfIcon}
-    </a>
-  )}
-  {latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && (
-    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`} target="_blank" rel="noopener noreferrer">
-      {pptIcon}
-    </a>
-  )}
-  {latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && (
-    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`} target="_blank" rel="noopener noreferrer">
-      {otherIcon}
-    </a>
-  )}
-</div>
-{(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
-  <span className="text-gray-500 text-xs">No Files</span>
-) : (
-  <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-    {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) || "On Time"}
-  </span>
-)}
-          </td>
-          <td className="py-3 px-6 text-center">
-            <div className="flex justify-center items-center gap-3 h-6 mb-1">
-  {latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && (
-    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pdfPath}`} target="_blank" rel="noopener noreferrer">
-      {pdfIcon}
-    </a>
-  )}
-  {latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && (
-    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pptPath}`} target="_blank" rel="noopener noreferrer">
-      {pptIcon}
-    </a>
-  )}
-  {latestReviewFiles[`${student.registerNumber}_third`]?.otherPath && (
-    <a href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].otherPath}`} target="_blank" rel="noopener noreferrer">
-      {otherIcon}
-    </a>
-  )}
-</div>
-{(!latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && !latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && !latestReviewFiles[`${student.registerNumber}_third`]?.otherPath) ? (
-  <span className="text-gray-500 text-xs">No Files</span>
-) : (
-  <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-    {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) || "On Time"}
-  </span>
-)}
-          </td>
-          <td className="py-3 px-6 text-center">
-            <img
-              src={unseenMessagesStatus[student.registerNumber] ? UNSEEN_MESSAGE_ICON_URL : SEEN_MESSAGE_ICON_URL}
-              alt="Chat Bubble"
-              width="24"
-              height="24"
-              className="cursor-pointer mx-auto"
-              onClick={() => openChatWindow(student.registerNumber)}
-            />
-          </td>
-        </tr>
-      ))
-    ) : (
-      <tr>
-        <td colSpan="12" className="py-4 text-center text-gray-500">
-          No students enrolled yet for this program.
-        </td>
-      </tr>
-    )}
-  </tbody>
-</table>
-```
-              </div>
-
-              <div className="flex flex-wrap justify-center gap-4 mt-6">
-                <button
-                  onClick={handleSaveAllMarks}
-                  className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
-                >
-                  Save All Marks
-                </button>
-                <button
-                  onClick={handleDownloadPDF}
-                  className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75"
-                >
-                  Download PDF
-                </button>
-                <button
-                  onClick={handleDownloadSpreadsheet}
-                  className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
-                >
-                  Download Excel Sheet
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* Display for UG Students (Project-based View) */}
-          {ugPrograms.includes(selectedProgram) && ugCurrentView === 'projects' && (
-            <>
-              <h2 className="text-2xl font-bold mb-4 text-gray-700">
-                Projects List for {selectedProgram}
-              </h2>
-              <div className="overflow-x-auto mb-6">
-                <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
-                  <thead className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
-                    <tr>
-                      <th className="py-3 px-6 text-left border-b border-gray-300">Project Name</th>
-                      <th className="py-3 px-6 text-left border-b border-gray-300">Register Numbers</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Total</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Viva</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-600 text-sm font-light">
-                    {ugProjects.length > 0 ? (
-                      ugProjects.map((project, index) => (
-                        <tr key={project.projectName} className="border-b border-gray-200 hover:bg-gray-100">
-                          <td className="py-3 px-6 text-left whitespace-nowrap">
-                            <span
-                              className="text-blue-600 hover:underline cursor-pointer font-medium"
-                              onClick={() => handleViewProjectStudents(project)}
-                            >
-                              {project.projectName}
-                            </span>
-                          </td>
-                          <td className="py-3 px-6 text-left">
-                            {/* Display all register numbers in one cell */}
-                            {project.groupRegisterNumbers.join(', ')}
-                          </td>
-                          {/* Display project-level assessments */}
-                          <td className="py-3 px-6 text-center">{project.Assessment1 || 0}</td>
-                          <td className="py-3 px-6 text-center">{project.Assessment2 || 0}</td>
-                          <td className="py-3 px-6 text-center">{project.Assessment3 || 0}</td>
-                          <td className="py-3 px-6 text-center">{project.Total || 0}</td>
-                          <td className="py-3 px-6 text-center">{Math.round((project.viva_total_awarded)/3) || 0}</td>
-                        </tr>
-                      ))
-                    ) : (
+            {/* Display for UG Students (Project-based View) */}
+            {ugPrograms.includes(selectedProgram) && ugCurrentView === 'projects' && (
+              <>
+                <h2 className="text-2xl font-bold mb-4 text-gray-700">
+                  Projects List for {selectedProgram}
+                </h2>
+                <div className="overflow-x-auto mb-6">
+                  <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                    <thead className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
                       <tr>
-                        <td colSpan="5" className="py-4 text-center text-gray-500">
-                          No UG projects found for this program.
-                        </td>
+                        <th className="py-3 px-6 text-left border-b border-gray-300">Project Name</th>
+                        <th className="py-3 px-6 text-left border-b border-gray-300">Register Numbers</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 3</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Total</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Viva</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <div className="flex flex-wrap justify-center gap-4 mt-6">
-                <button
-                  onClick={handleDownloadSpreadsheet}
-                  className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
-                >
-                  Download Project Data (Excel)
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* Display for Students within a Selected UG Project */}
-          {ugPrograms.includes(selectedProgram) && ugCurrentView === 'students_in_project' && selectedProject && (
-            <>
-              <h2 className="text-2xl font-bold mb-4 text-gray-700">
-                Students in Project: {selectedProject.projectName}
-              </h2>
-              <div className="overflow-x-auto mb-6">
-                <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
-                  <thead className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
-                    <tr>
-                      <th className="py-3 px-6 text-left border-b border-gray-300">Register Number</th>
-                      <th className="py-3 px-6 text-left border-b border-gray-300">Student Name</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
-                      <th className="py-3 px-6 text-center border-b border-300">Assessment 3</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Total</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Viva</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Zeroth Review</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">First Review</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Second Review</th>
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Third Review</th> {/* NEW: Third Review Column */}
-                      <th className="py-3 px-6 text-center border-b border-gray-300">Contact</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-600 text-sm font-light">
-                    {studentsInSelectedProject.length > 0 ? (
-                      studentsInSelectedProject.map((student) => (
-                        <tr key={student.registerNumber} className="border-b border-gray-200 hover:bg-gray-100">
-                          <td className="py-3 px-6 text-left whitespace-nowrap">
-                            <span
-                              className="text-blue-600 hover:underline cursor-pointer font-medium"
-                              onClick={() => handleOpenReviewModal(student)}
-                            >
-                              {student.registerNumber}
-                            </span>
-                          </td>
-                          <td className="py-3 px-6 text-left whitespace-nowrap">{student.studentName}</td>
-                          {/* Display current individual assessment marks (should reflect project-wide marks) */}
-                          <td className="py-3 px-6 text-center">{student.Assessment1 || 0}</td>
-                          <td className="py-3 px-6 text-center">{student.Assessment2 || 0}</td>
-                          <td className="py-3 px-6 text-center">{student.Assessment3 || 0}</td>
-                          <td className="py-3 px-6 text-center">{student.Total || 0}</td>
-                          <td className="py-3 px-6 text-center">{Math.round((student.viva_total_awarded)/3) || 0}</td>
-                           {/* Display all three file types for Zeroth Review */}
-                          
-                          <td className="py-3 px-6 text-center">
-  {/* Flex container to hold icons in a single row */}
-  <div className="flex justify-center items-center gap-3 h-6 mb-1">
-    {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && (
-      <a
-        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pdfPath}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {pdfIcon}
-      </a>
-    )}
-    {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && (
-      <a
-        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pptPath}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {pptIcon}
-      </a>
-    )}
-    {latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && (
-      <a
-        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].otherPath}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {otherIcon}
-      </a>
-    )}
-  </div>
-
-  {/* Status text (No Files or On Time/Late) */}
-  {(!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath &&
-   !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath &&
-   !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath) ? (
-    <span className="text-gray-500 text-xs">No Files</span>
-  ) : (
-    <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-      {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) || "On Time"}
-    </span>
-  )}
-</td>
-                          {/* Display all three file types for First Review and late status */}
-                          <td className="py-3 px-6 text-center">
-  {/* Flex container to hold icons in a single row */}
-  <div className="flex justify-center items-center gap-3 h-6 mb-1">
-    {latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && (
-      <a
-        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pdfPath}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {pdfIcon}
-      </a>
-    )}
-    {latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && (
-      <a
-        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pptPath}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {pptIcon}
-      </a>
-    )}
-    {latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && (
-      <a
-        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].otherPath}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {otherIcon}
-      </a>
-    )}
-  </div>
-
-  {/* Status text (No Files or On Time/Late) */}
-  {(!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath &&
-   !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath &&
-   !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath) ? (
-    <span className="text-gray-500 text-xs">No Files</span>
-  ) : (
-    <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-      {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) || "On Time"}
-    </span>
-  )}
-</td>
-                          <td className="py-3 px-6 text-center">
-  {/* Flex container to hold icons in a single row */}
-  <div className="flex justify-center items-center gap-3 h-6 mb-1">
-    {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
-      <a
-        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {pdfIcon}
-      </a>
-    )}
-    {latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && (
-      <a
-        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {pptIcon}
-      </a>
-    )}
-    {latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && (
-      <a
-        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {otherIcon}
-      </a>
-    )}
-  </div>
-
-  {/* Status text (No Files or On Time/Late) */}
-  {(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath &&
-   !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath &&
-   !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
-    <span className="text-gray-500 text-xs">No Files</span>
-  ) : (
-    <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-      {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) || "On Time"}
-    </span>
-  )}
-</td>
-                          {/* NEW: Display all three file types for Third Review and late status */}
-                          <td className="py-3 px-6 text-center">
-  {/* Flex container to hold icons in a single row */}
-  <div className="flex justify-center items-center gap-3 h-6 mb-1">
-    {latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && (
-      <a
-        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pdfPath}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {pdfIcon}
-      </a>
-    )}
-    {latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && (
-      <a
-        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pptPath}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {pptIcon}
-      </a>
-    )}
-    {latestReviewFiles[`${student.registerNumber}_third`]?.otherPath && (
-      <a
-        href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].otherPath}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {otherIcon}
-      </a>
-    )}
-  </div>
-
-  {/* Status text (No Files or On Time/Late) */}
-  {(!latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath &&
-   !latestReviewFiles[`${student.registerNumber}_third`]?.pptPath &&
-   !latestReviewFiles[`${student.registerNumber}_third`]?.otherPath) ? (
-    <span className="text-gray-500 text-xs">No Files</span>
-  ) : (
-    <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
-      {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) || "On Time"}
-    </span>
-  )}
-</td>
-                          <td className="py-3 px-6 text-center">
-                            <img
-                              src={unseenMessagesStatus[student.registerNumber] ? UNSEEN_MESSAGE_ICON_URL : SEEN_MESSAGE_ICON_URL}
-                              alt="Chat Bubble"
-                              width="24"
-                              height="24"
-                              className="cursor-pointer mx-auto"
-                              onClick={() => openChatWindow(student.registerNumber)}
-                            />
+                    </thead>
+                    <tbody className="text-gray-600 text-sm font-light">
+                      {ugProjects.length > 0 ? (
+                        ugProjects.map((project, index) => (
+                          <tr key={project.projectName} className="border-b border-gray-200 hover:bg-gray-100">
+                            <td className="py-3 px-6 text-left whitespace-nowrap">
+                              <span
+                                className="text-blue-600 hover:underline cursor-pointer font-medium"
+                                onClick={() => handleViewProjectStudents(project)}
+                              >
+                                {project.projectName}
+                              </span>
+                            </td>
+                            <td className="py-3 px-6 text-left">
+                              {/* Display all register numbers in one cell */}
+                              {project.groupRegisterNumbers.join(', ')}
+                            </td>
+                            {/* Display project-level assessments */}
+                            <td className="py-3 px-6 text-center">{project.Assessment1 || 0}</td>
+                            <td className="py-3 px-6 text-center">{project.Assessment2 || 0}</td>
+                            <td className="py-3 px-6 text-center">{project.Assessment3 || 0}</td>
+                            <td className="py-3 px-6 text-center">{project.Total || 0}</td>
+                            <td className="py-3 px-6 text-center">{Math.round((project.viva_total_awarded) / 3) || 0}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="5" className="py-4 text-center text-gray-500">
+                            No UG projects found for this program.
                           </td>
                         </tr>
-                      ))
-                    ) : (
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="flex flex-wrap justify-center gap-4 mt-6">
+                  <button
+                    onClick={handleDownloadSpreadsheet}
+                    className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
+                  >
+                    Download Project Data (Excel)
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Display for Students within a Selected UG Project */}
+            {ugPrograms.includes(selectedProgram) && ugCurrentView === 'students_in_project' && selectedProject && (
+              <>
+                <h2 className="text-2xl font-bold mb-4 text-gray-700">
+                  Students in Project: {selectedProject.projectName}
+                </h2>
+                <div className="overflow-x-auto mb-6">
+                  <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                    <thead className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
                       <tr>
-                        <td colSpan="11" className="py-4 text-center text-gray-500"> {/* MODIFIED: colSpan to 11 */}
-                          No students found in this project.
-                        </td>
+                        <th className="py-3 px-6 text-left border-b border-gray-300">Register Number</th>
+                        <th className="py-3 px-6 text-left border-b border-gray-300">Student Name</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 1</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Assessment 2</th>
+                        <th className="py-3 px-6 text-center border-b border-300">Assessment 3</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Total</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Viva</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Zeroth Review</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">First Review</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Second Review</th>
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Third Review</th> {/* NEW: Third Review Column */}
+                        <th className="py-3 px-6 text-center border-b border-gray-300">Contact</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <div className="flex justify-center mt-6">
+                    </thead>
+                    <tbody className="text-gray-600 text-sm font-light">
+                      {studentsInSelectedProject.length > 0 ? (
+                        studentsInSelectedProject.map((student) => (
+                          <tr key={student.registerNumber} className="border-b border-gray-200 hover:bg-gray-100">
+                            <td className="py-3 px-6 text-left whitespace-nowrap">
+                              <span
+                                className="text-blue-600 hover:underline cursor-pointer font-medium"
+                                onClick={() => handleOpenReviewModal(student)}
+                              >
+                                {student.registerNumber}
+                              </span>
+                            </td>
+                            <td className="py-3 px-6 text-left whitespace-nowrap">{student.studentName}</td>
+                            {/* Display current individual assessment marks (should reflect project-wide marks) */}
+                            <td className="py-3 px-6 text-center">{student.Assessment1 || 0}</td>
+                            <td className="py-3 px-6 text-center">{student.Assessment2 || 0}</td>
+                            <td className="py-3 px-6 text-center">{student.Assessment3 || 0}</td>
+                            <td className="py-3 px-6 text-center">{student.Total || 0}</td>
+                            <td className="py-3 px-6 text-center">{Math.round((student.viva_total_awarded) / 3) || 0}</td>
+                            {/* Display all three file types for Zeroth Review */}
+
+                            <td className="py-3 px-6 text-center">
+                              {/* Flex container to hold icons in a single row */}
+                              <div className="flex justify-center items-center gap-3 h-6 mb-1">
+                                {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath && (
+                                  <a
+                                    href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pdfPath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {pdfIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath && (
+                                  <a
+                                    href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].pptPath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {pptIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath && (
+                                  <a
+                                    href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_zeroth`].otherPath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {otherIcon}
+                                  </a>
+                                )}
+                              </div>
+
+                              {/* Status text (No Files or On Time/Late) */}
+                              {(!latestReviewFiles[`${student.registerNumber}_zeroth`]?.pdfPath &&
+                                !latestReviewFiles[`${student.registerNumber}_zeroth`]?.pptPath &&
+                                !latestReviewFiles[`${student.registerNumber}_zeroth`]?.otherPath) ? (
+                                <span className="text-gray-500 text-xs">No Files</span>
+                              ) : (
+                                <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                  {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_zeroth`]?.uploadedAt, reviewDeadlines.zerothReviewDeadline) || "On Time"}
+                                </span>
+                              )}
+                            </td>
+                            {/* Display all three file types for First Review and late status */}
+                            <td className="py-3 px-6 text-center">
+                              {/* Flex container to hold icons in a single row */}
+                              <div className="flex justify-center items-center gap-3 h-6 mb-1">
+                                {latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath && (
+                                  <a
+                                    href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pdfPath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {pdfIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_first`]?.pptPath && (
+                                  <a
+                                    href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].pptPath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {pptIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_first`]?.otherPath && (
+                                  <a
+                                    href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_first`].otherPath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {otherIcon}
+                                  </a>
+                                )}
+                              </div>
+
+                              {/* Status text (No Files or On Time/Late) */}
+                              {(!latestReviewFiles[`${student.registerNumber}_first`]?.pdfPath &&
+                                !latestReviewFiles[`${student.registerNumber}_first`]?.pptPath &&
+                                !latestReviewFiles[`${student.registerNumber}_first`]?.otherPath) ? (
+                                <span className="text-gray-500 text-xs">No Files</span>
+                              ) : (
+                                <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                  {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_first`]?.uploadedAt, reviewDeadlines.firstReviewDeadline) || "On Time"}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-6 text-center">
+                              {/* Flex container to hold icons in a single row */}
+                              <div className="flex justify-center items-center gap-3 h-6 mb-1">
+                                {latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath && (
+                                  <a
+                                    href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pdfPath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {pdfIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_second`]?.pptPath && (
+                                  <a
+                                    href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].pptPath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {pptIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_second`]?.otherPath && (
+                                  <a
+                                    href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_second`].otherPath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {otherIcon}
+                                  </a>
+                                )}
+                              </div>
+
+                              {/* Status text (No Files or On Time/Late) */}
+                              {(!latestReviewFiles[`${student.registerNumber}_second`]?.pdfPath &&
+                                !latestReviewFiles[`${student.registerNumber}_second`]?.pptPath &&
+                                !latestReviewFiles[`${student.registerNumber}_second`]?.otherPath) ? (
+                                <span className="text-gray-500 text-xs">No Files</span>
+                              ) : (
+                                <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                  {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_second`]?.uploadedAt, reviewDeadlines.secondReviewDeadline) || "On Time"}
+                                </span>
+                              )}
+                            </td>
+                            {/* NEW: Display all three file types for Third Review and late status */}
+                            <td className="py-3 px-6 text-center">
+                              {/* Flex container to hold icons in a single row */}
+                              <div className="flex justify-center items-center gap-3 h-6 mb-1">
+                                {latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath && (
+                                  <a
+                                    href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pdfPath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {pdfIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_third`]?.pptPath && (
+                                  <a
+                                    href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].pptPath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {pptIcon}
+                                  </a>
+                                )}
+                                {latestReviewFiles[`${student.registerNumber}_third`]?.otherPath && (
+                                  <a
+                                    href={`${API_BASE_URL}/${latestReviewFiles[`${student.registerNumber}_third`].otherPath}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {otherIcon}
+                                  </a>
+                                )}
+                              </div>
+
+                              {/* Status text (No Files or On Time/Late) */}
+                              {(!latestReviewFiles[`${student.registerNumber}_third`]?.pdfPath &&
+                                !latestReviewFiles[`${student.registerNumber}_third`]?.pptPath &&
+                                !latestReviewFiles[`${student.registerNumber}_third`]?.otherPath) ? (
+                                <span className="text-gray-500 text-xs">No Files</span>
+                              ) : (
+                                <span className={`block text-xs ${calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) ? 'text-red-500' : 'text-green-600'}`}>
+                                  {calculateDaysLate(latestReviewFiles[`${student.registerNumber}_third`]?.uploadedAt, reviewDeadlines.thirdReviewDeadline) || "On Time"}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-6 text-center">
+                              <img
+                                src={unseenMessagesStatus[student.registerNumber] ? UNSEEN_MESSAGE_ICON_URL : SEEN_MESSAGE_ICON_URL}
+                                alt="Chat Bubble"
+                                width="24"
+                                height="24"
+                                className="cursor-pointer mx-auto"
+                                onClick={() => openChatWindow(student.registerNumber)}
+                              />
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="11" className="py-4 text-center text-gray-500"> {/* MODIFIED: colSpan to 11 */}
+                            No students found in this project.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={handleBackToProjects}
+                    className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"
+                  >
+                    Back to Projects
+                  </button>
+                </div>
+              </>
+            )}
+
+
+            {/* Back button to go back to program selection (for both UG/PG main views) */}
+            {(!ugPrograms.includes(selectedProgram) || (ugPrograms.includes(selectedProgram) && ugCurrentView === 'projects')) && (
+              <div className="flex justify-center mt-8">
                 <button
-                  onClick={handleBackToProjects}
+                  onClick={() => {
+                    setSelectedProgram(null);
+                    setStudents([]);
+                    setUgProjects([]);
+                    setUnseenMessagesStatus({});
+                    setLatestReviewFiles({});
+                    setUgCurrentView('projects'); // Reset UG view
+                    setSelectedProject(null); // Clear selected project
+                    setStudentsInSelectedProject([]); // Clear students in project
+                  }}
                   className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"
                 >
-                  Back to Projects
+                  Select Another Program
                 </button>
               </div>
-            </>
-          )}
-
-
-          {/* Back button to go back to program selection (for both UG/PG main views) */}
-          {(!ugPrograms.includes(selectedProgram) || (ugPrograms.includes(selectedProgram) && ugCurrentView === 'projects')) && (
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={() => {
-                  setSelectedProgram(null);
-                  setStudents([]);
-                  setUgProjects([]);
-                  setUnseenMessagesStatus({});
-                  setLatestReviewFiles({});
-                  setUgCurrentView('projects'); // Reset UG view
-                  setSelectedProject(null); // Clear selected project
-                  setStudentsInSelectedProject([]); // Clear students in project
-                }}
-                className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"
-              >
-                Select Another Program
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {selectedStudentRegisterNumber && (
-        <ChatWindow
-          currentUser={teacherEmail}
-          contactUser={selectedStudentRegisterNumber}
-          onClose={handleCloseChat}
-        />
-      )}
-
-      {/* Review Marks Modal (Remains the same, but now callable from UG project student list) */}
-      {showReviewModal && currentStudentForReview && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
-            <h3 className="text-2xl font-bold mb-4 text-gray-800">
-              Review Marks for {currentStudentForReview.studentName} ({currentStudentForReview.registerNumber})
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Program: {selectedProgram}
-            </p>            
-     
-
-<table className="w-full mt-4 border-separate border-spacing-4">
-  <tbody>
-    <tr>
-      {/* Zeroth Review */}
-      <td className="border border-gray-300 rounded-md p-3 align-top">
-        <h4 className="font-semibold capitalize text-gray-700 mb-2">Zeroth Review Comment</h4>
-        <input
-          type="text"
-          placeholder="Enter zeroth review comment"
-          value={newComments[currentStudentForReview.registerNumber]?.['zeroth'] || ""}
-          onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'zeroth', e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md text-sm"
-          style={{ width: '100%' }}
-        />
-        <button
-          onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'zeroth')}
-          className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-        >
-          Submit
-        </button>
-        {reviewComments[currentStudentForReview.registerNumber]?.['zeroth'] && (
-          <p className="mt-1 text-xs text-gray-600 italic">
-            Saved: {reviewComments[currentStudentForReview.registerNumber]?.['zeroth']}
-          </p>
+            )}
+          </div>
         )}
+
+        {selectedStudentRegisterNumber && (
+          <ChatWindow
+            currentUser={teacherEmail}
+            contactUser={selectedStudentRegisterNumber}
+            onClose={handleCloseChat}
+          />
+        )}
+
+        {/* Review Marks Modal (Remains the same, but now callable from UG project student list) */}
+        {showReviewModal && currentStudentForReview && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
+              <h3 className="text-2xl font-bold mb-4 text-gray-800">
+                Review Marks for {currentStudentForReview.studentName} ({currentStudentForReview.registerNumber})
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Program: {selectedProgram}
+              </p>
+
+
+              <table className="w-full mt-4 border-separate border-spacing-4">
+                <tbody>
+                  <tr>
+                    {/* Zeroth Review */}
+                    <td className="border border-gray-300 rounded-md p-3 align-top">
+                      <h4 className="font-semibold capitalize text-gray-700 mb-2">Zeroth Review Comment</h4>
+                      <input
+                        type="text"
+                        placeholder="Enter zeroth review comment"
+                        value={newComments[currentStudentForReview.registerNumber]?.['zeroth'] || ""}
+                        onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'zeroth', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                        style={{ width: '100%' }}
+                      />
+                      <button
+                        onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'zeroth')}
+                        className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                      >
+                        Submit
+                      </button>
+                      {reviewComments[currentStudentForReview.registerNumber]?.['zeroth'] && (
+                        <p className="mt-1 text-xs text-gray-600 italic">
+                          Saved: {reviewComments[currentStudentForReview.registerNumber]?.['zeroth']}
+                        </p>
+                      )}
+                    </td>
+
+                    {/* First Review */}
+                    <td className="border border-gray-300 rounded-md p-3 align-top">
+                      <h4 className="font-semibold capitalize text-gray-700 mb-2">First Review Comment</h4>
+                      <input
+                        type="text"
+                        placeholder="Enter first review comment"
+                        value={newComments[currentStudentForReview.registerNumber]?.['first'] || ""}
+                        onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'first', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                        style={{ width: '100%' }}
+                      />
+                      <button
+                        onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'first')}
+                        className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                      >
+                        Submit
+                      </button>
+                      {reviewComments[currentStudentForReview.registerNumber]?.['first'] && (
+                        <p className="mt-1 text-xs text-gray-600 italic">
+                          Saved: {reviewComments[currentStudentForReview.registerNumber]?.['first']}
+                        </p>
+                      )}
+                    </td>
+                  </tr>
+                  <tr>
+                    {/* Second Review */}
+                    <td className="border border-gray-300 rounded-md p-3 align-top">
+                      <h4 className="font-semibold capitalize text-gray-700 mb-2">Second Review Comment</h4>
+                      <input
+                        type="text"
+                        placeholder="Enter second review comment"
+                        value={newComments[currentStudentForReview.registerNumber]?.['second'] || ""}
+                        onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'second', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                        style={{ width: '100%' }}
+                      />
+                      <button
+                        onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'second')}
+                        className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                      >
+                        Submit
+                      </button>
+                      {reviewComments[currentStudentForReview.registerNumber]?.['second'] && (
+                        <p className="mt-1 text-xs text-gray-600 italic">
+                          Saved: {reviewComments[currentStudentForReview.registerNumber]?.['second']}
+                        </p>
+                      )}
+                    </td>
+
+                    {/* Third Review */}
+                    <td className="border border-gray-300 rounded-md p-3 align-top">
+                      <h4 className="font-semibold capitalize text-gray-700 mb-2">Third Review Comment</h4>
+                      <input
+                        type="text"
+                        placeholder="Enter third review comment"
+                        value={newComments[currentStudentForReview.registerNumber]?.['third'] || ""}
+                        onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'third', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                        style={{ width: '100%' }}
+                      />
+                      <button
+                        onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'third')}
+                        className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                      >
+                        Submit
+                      </button>
+                      {reviewComments[currentStudentForReview.registerNumber]?.['third'] && (
+                        <p className="mt-1 text-xs text-gray-600 italic">
+                          Saved: {reviewComments[currentStudentForReview.registerNumber]?.['third']}
+                        </p>
+                      )}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+
+
+              {loadingReviewData ? (
+                <div className="flex justify-center items-center h-32">
+                  <p className="text-lg text-blue-600">Loading review items...</p>
+                </div>
+              ) : (
+                <>
+                  {coordinatorReviewStructure.length > 0 ? (
+                    <div className="overflow-x-auto mt-6">
+                      <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-sm">
+                        {/* Table Head */}
+                        <thead className="bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
+                          <tr>
+                            <th className="py-2 px-4 text-left border-b">Review Item (R1)</th>
+                            <th className="py-2 px-4 text-center border-b">R1 Max</th>
+                            <th className="py-2 px-4 text-center border-b">R1 Awarded</th>
+                            <th className="py-2 px-4 text-left border-b">Review Item (R2)</th>
+                            <th className="py-2 px-4 text-center border-b">R2 Max</th>
+                            <th className="py-2 px-4 text-center border-b">R2 Awarded</th>
+                            <th className="py-2 px-4 text-left border-b">Review Item (R3)</th>
+                            <th className="py-2 px-4 text-center border-b">R3 Max</th>
+                            <th className="py-2 px-4 text-center border-b">R3 Awarded</th>
+
+                          </tr>
+                        </thead>
+
+<tbody className="text-gray-700 text-sm">
+  {studentReviewMarks.map((item, index) => (
+    <tr key={index} className="border-b border-gray-200">
+      <td className="py-2 px-4">{item.r1_item_desc}</td>
+      <td className="py-2 px-4 text-center">{item.coord_r1_max}</td>
+      <td className="py-2 px-4 text-center">
+        <input
+          type="number"
+          min="0"
+          max={item.coord_r1_max}
+          value={item.r1_mark}
+          onChange={(e) => handleStudentReviewMarkChange(index, 'r1_mark', e.target.value)}
+          readOnly={marksLockStatus === 'Locked'}
+          className={`w-20 p-1 border rounded text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
+        />
       </td>
 
-      {/* First Review */}
-      <td className="border border-gray-300 rounded-md p-3 align-top">
-        <h4 className="font-semibold capitalize text-gray-700 mb-2">First Review Comment</h4>
+      <td className="py-2 px-4">{item.r2_item_desc}</td>
+      <td className="py-2 px-4 text-center">{item.coord_r2_max}</td>
+      <td className="py-2 px-4 text-center">
         <input
-          type="text"
-          placeholder="Enter first review comment"
-          value={newComments[currentStudentForReview.registerNumber]?.['first'] || ""}
-          onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'first', e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md text-sm"
-          style={{ width: '100%' }}
+          type="number"
+          min="0"
+          max={item.coord_r2_max}
+          value={item.r2_mark}
+          onChange={(e) => handleStudentReviewMarkChange(index, 'r2_mark', e.target.value)}
+          readOnly={marksLockStatus === 'Locked'}
+          className={`w-20 p-1 border rounded text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
         />
-        <button
-          onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'first')}
-          className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-        >
-          Submit
-        </button>
-        {reviewComments[currentStudentForReview.registerNumber]?.['first'] && (
-          <p className="mt-1 text-xs text-gray-600 italic">
-            Saved: {reviewComments[currentStudentForReview.registerNumber]?.['first']}
-          </p>
-        )}
+      </td>
+
+      <td className="py-2 px-4">{item.r3_item_desc}</td>
+      <td className="py-2 px-4 text-center">{item.coord_r3_max}</td>
+      <td className="py-2 px-4 text-center">
+        <input
+          type="number"
+          min="0"
+          max={item.coord_r3_max}
+          value={item.r3_mark}
+          onChange={(e) => handleStudentReviewMarkChange(index, 'r3_mark', e.target.value)}
+          readOnly={marksLockStatus === 'Locked'}
+          className={`w-20 p-1 border rounded text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
+        />
       </td>
     </tr>
-    <tr>
-      {/* Second Review */}
-      <td className="border border-gray-300 rounded-md p-3 align-top">
-        <h4 className="font-semibold capitalize text-gray-700 mb-2">Second Review Comment</h4>
-        <input
-          type="text"
-          placeholder="Enter second review comment"
-          value={newComments[currentStudentForReview.registerNumber]?.['second'] || ""}
-          onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'second', e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md text-sm"
-          style={{ width: '100%' }}
-        />
-        <button
-          onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'second')}
-          className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-        >
-          Submit
-        </button>
-        {reviewComments[currentStudentForReview.registerNumber]?.['second'] && (
-          <p className="mt-1 text-xs text-gray-600 italic">
-            Saved: {reviewComments[currentStudentForReview.registerNumber]?.['second']}
-          </p>
-        )}
-      </td>
-
-      {/* Third Review */}
-      <td className="border border-gray-300 rounded-md p-3 align-top">
-        <h4 className="font-semibold capitalize text-gray-700 mb-2">Third Review Comment</h4>
-        <input
-          type="text"
-          placeholder="Enter third review comment"
-          value={newComments[currentStudentForReview.registerNumber]?.['third'] || ""}
-          onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'third', e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md text-sm"
-          style={{ width: '100%' }}
-        />
-        <button
-          onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'third')}
-          className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-        >
-          Submit
-        </button>
-        {reviewComments[currentStudentForReview.registerNumber]?.['third'] && (
-          <p className="mt-1 text-xs text-gray-600 italic">
-            Saved: {reviewComments[currentStudentForReview.registerNumber]?.['third']}
-          </p>
-        )}
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-
-
-            {loadingReviewData ? (
-              <div className="flex justify-center items-center h-32">
-                <p className="text-lg text-blue-600">Loading review items...</p>
-              </div>
-            ) : (
-             <>
-              {coordinatorReviewStructure.length > 0 ? (
-                <div className="overflow-x-auto mt-6">
-<table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-sm">
-  {/* Table Head */}
-  <thead className="bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
-    <tr>
-      <th className="py-2 px-4 text-left border-b">Review Item (R1)</th>
-      <th className="py-2 px-4 text-center border-b">R1 Max</th>
-      <th className="py-2 px-4 text-center border-b">R1 Awarded</th>
-      <th className="py-2 px-4 text-left border-b">Review Item (R2)</th>
-      <th className="py-2 px-4 text-center border-b">R2 Max</th>
-      <th className="py-2 px-4 text-center border-b">R2 Awarded</th>
-      <th className="py-2 px-4 text-left border-b">Review Item (R3)</th>
-      <th className="py-2 px-4 text-center border-b">R3 Max</th>
-      <th className="py-2 px-4 text-center border-b">R3 Awarded</th>
-      
-    </tr>
-  </thead>
-
-  <tbody className="text-gray-700 text-sm">
-    {studentReviewMarks.map((item, index) => (
-      <tr key={index} className="border-b border-gray-200">
-        <td className="py-2 px-4">{item.r1_item_desc}</td>
-        <td className="py-2 px-4 text-center">{item.coord_r1_max}</td>
-        <td className="py-2 px-4 text-center">
-          <input
-            type="number"
-            min="0"
-            max={item.coord_r1_max}
-            value={item.r1_mark}
-            onChange={(e) => handleStudentReviewMarkChange(index, 'r1_mark', e.target.value)}
-            className="w-20 p-1 border rounded text-center"
-          />
-        </td>
-
-        <td className="py-2 px-4">{item.r2_item_desc}</td>
-        <td className="py-2 px-4 text-center">{item.coord_r2_max}</td>
-        <td className="py-2 px-4 text-center">
-          <input
-            type="number"
-            min="0"
-            max={item.coord_r2_max}
-            value={item.r2_mark}
-            onChange={(e) => handleStudentReviewMarkChange(index, 'r2_mark', e.target.value)}
-            className="w-20 p-1 border rounded text-center"
-          />
-        </td>
-
-        <td className="py-2 px-4">{item.r3_item_desc}</td>
-        <td className="py-2 px-4 text-center">{item.coord_r3_max}</td>
-        <td className="py-2 px-4 text-center">
-          <input
-            type="number"
-            min="0"
-            max={item.coord_r3_max}
-            value={item.r3_mark}
-            onChange={(e) => handleStudentReviewMarkChange(index, 'r3_mark', e.target.value)}
-            className="w-20 p-1 border rounded text-center"
-          />
-        </td>
-
-
-      </tr>
-    ))}
-  </tbody>
-  <tfoot className="bg-gray-100 font-bold">
-                        <tr>
+  ))}
+</tbody>
+                        <tfoot className="bg-gray-100 font-bold">
+                          <tr>
                             <td className="py-2 px-4 text-right" colSpan="2">Total Awarded (R1):</td>
                             <td className="py-2 px-4 text-center">{totalAwardedR1}</td>
                             <td className="py-2 px-4 text-right" colSpan="2">Total Awarded (R2):</td>
                             <td className="py-2 px-4 text-center">{totalAwardedR2}</td>
                             <td className="py-2 px-4 text-right" colSpan="2">Total Awarded (R3):</td>
                             <td className="py-2 px-4 text-center">{totalAwardedR3}</td>
-                            <td className="py-2 px-4 text-center">{totalViva/3}</td>
-                        </tr>
-                    </tfoot>
-</table>
+                            <td className="py-2 px-4 text-center">{totalViva / 3}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
 
 
 
 
 
 
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-4">No review items defined by the coordinator for this program. Please ensure the coordinator for {selectedProgram} has set up review items in their dashboard.</p>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">No review items defined by the coordinator for this program. Please ensure the coordinator for {selectedProgram} has set up review items in their dashboard.</p>
+                  )}
+                </>
               )}
-            </>
-            )}
 
-            {savingReviewMarks && (
-              <div className="flex justify-center mt-4">
-                <p className="text-blue-600">Saving marks...</p>
+              {savingReviewMarks && (
+                <div className="flex justify-center mt-4">
+                  <p className="text-blue-600">Saving marks...</p>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowReviewModal(false)}
+                  className="bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveStudentReviewMarks}
+                  disabled={savingReviewMarks || loadingReviewData}
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {savingReviewMarks ? "Saving..." : "Save Marks"}
+                </button>
+                <button
+                  onClick={handleDownloadStudentReviewPDF}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75"
+                >
+                  Download as PDF
+                </button>
               </div>
-            )}
-
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setShowReviewModal(false)}
-                className="bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveStudentReviewMarks}
-                disabled={savingReviewMarks || loadingReviewData}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {savingReviewMarks ? "Saving..." : "Save Marks"}
-              </button>
-              <button
-                onClick={handleDownloadStudentReviewPDF}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75"
-              >
-                Download as PDF
-              </button>
             </div>
           </div>
-        </div>
-      )}
-      
-    </div>
-    <Footer />
+        )}
+
+      </div>
+      <Footer />
     </div>
   );
 }
