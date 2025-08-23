@@ -49,7 +49,7 @@ function EnrolledStudents() {
   const [selectedProject, setSelectedProject] = useState(null); // The project object selected from the projects table
   const [studentsInSelectedProject, setStudentsInSelectedProject] = useState([]); // Students belonging to the selected project
 
-  const [marksLockStatus, setMarksLockStatus] = useState('Disabled');
+
 
   // NEW: Consolidated state for Viva marks
   const [vivaMarks, setVivaMarks] = useState({ guide: 0, panel: 0, external: 0 });
@@ -126,31 +126,11 @@ function EnrolledStudents() {
         secondReviewDeadline: response.data?.secondReviewDeadline || null,
         thirdReviewDeadline: response.data?.thirdReviewDeadline || null, // NEW: Fetch third review deadline
       });
-      setMarksLockStatus(response.data?.marksLockStatus || 'Disabled');
+      
     } catch (error) {
       console.error("Error fetching review deadlines:", error);
     }
   }, [API_BASE_URL]);
-
-
-  const handleLockMarks = async () => {
-    if (window.confirm("Are you sure you want to lock the marks? This action cannot be undone and will prevent any further changes.")) {
-      try {
-        await axios.post(`${API_BASE_URL}/update-marks-lock-status`, {
-          courseName: selectedProgram,
-          status: 'Locked',
-        });
-        setMarksLockStatus('Locked');
-        toast.success("Marks have been locked successfully!");
-      } catch (error) {
-        console.error("Error locking marks:", error);
-        toast.error("Failed to lock marks.");
-      }
-    }
-  };
-
-
-
 
   const handleCommentChange = (identifier, reviewType, value) => {
     setNewComments((prev) => ({
@@ -1020,43 +1000,44 @@ function EnrolledStudents() {
                             <td className="py-3 px-6 text-left whitespace-nowrap">{student.studentName}</td>
                             <td className="py-3 px-6 text-center">
                               <input
-                                type="number"
-                                value={student.marks1}
-                                readOnly={marksLockStatus === 'Locked'} // Apply condition here
-                                className={`w-20 p-1 border border-gray-300 rounded-md text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
-                              />
+  type="number"
+  value={student.marks1}
+  readOnly
+  className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed"
+/>
                             </td>
                             <td className="py-3 px-6 text-center">
                               <input
-                                type="number"
-                                value={student.marks2}
-                                readOnly={marksLockStatus === 'Locked'} // Apply condition here
-                                className={`w-20 p-1 border border-gray-300 rounded-md text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
-                              />
+  type="number"
+  value={student.marks2}
+  readOnly
+  className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed"
+/>
                             </td>
                             <td className="py-3 px-6 text-center">
                               <input
-                                type="number"
-                                value={student.marks3}
-                                readOnly={marksLockStatus === 'Locked'} // Apply condition here
-                                className={`w-20 p-1 border border-gray-300 rounded-md text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
-                              />
+  type="number"
+  value={student.marks3}
+  readOnly
+  className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed"
+/>
                             </td>
                             <td className="py-3 px-6 text-center">
                               <input
-                                type="number"
-                                value={student.marks4}
-                                readOnly={marksLockStatus === 'Locked'} // Apply condition here
-                                className={`w-20 p-1 border border-gray-300 rounded-md text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
-                              />
+  type="number"
+  value={student.marks4}
+  readOnly
+  className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed"
+/>
                             </td>
                             <td className="py-3 px-6 text-center">
                               <input
-                                type="number"
-                                value={student.viva_total_awarded / 3 || 0}
-                                readOnly={marksLockStatus === 'Locked'} // Apply condition here
-                                className={`w-20 p-1 border border-gray-300 rounded-md text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
-                              />
+  type="number"
+  value={student.viva_total_awarded / 3 || 0}
+  readOnly
+  className="w-20 p-1 border border-gray-300 rounded-md text-center bg-gray-50 cursor-not-allowed"
+/>
+                              
 
                             </td>
                             <td className="py-3 px-6 text-center">
@@ -1194,20 +1175,8 @@ function EnrolledStudents() {
                   >
                     Save All Marks
                   </button>
-                  {marksLockStatus === 'Enabled' && (
-    <button
-      onClick={handleLockMarks}
-      className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75"
-    >
-      Lock Final Marks
-    </button>
-)}
-{marksLockStatus === 'Locked' && (
-    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded-lg" role="alert">
-      <p className="font-bold">Marks Locked</p>
-      <p>Editing is disabled for this course.</p>
-    </div>
-)}
+                  
+
                   <button
                     onClick={handleDownloadPDF}
                     className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75"

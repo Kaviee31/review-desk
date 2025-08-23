@@ -75,7 +75,6 @@ const reviewDeadlineSchema = new mongoose.Schema({
   firstReviewDeadline: Date,
   secondReviewDeadline: Date,
   thirdReviewDeadline: Date, // NEW: Third review deadline
-  marksLockStatus: { type: String, enum: ['Disabled', 'Enabled', 'Locked'], default: 'Disabled' },
 }, { timestamps: true });
 
 // SCHEMA for Coordinator Review Data (defines the structure of review items)
@@ -964,29 +963,6 @@ app.post("/bulk-enroll", async (req, res) => {
   }
 });
 
-app.post("/update-marks-lock-status", async (req, res) => {
-  const { courseName, status } = req.body;
-  if (!courseName || !status) {
-    return res.status(400).json({ error: "Course name and status are required." });
-  }
-  if (!['Disabled', 'Enabled', 'Locked'].includes(status)) {
-    return res.status(400).json({ error: "Invalid status provided." });
-  }
-  try {
-    const updatedDeadline = await ReviewDeadline.findOneAndUpdate(
-      { courseName },
-      { $set: { marksLockStatus: status } },
-      { new: true, upsert: true }
-    );
-    res.json({ 
-        message: `Marks lock status for ${courseName} updated to ${status}.`,
-        data: updatedDeadline 
-    });
-  } catch (error) {
-    console.error("Error updating marks lock status:", error);
-    res.status(500).json({ error: "Failed to update marks lock status." });
-  }
-});
 
 // Start server
 const PORT = process.env.PORT || 5000;

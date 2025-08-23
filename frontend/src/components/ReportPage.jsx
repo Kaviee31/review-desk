@@ -20,7 +20,7 @@ function ReportPage() {
     const [thirdReviewDate, setThirdReviewDate] = useState(''); // NEW: State for third review date
     const [loading, setLoading] = useState(false);
     const today = new Date().toISOString().split('T')[0];
-    const [marksLockStatus, setMarksLockStatus] = useState('Disabled');
+    
 
     // Define all programs
     const allPrograms = [
@@ -39,7 +39,7 @@ function ReportPage() {
                         setFirstReviewDate(response.data.firstReviewDeadline ? new Date(response.data.firstReviewDeadline).toISOString().split('T')[0] : '');
                         setSecondReviewDate(response.data.secondReviewDeadline ? new Date(response.data.secondReviewDeadline).toISOString().split('T')[0] : '');
                         setThirdReviewDate(response.data.thirdReviewDeadline ? new Date(response.data.thirdReviewDeadline).toISOString().split('T')[0] : ''); // NEW: Set third review date
-                       setMarksLockStatus(response.data.marksLockStatus || 'Disabled');
+                       
                     } else {
                         // If no deadlines exist for the selected program, clear the fields
                         setZerothReviewDate('');
@@ -114,20 +114,7 @@ function ReportPage() {
         }
     };
     
-    const handleLockToggle = async () => {
-    const newStatus = marksLockStatus === 'Enabled' ? 'Disabled' : 'Enabled';
-    try {
-        await axios.post(`${API_BASE_URL}/update-marks-lock-status`, {
-            courseName: selectedProgram,
-            status: newStatus,
-        });
-        setMarksLockStatus(newStatus);
-        toast.success(`Marks locking for teachers has been ${newStatus.toLowerCase()}.`);
-    } catch (error) {
-        console.error("Error toggling marks lock status:", error);
-        toast.error("Failed to update marks lock status.");
-    }
-};
+  
 
     // New function to send email to students of a specific course
     const sendEmailToStudentsByCourse = async (courseName) => {
@@ -247,27 +234,7 @@ function ReportPage() {
                             >
                                 {loading ? "Updating..." : "Set Deadlines & Notify Students"}
                             </button>
-                            <div className="form-group mt-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
-    <label className="block text-gray-800 text-md font-bold mb-2">Enable Mark Locking for Teachers</label>
-    <div className="flex items-center">
-        <span className={`mr-3 font-semibold ${marksLockStatus !== 'Enabled' ? 'text-gray-700' : 'text-gray-400'}`}>NO</span>
-        <label className="relative inline-flex items-center cursor-pointer">
-            <input
-                type="checkbox"
-                checked={marksLockStatus === 'Enabled'}
-                onChange={handleLockToggle}
-                className="sr-only peer"
-                disabled={marksLockStatus === 'Locked'}
-            />
-            <div className="w-14 h-8 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-500"></div>
-        </label>
-        <span className={`ml-3 font-semibold ${marksLockStatus === 'Enabled' ? 'text-green-600' : 'text-gray-400'}`}>YES</span>
-    </div>
-    {marksLockStatus === 'Locked' && (
-         <p className="text-sm text-red-600 mt-2">A teacher has already locked the marks for this course. This setting cannot be changed.</p>
-    )}
-    <p className="text-xs text-gray-500 mt-2">When enabled, the assigned teacher will see a button to lock final marks, preventing further edits.</p>
-</div>
+      
                         </form>
 
                         <div className="mt-8">
