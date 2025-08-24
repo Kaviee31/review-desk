@@ -337,7 +337,7 @@ const fetchUgProjectsByProgram = async (programName) => {
       )}
 
       {selectedProgram && (
-        <div className="students-section">
+        <div >
           <div className="section-header">
             <h2>{selectedProgram} - {ugPrograms.includes(selectedProgram) ? 'Projects' : 'Enrolled Students'}</h2>
             <button onClick={handleDownloadZerothReviewPDF} className="download-btn">

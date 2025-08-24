@@ -28,6 +28,7 @@ function EnrolledStudents() {
   const [selectedStudentRegisterNumber, setSelectedStudentRegisterNumber] = useState(null);
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
   const [loading, setLoading] = useState(true);
+  const [marksLockStatus, setMarksLockStatus] = useState('Unlocked');
 
   // Modified to store objects with pdfPath, pptPath, otherPath, and uploadedAt
   const [latestReviewFiles, setLatestReviewFiles] = useState({});
@@ -75,8 +76,33 @@ function EnrolledStudents() {
   const ugPrograms = ugCourses;
   const allPrograms = courses;
 
+const fetchLockStatus = useCallback(async (courseName) => {
+    if (!courseName) return;
+    try {
+      const response = await axios.get(`${API_BASE_URL}/marks-lock/status/${courseName}`);
+      setMarksLockStatus(response.data.status);
+    } catch (error) {
+      console.error("Error fetching marks lock status:", error);
+    }
+  }, []);
 
-
+   
+   const handleLockMarks = async () => {
+    if (!selectedProgram) {
+      toast.error("No program selected.");
+      return;
+    }
+    // Confirmation dialog
+    if (window.confirm(`Are you sure you want to lock marks for ${selectedProgram}? You will not be able to edit them again unless an admin unlocks them.`)) {
+      try {
+        await axios.post(`${API_BASE_URL}/marks-lock/lock`, { courseName: selectedProgram });
+        toast.success(`Marks for ${selectedProgram} have been locked!`);
+        setMarksLockStatus('Locked'); // Update UI immediately
+      } catch (error) {
+        toast.error("Failed to lock marks.");
+      }
+    }
+  };
   // Effect to set teacher email and UID on auth state change
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -205,11 +231,12 @@ function EnrolledStudents() {
   };
 
 
-  useEffect(() => {
+   useEffect(() => {
     if (selectedProgram) {
       fetchReviewDeadlines(selectedProgram);
+      fetchLockStatus(selectedProgram); // Fetch lock status
     }
-  }, [selectedProgram, fetchReviewDeadlines]);
+  }, [selectedProgram, fetchReviewDeadlines, fetchLockStatus]);
 
 
   // Function to fetch students from the backend (for PG courses)
@@ -605,7 +632,10 @@ function EnrolledStudents() {
 
   // Function to handle changes in student's review item marks
   const handleStudentReviewMarkChange = (index, reviewType, value) => {
-    if (marksLockStatus === 'Locked') return;
+    if (marksLockStatus === 'Locked') {
+      toast.warn("Marks are locked and cannot be edited.");
+      return;
+    }
 
     setStudentReviewMarks(prevMarks => {
       const updatedMarks = [...prevMarks];
@@ -1175,6 +1205,13 @@ function EnrolledStudents() {
                   >
                     Save All Marks
                   </button>
+                   <button
+      onClick={handleLockMarks}
+      disabled={marksLockStatus === 'Locked'}
+      className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {marksLockStatus === 'Locked' ? '🔒 Marks Locked' : `🔒 Lock Marks`}
+    </button>
                   
 
                   <button
@@ -1695,8 +1732,8 @@ function EnrolledStudents() {
           max={item.coord_r1_max}
           value={item.r1_mark}
           onChange={(e) => handleStudentReviewMarkChange(index, 'r1_mark', e.target.value)}
-          readOnly={marksLockStatus === 'Locked'}
-          className={`w-20 p-1 border rounded text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
+          readOnly={marksLockStatus === 'Locked'} // 👈 ADD THIS
+          className={`w-20 p-1 border rounded text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`} // 👈 MODIFY THIS
         />
       </td>
 
@@ -1709,8 +1746,8 @@ function EnrolledStudents() {
           max={item.coord_r2_max}
           value={item.r2_mark}
           onChange={(e) => handleStudentReviewMarkChange(index, 'r2_mark', e.target.value)}
-          readOnly={marksLockStatus === 'Locked'}
-          className={`w-20 p-1 border rounded text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
+          readOnly={marksLockStatus === 'Locked'} // 👈 ADD THIS
+          className={`w-20 p-1 border rounded text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`} // 👈 MODIFY THIS
         />
       </td>
 
@@ -1723,8 +1760,8 @@ function EnrolledStudents() {
           max={item.coord_r3_max}
           value={item.r3_mark}
           onChange={(e) => handleStudentReviewMarkChange(index, 'r3_mark', e.target.value)}
-          readOnly={marksLockStatus === 'Locked'}
-          className={`w-20 p-1 border rounded text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`}
+          readOnly={marksLockStatus === 'Locked'} // 👈 ADD THIS
+          className={`w-20 p-1 border rounded text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`} // 👈 MODIFY THIS
         />
       </td>
     </tr>

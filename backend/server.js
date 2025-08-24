@@ -88,12 +88,18 @@ const coordinatorReviewSchema = new mongoose.Schema({
   lastUpdated: { type: Date, default: Date.now } // Timestamp of last update
 }, { timestamps: true });
 
+const marksLockSchema = new mongoose.Schema({
+  courseName: { type: String, required: true, unique: true },
+  locked: { type: Boolean, default: false },
+  lockedAt: { type: Date }
+});
 
 // === MODELS ===
 const Enrollment = mongoose.model("Enrollment", enrollmentSchema);
 const Message = mongoose.model("Message", messageSchema);
 const ReviewDeadline = mongoose.model("ReviewDeadline", reviewDeadlineSchema);
 const CoordinatorReview = mongoose.model("CoordinatorReview", coordinatorReviewSchema);
+const MarksLock = mongoose.model("MarksLock", marksLockSchema);
 
 
 // === MULTER CONFIG ===
@@ -394,6 +400,61 @@ app.post("/update-marks", async (req, res) => {
   } catch (error) {
     console.error("Error saving marks:", error);
     res.status(500).json({ error: "Failed to update marks" });
+  }
+});
+
+// GET: Check the lock status for a specific course
+// Used by: ReportPage.jsx (Admin) and EnrolledStudents.jsx (Teacher)
+app.get("/marks-lock/status/:courseName", async (req, res) => {
+  try {
+    const { courseName } = req.params;
+    const lock = await MarksLock.findOne({ courseName });
+    if (lock && lock.locked) {
+      res.json({ status: "Locked" });
+    } else {
+      res.json({ status: "Unlocked" });
+    }
+  } catch (error) {
+    console.error("Error fetching lock status:", error);
+    res.status(500).json({ error: "Failed to fetch lock status." });
+  }
+});
+
+// POST: Lock marks for a course
+// Used by: EnrolledStudents.jsx (Teacher)
+app.post("/marks-lock/lock", async (req, res) => {
+  try {
+    const { courseName } = req.body;
+    if (!courseName) return res.status(400).json({ error: "Course name is required." });
+
+    await MarksLock.updateOne(
+      { courseName },
+      { $set: { locked: true, lockedAt: new Date() } },
+      { upsert: true }
+    );
+    res.json({ message: `Marks for ${courseName} have been locked.` });
+  } catch (error) {
+    console.error("Error locking marks:", error);
+    res.status(500).json({ error: "Failed to lock marks." });
+  }
+});
+
+// POST: Unlock marks for a course
+// Used by: ReportPage.jsx (Admin)
+app.post("/marks-lock/unlock", async (req, res) => {
+  try {
+    const { courseName } = req.body;
+    if (!courseName) return res.status(400).json({ error: "Course name is required." });
+
+    await MarksLock.updateOne(
+      { courseName },
+      { $set: { locked: false } },
+      { upsert: true }
+    );
+    res.json({ message: `Marks for ${courseName} have been unlocked.` });
+  } catch (error) {
+    console.error("Error unlocking marks:", error);
+    res.status(500).json({ error: "Failed to unlock marks." });
   }
 });
 
