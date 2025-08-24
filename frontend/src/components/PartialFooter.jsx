@@ -1,12 +1,18 @@
+// src/layouts/AdminLayout.jsx
 import React from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LogOut, Users, LayoutDashboard } from "lucide-react";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import { LogOut, BarChart2, LayoutDashboard, UserPlus } from "lucide-react"; // Import UserPlus icon
 import { getAuth } from "firebase/auth";
-import "../styles/HODLayout.css";
+import "../styles/AdminLayout.css";
 
-function HODLayout() {
+// Assuming you'll define your routes in a higher-level component like App.jsx
+// For now, the button will navigate to '/admin/assign-coordinator'
+
+function PartialFooter() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isActive = (path) => location.pathname === path;
 
   const handleLogout = async () => {
     try {
@@ -18,11 +24,9 @@ function HODLayout() {
     }
   };
 
-  const isActive = (path) => location.pathname === path;
-
   return (
-    <div className="hod-layout">
-      <nav className="hod-navbar">
+    <div className="admin-layout">
+      <nav className="admin-navbar">
         <div className="navbar-header">
           <img src="https://www.auegov.ac.in/Department/public/assets/img/aulogo.png" alt="Logo" className="navbar-image" />
           <div className="navbar-logo-container">
@@ -30,25 +34,13 @@ function HODLayout() {
             <div className="navbar-logo">Anna University</div>
           </div>
         </div>
-        <div className="navbar-links">
-          <button className={isActive("/hod/dashboard") ? "active" : ""}
-            onClick={() => navigate("/hod/dashboard")}>
-            <LayoutDashboard size={18} /> Dashboard
-          </button>
-
-
-
-          <button onClick={handleLogout}>
-            <LogOut size={18} /> Logout
-          </button>
-        </div>
+        
       </nav>
-
-      <div className="hod-body">
+      <div className="admin-body">
         <Outlet />
       </div>
     </div>
   );
 }
 
-export default HODLayout;
+export default PartialFooter;

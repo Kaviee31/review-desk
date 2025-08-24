@@ -91,21 +91,15 @@ const fetchTeacherName = async (teacherEmailToSearch) => {
       const studentName = studentDoc.username;
       const studentEmail = studentDoc.email;
 
-     await axios.post(`${API_BASE_URL}/enroll`, {
-  studentName: row.StudentName,
-  registerNumber: row.RegisterNumber,
-  email: row.Email,
-  courseName: row.CourseName,
-  teacherName: fetchedTeacherName,
-  teacherEmail: row.TeacherEmail,
-  projectName: row.ProjectName || "",
-  groupRegisterNumbers: row.CourseName.startsWith("MCA")
-    ? [] 
-    : row.GroupRegisterNumbers
-      ? row.GroupRegisterNumbers.split(",")
-      : [],
-});
-
+      await axios.post("http://localhost:5000/enroll", {
+        studentName: studentName,
+        registerNumber: pgStudentRegNo,
+        email: studentEmail,
+        courseName: pgStudentCourseName,
+        teacherName: fetchedTeacherName, // Use fetched name for the request
+        teacherEmail: pgTeacherEmail,
+        projectName: pgProjectName,
+      });
 
       toast.success(`PG Student ${studentName} enrolled successfully!`);
       setPgStudentRegNo('');

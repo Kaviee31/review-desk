@@ -7,15 +7,48 @@ body {
   min-height: 100vh;
 }
 
+.teacher-dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* NEW RULE ADDED:
+  This specifically targets the header component on the login page.
+  It overrides any conflicting styles (like 'display: flex' or 'min-height')
+  that might be coming from other CSS files (like AdminLayout.css).
+*/
+.teacher-dashboard-layout .admin-layout {
+  display: block; /* Resets the display property */
+  min-height: 0;  /* Removes any minimum height that could cause a gap */
+  padding: 0;     /* Removes any padding that could add to the gap */
+}
+
 .login-page {
+  display: flex;
+  flex-direction: column; 
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1; /* This makes it fill the space between header and footer */
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.main-heading {
+  width: 100%;
+  text-align: center;
+  font-size: 2.5rem;
+  color: #6a1b9a;
+  margin-bottom: 1rem;
+}
+
+.login-content {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2rem;
-  min-height: 100vh;
-  box-sizing: border-box;
   gap: 3rem;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .login-left {
@@ -44,6 +77,7 @@ body {
   margin: 1rem 0 0.3rem;
   font-weight: 600;
   font-size: 0.95rem;
+  color: #333;
 }
 
 .login-form input {
@@ -96,78 +130,11 @@ body {
   text-decoration: underline;
 }
 
-/* Flex row for links */
-.login-form .link-row {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 1rem;
-}
-
-/* Responsive tweaks */
-@media (max-width: 768px) {
-  .login-page {
-    flex-direction: column;
-    padding: 1rem;
-  }
-
-  .login-left {
-    max-width: 300px;
-  }
-
-  .login-right {
-    width: 90%;
-  }
-}
-.login-form label {
-  display: block;
-  margin: 1rem 0 0.3rem;
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #333; /* or #6a1b9a for purple tone */
-}
-.main-heading {
-  width: 100%;
-  text-align: center;
-  font-size: 2.5rem; /* Or your desired size */
-  color: #6a1b9a;
-  margin-bottom: 1rem;
-}
-
-
-.login-page {
-  display: flex;
-  flex-direction: column; /* Stack heading on top of content */
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-  min-height: 100vh;
-  box-sizing: border-box;
-}
-
-
-.login-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 3rem;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
-.login-left {
-  flex: 1;
-  max-width: 500px;
-}
-
-
-
-
 @media (max-width: 768px) {
   .login-page {
     padding: 1rem;
   }
   
-  /* Make the content wrapper stack vertically on small screens */
   .login-content {
     flex-direction: column;
   }

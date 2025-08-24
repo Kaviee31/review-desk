@@ -47,7 +47,7 @@ const Footer = () => {
            <h3 className="footer-title">Our Map Link</h3>
            <div className="map-container">
             <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.007575798235!2d80.2322656148227!3d13.03527999081367!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a526786375f197f%3A0x824b2140682125f!2sDepartment%20of%20Information%20Science%20and%20Technology%2C%20Anna%20University!5e0!3m2!1sen!2sin!4v1663828318224!5m2!1sen!2sin"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3268.8700552081373!2d80.23374188184675!3d13.012506884285498!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a5267a1dbf3955d%3A0xa2016d5a35abce76!2sDepartment%20of%20Information%20Science%20and%20Technology!5e0!3m2!1sen!2sin!4v1701342562664!5m2!1sen!2sin"
                 width="100%"
                 height="200"
                 style={{ border: 0 }}

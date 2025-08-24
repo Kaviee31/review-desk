@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import { redirectToDashboard } from "../utils/roleHelper";
 import "../styles/Login.css";
 import Footer from './Footer';
+import ParitalFooter from './PartialFooter';
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -36,6 +37,9 @@ function Login() {
           roles = [userData.profession];
         } else {
           roles = ["Student"]; // fallback
+        }
+        if (roles.includes("HOD")) {
+          roles.push("Teacher");
         }
 
         localStorage.setItem("availableRoles", JSON.stringify(roles));
@@ -65,7 +69,9 @@ function Login() {
 
 return (
   <div className="teacher-dashboard-layout">
+    <ParitalFooter />
     <div className="login-page">
+      
       {/* 1. Moved the heading here, to the top level */}
       <h1 className="main-heading">IST's Review Desk</h1>
 

@@ -23,6 +23,9 @@ function RoleProtectedRoute({ children, allowedRoles }) {
 
       const userData = userSnap.data();
       const roles = userData.roles || [userData.profession || userData.userType];
+      if (roles.includes("HOD") && !roles.includes("Teacher")) {
+        roles.push("Teacher");
+      }
       const hasAccess = roles.some(role => allowedRoles.includes(role));
       setAuthorized(hasAccess);
     };
