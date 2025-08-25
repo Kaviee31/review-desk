@@ -189,12 +189,16 @@ const fetchUgProjectsByProgram = async (programName) => {
       }
       const doc = new jsPDF();
       doc.text(`${selectedProgram} - Zeroth Review Comments`, 14, 22);
-      const tableColumn = ["Project Name", "Project Members", "Assigned Teacher", "Zeroth Review Comment"];
+      const tableColumn = ["Project Name", "Project Members", "Assigned Teacher", "Zeroth Review Comment", "First Review Comment"
+        , "Second Review Comment" , "Third Review Comment"];
       const tableRows = ugProjects.map(project => [
         project.projectName || "N/A",
         project.groupRegisterNumbers.join(', ') || "N/A",
         project.teacherDisplayName || "N/A",
-        project.zerothReviewComment || "No comment submitted"
+        project.zerothReviewComment || "No comment submitted",
+        project.firstReviewComment || "No comment submitted",
+        project.secondReviewComment || "No comment submitted",
+        project.thirdReviewComment || "No comment submitted"
       ]);
       autoTable(doc, {
         head: [tableColumn],
@@ -210,19 +214,23 @@ const fetchUgProjectsByProgram = async (programName) => {
       }
       const doc = new jsPDF();
       doc.text(`${selectedProgram} - Zeroth Review Comments`, 14, 22);
-      const tableColumn = ["Register Number", "Student Name","Project Name", "Zeroth Review Comment"];
+      const tableColumn = ["Register Number", "Student Name","Project Name", "Zeroth Review Comment", "First Review Comment"
+        , "Second Review Comment" , "Third Review Comment"];
       const tableRows = students.map(student => [
         student.registerNumber,
         student.studentName || "N/A",
         student.projectName,
-        student.zerothReviewComment || "No comment submitted"
+        student.zerothReviewComment || "No comment submitted",
+        student.firstReviewComment || "No comment submitted",
+        student.secondReviewComment || "No comment submitted",
+        student.thirdReviewComment || "No comment submitted"
       ]);
       autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
         startY: 30,
       });
-      doc.save(`${selectedProgram}_Zeroth_Review_Comments.pdf`);
+      doc.save(`${selectedProgram}_Review_Comments.pdf`);
       toast.success("PDF downloaded successfully!");
     }
   };
@@ -244,7 +252,7 @@ const fetchUgProjectsByProgram = async (programName) => {
             <th>Total</th>
             <th>Viva Total</th>
             <th>Assigned Teacher</th>
-            <th>Zeroth Review Comment</th>
+            
           </tr>
         </thead>
         <tbody>
@@ -258,7 +266,7 @@ const fetchUgProjectsByProgram = async (programName) => {
               <td>{student.marks4}</td>
               <td>{Math.round(student.viva_total_awarded/3) || 0}</td>
               <td>{student.teacherDisplayName}</td>
-              <td>{student.zerothReviewComment || "No comment submitted"}</td>
+              
             </tr>
           )) : (
             <tr><td colSpan="9">No students found.</td></tr>
@@ -281,7 +289,7 @@ const fetchUgProjectsByProgram = async (programName) => {
             <th>Total</th>
             <th>Viva Total</th>
             <th>Assigned Teacher</th>
-            <th>Zeroth Review Comment</th>
+            
           </tr>
         </thead>
         <tbody>
@@ -299,7 +307,7 @@ const fetchUgProjectsByProgram = async (programName) => {
               <td>{project.Total}</td>
               <td>{Math.round(project.viva_total_awarded / 3) || 0}</td>
               <td>{project.teacherDisplayName || 'N/A'}</td>
-              <td>{project.zerothReviewComment || "No comment submitted"}</td>
+              
             </tr>
           )) : (
             <tr><td colSpan="9">No projects found.</td></tr>
@@ -341,7 +349,7 @@ const fetchUgProjectsByProgram = async (programName) => {
           <div className="section-header">
             <h2>{selectedProgram} - {ugPrograms.includes(selectedProgram) ? 'Projects' : 'Enrolled Students'}</h2>
             <button onClick={handleDownloadZerothReviewPDF} className="download-btn">
-              Download Zeroth Review Comments
+              Download Review Comments
             </button>
           </div>
           {loadingStudents ? (
