@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import "../styles/Signup.css";
 import { courses } from "../constants/courses";
 import Footer from './Footer';
+import PartialFooter from './PartialFooter';
 
 function Signup() {
   useEffect(() => { document.title = "Signup"; }, []);
@@ -117,6 +118,7 @@ function Signup() {
 
   return (
     <div className="teacher-dashboard-layout">
+      <PartialFooter />
     <div className="signup-page">
       <form className="signup-form" onSubmit={handleSubmit}>
         <h2>Create Account</h2>

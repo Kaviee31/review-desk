@@ -80,3 +80,56 @@
   display: flex;
   flex-direction: column; /* This stacks the two text lines */
 }
+
+/* Add or update these styles in your CSS file */
+
+.admin-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 60px 10px 40px; 
+  background-color: #34495e; /* Matching the dark blue-gray from the image */
+  color: white;
+  width: 100%;
+}
+
+.navbar-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.navbar-contact-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.contact-link {
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+  font-family: sans-serif;
+}
+
+.contact-link:hover {
+  text-decoration: underline;
+}
+
+.social-media-icons {
+  display: flex;
+  gap: 18px;
+  margin-top: 5px;
+}
+
+.social-media-icons a {
+  color: white;
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.social-media-icons a:hover {
+  transform: scale(1.2);
+  color: #bdc3c7; /* A light gray for hover effect */
+}
