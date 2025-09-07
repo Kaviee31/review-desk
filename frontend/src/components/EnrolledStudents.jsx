@@ -14,6 +14,7 @@ import { pgCourses, ugCourses, courses } from "../constants/courses";
 import { FaUser } from 'react-icons/fa';
 import { FaFilePdf, FaFilePowerpoint, FaFileAlt } from "react-icons/fa";
 import Footer from './Footer';
+import annaUniversityLogo from '../assets/anna-university-logo.png';
 
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 const UNSEEN_MESSAGE_ICON_URL = "https://cdn-icons-png.flaticon.com/512/134/134935.png";
@@ -158,6 +159,32 @@ const fetchLockStatus = useCallback(async (courseName) => {
     }
   }, [API_BASE_URL]);
 
+  // Add this new reusable function inside your EnrolledStudents component
+
+const addPdfHeader = (doc, title) => {
+  
+  doc.addImage(annaUniversityLogo, 'PNG', 15, 12, 30, 30);
+
+  
+  const textX = 50;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('ANNA UNIVERSITY', textX, 20);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(14);
+  doc.text('Department of Information Science and Technology', textX, 28);
+  
+  doc.setFontSize(12);
+  doc.text(title, textX, 36);
+
+  
+  doc.setLineWidth(0.5);
+  doc.line(14, 45, doc.internal.pageSize.width - 14, 45);
+
+  
+  return 55; 
+};
   const handleCommentChange = (identifier, reviewType, value) => {
     setNewComments((prev) => ({
       ...prev,
@@ -424,10 +451,8 @@ const fetchLockStatus = useCallback(async (courseName) => {
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
     const courseName = selectedProgram || "Students";
-    doc.setFontSize(18);
-    doc.text(`${courseName} Marks Report`, 14, 22);
-    doc.setFontSize(11);
-    doc.setTextColor(100);
+    const tableStartY = addPdfHeader(doc, `${courseName} Marks Report`);
+    
     const tableColumn = ["Register Number", "Project Name", "Assess1", "Assess2", "Assess3", "Total"];
     const tableRows = students.map((student) => [
       student.registerNumber,
@@ -440,7 +465,7 @@ const fetchLockStatus = useCallback(async (courseName) => {
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
-      startY: 30,
+      startY: tableStartY,
     });
     doc.save(`${courseName.replace(/[^a-zA-Z0-9]/g, '_')}_Marks_Report.pdf`);
   };
@@ -820,7 +845,7 @@ const fetchLockStatus = useCallback(async (courseName) => {
   const { totalAwardedR1, totalAwardedR2, totalAwardedR3, totalViva } = calculateModalTotals();
 
   // Function to download the specific student's review marks as PDF
-  const handleDownloadStudentReviewPDF = () => {
+const handleDownloadStudentReviewPDF = () => {
     if (!currentStudentForReview || studentReviewMarks.length === 0) {
       toast.error("No review data available to download for this student.");
       return;
@@ -830,28 +855,25 @@ const fetchLockStatus = useCallback(async (courseName) => {
     const studentName = currentStudentForReview.studentName;
     const registerNumber = currentStudentForReview.registerNumber;
     const programName = selectedProgram;
-    const projectName = currentStudentForReview.projectName; // Get project name
-    const currentDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }); // DD/MM/YYYY format
+    const projectName = currentStudentForReview.projectName;
+    const currentDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+    // ===> Call the reusable header function here <===
+    let contentStartY = addPdfHeader(doc, 'Student Review Marks Report');
 
-    doc.setFont('helvetica'); // Use a standard font
+    // Add student-specific details below the header
     doc.setFontSize(10);
-    doc.text('PROGRESS THROUGH KNOWLEDGE', 14, 15);
+    doc.text(`Roll.No: ${registerNumber}`, 14, contentStartY);
+    doc.text(`Name: ${studentName}`, 14, contentStartY + 5);
+    doc.text(`Program: ${programName}`, 14, contentStartY + 10);
+    doc.text(`Report Generated On: ${currentDate}`, 14, contentStartY + 15);
 
-    doc.setFontSize(14);
-    doc.text('ANNA UNIVERSITY', 14, 25);
-    doc.text('STUDENT REVIEW MARKS REPORT', 14, 32);
-
-    doc.setFontSize(10);
-    doc.text(`Roll.No: ${registerNumber}`, 14, 45);
-    doc.text(`Name: ${studentName}`, 14, 55);
-    doc.text(`Program: ${programName}`, 14, 50);
-    doc.text(`Report Generated On: ${currentDate}`, 14, 60);
-
-    // Add project name as a heading
     doc.setFontSize(12);
-    doc.text(`Project Name: ${projectName}`, 14, 65);
+    doc.text(`Project Name: ${projectName}`, 14, contentStartY + 22);
 
+    const tableStartY = contentStartY + 30;
+
+    // The rest of the function remains the same...
     const tableColumn = [
       "Review Item (R1)", "R1 Max", "R1 Awarded",
       "Review Item (R2)", "R2 Max", "R2 Awarded",
@@ -859,18 +881,11 @@ const fetchLockStatus = useCallback(async (courseName) => {
     ];
 
     const tableRows = studentReviewMarks.map(item => [
-      item.r1_item_desc || '', // Ensure no 'undefined' in PDF
-      item.coord_r1_max.toString(),
-      item.r1_mark.toString(),
-      item.r2_item_desc || '',
-      item.coord_r2_max.toString(),
-      item.r2_mark.toString(),
-      item.r3_item_desc || '',
-      item.coord_r3_max.toString(),
-      item.r3_mark.toString()
+      item.r1_item_desc || '', item.coord_r1_max.toString(), item.r1_mark.toString(),
+      item.r2_item_desc || '', item.coord_r2_max.toString(), item.r2_mark.toString(),
+      item.r3_item_desc || '', item.coord_r3_max.toString(), item.r3_mark.toString()
     ]);
 
-    // Add totals row to the tableRows for PDF
     tableRows.push([
       { content: "Total Awarded Marks (R1):", colSpan: 2, styles: { fontStyle: 'bold', halign: 'right' } },
       { content: totalAwardedR1.toString(), styles: { fontStyle: 'bold', halign: 'center' } },
@@ -880,23 +895,18 @@ const fetchLockStatus = useCallback(async (courseName) => {
       { content: totalAwardedR3.toString(), styles: { fontStyle: 'bold', halign: 'center' } }
     ]);
 
-
     autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows,
-      startY: 75, // Adjust start position based on new header info
-      theme: 'grid', // Add grid theme for better visual separation
+      head: [tableColumn], body: tableRows, startY: tableStartY, theme: 'grid',
       styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
       headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0], fontStyle: 'bold' },
       footStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold' },
       didDrawPage: function (data) {
-        // Footer (optional: add page numbers or custom text)
         let str = "Page " + doc.internal.getNumberOfPages();
         doc.setFontSize(10);
         doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
       }
     });
-    // Add VIVA marks section to PDF
+
     autoTable(doc, {
       startY: doc.lastAutoTable.finalY + 10,
       head: [['Viva Voce Component', 'Marks Awarded']],
@@ -909,6 +919,7 @@ const fetchLockStatus = useCallback(async (courseName) => {
       theme: 'grid',
       headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0], fontStyle: 'bold' },
     });
+
     doc.save(`${studentName.replace(/[^a-zA-Z0-9]/g, '_')}_${registerNumber}_Review_Marks.pdf`);
     toast.success("Student review marks PDF downloaded successfully!");
   };

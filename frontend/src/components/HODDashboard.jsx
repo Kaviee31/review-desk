@@ -11,6 +11,8 @@ import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
 import { pgCourses, ugCourses, courses } from "../constants/courses";
 import Footer from './Footer';
+import annaUniversityLogo from '../assets/anna-university-logo.png'; // 1. LOGO IMPORT ADDED
+
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 
 function HODDashboard() {
@@ -18,7 +20,7 @@ function HODDashboard() {
   const [loadingUser, setLoadingUser] = useState(true);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [students, setStudents] = useState([]);
-  const [ugProjects, setUgProjects] = useState([]); // New state for UG projects
+  const [ugProjects, setUgProjects] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [programCounts, setProgramCounts] = useState({});
   const navigate = useNavigate();
@@ -124,53 +126,50 @@ function HODDashboard() {
       setLoadingStudents(false);
     }
   };
-  
-// In HODDashboard.jsx
 
-const fetchUgProjectsByProgram = async (programName) => {
-  setLoadingStudents(true);
-  setUgProjects([]);
-  try {
-    const response = await axios.get(`${API_BASE_URL}/ug-projects-by-program/${programName}`);
-    
-    const projectsWithDetails = await Promise.all(response.data.map(async (project) => {
-      let teacherDisplayName = 'N/A';
-      const teacherEmail = project.teacherEmail;
-
-      if (teacherEmail) {
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("email", "==", teacherEmail));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const teacherData = querySnapshot.docs[0].data();
-          teacherDisplayName = teacherData.username || teacherEmail;
-        } else {
-          teacherDisplayName = teacherEmail; // Fallback to email if user not found in 'users' collection
-        }
-      }
+  const fetchUgProjectsByProgram = async (programName) => {
+    setLoadingStudents(true);
+    setUgProjects([]);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/ug-projects-by-program/${programName}`);
       
-      // Explicitly map all required properties and provide fallbacks for safety.
-      return {
-        projectName: project.projectName || "Unnamed Project",
-        groupRegisterNumbers: project.groupRegisterNumbers || [],
-        teacherDisplayName: teacherDisplayName,
-        zerothReviewComment: project.zerothReviewComment || "No comment submitted",
-        Assessment1: project.Assessment1 || 0,
-        Assessment2: project.Assessment2 || 0,
-        Assessment3: project.Assessment3 || 0,
-        Total: project.Total || 0,
-        viva_total_awarded: project.viva_total_awarded || 0,
-      };
-    }));
+      const projectsWithDetails = await Promise.all(response.data.map(async (project) => {
+        let teacherDisplayName = 'N/A';
+        const teacherEmail = project.teacherEmail;
 
-    setUgProjects(projectsWithDetails);
-  } catch (error) {
-    console.error("Error fetching UG projects:", error);
-    toast.error("Failed to load projects.");
-  } finally {
-    setLoadingStudents(false);
-  }
-};
+        if (teacherEmail) {
+          const usersRef = collection(db, "users");
+          const q = query(usersRef, where("email", "==", teacherEmail));
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            const teacherData = querySnapshot.docs[0].data();
+            teacherDisplayName = teacherData.username || teacherEmail;
+          } else {
+            teacherDisplayName = teacherEmail;
+          }
+        }
+        
+        return {
+          projectName: project.projectName || "Unnamed Project",
+          groupRegisterNumbers: project.groupRegisterNumbers || [],
+          teacherDisplayName: teacherDisplayName,
+          zerothReviewComment: project.zerothReviewComment || "No comment submitted",
+          Assessment1: project.Assessment1 || 0,
+          Assessment2: project.Assessment2 || 0,
+          Assessment3: project.Assessment3 || 0,
+          Total: project.Total || 0,
+          viva_total_awarded: project.viva_total_awarded || 0,
+        };
+      }));
+
+      setUgProjects(projectsWithDetails);
+    } catch (error) {
+      console.error("Error fetching UG projects:", error);
+      toast.error("Failed to load projects.");
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
 
   const handleProgramClick = (program) => {
     setSelectedProgram(program);
@@ -181,58 +180,74 @@ const fetchUgProjectsByProgram = async (programName) => {
     }
   };
 
+  // 3. UPDATED PDF DOWNLOAD FUNCTION
   const handleDownloadZerothReviewPDF = () => {
+    const doc = new jsPDF();
+    const title = `${selectedProgram} - Review Comments`;
+
+    const tableStartY = addPdfHeader(doc, title);
+
     if (ugPrograms.includes(selectedProgram)) {
       if (ugProjects.length === 0) {
         toast.warn("No projects found to download.");
         return;
       }
-      const doc = new jsPDF();
-      doc.text(`${selectedProgram} - Zeroth Review Comments`, 14, 22);
-      const tableColumn = ["Project Name", "Project Members", "Assigned Teacher", "Zeroth Review Comment", "First Review Comment"
-        , "Second Review Comment" , "Third Review Comment"];
+      const tableColumn = ["Project Name", "Project Members", "Assigned Teacher", "Zeroth Review", "First Review", "Second Review", "Third Review"];
       const tableRows = ugProjects.map(project => [
         project.projectName || "N/A",
         project.groupRegisterNumbers.join(', ') || "N/A",
         project.teacherDisplayName || "N/A",
-        project.zerothReviewComment || "No comment submitted",
-        project.firstReviewComment || "No comment submitted",
-        project.secondReviewComment || "No comment submitted",
-        project.thirdReviewComment || "No comment submitted"
+        project.zerothReviewComment || "N/A",
+        project.firstReviewComment || "N/A",
+        project.secondReviewComment || "N/A",
+        project.thirdReviewComment || "N/A"
       ]);
       autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
-        startY: 30,
+        startY: tableStartY,
       });
-      doc.save(`${selectedProgram}_Zeroth_Review_Comments.pdf`);
-      toast.success("PDF downloaded successfully!");
+      doc.save(`${selectedProgram}_Review_Comments.pdf`);
     } else {
       if (students.length === 0) {
         toast.warn("No student data available to download.");
         return;
       }
-      const doc = new jsPDF();
-      doc.text(`${selectedProgram} - Zeroth Review Comments`, 14, 22);
-      const tableColumn = ["Register Number", "Student Name","Project Name", "Zeroth Review Comment", "First Review Comment"
-        , "Second Review Comment" , "Third Review Comment"];
+      const tableColumn = ["Register Number", "Student Name", "Project Name", "Zeroth Review", "First Review", "Second Review", "Third Review"];
       const tableRows = students.map(student => [
         student.registerNumber,
         student.studentName || "N/A",
-        student.projectName,
-        student.zerothReviewComment || "No comment submitted",
-        student.firstReviewComment || "No comment submitted",
-        student.secondReviewComment || "No comment submitted",
-        student.thirdReviewComment || "No comment submitted"
+        student.projectName || "N/A",
+        student.zerothReviewComment || "N/A",
+        student.firstReviewComment || "N/A",
+        student.secondReviewComment || "N/A",
+        student.thirdReviewComment || "N/A"
       ]);
       autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
-        startY: 30,
+        startY: tableStartY,
       });
       doc.save(`${selectedProgram}_Review_Comments.pdf`);
-      toast.success("PDF downloaded successfully!");
     }
+    toast.success("PDF downloaded successfully!");
+  };
+
+  // 2. REUSABLE HEADER FUNCTION ADDED
+  const addPdfHeader = (doc, title) => {
+    doc.addImage(annaUniversityLogo, 'PNG', 15, 12, 30, 30);
+    const textX = 50;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text('ANNA UNIVERSITY', textX, 20);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(14);
+    doc.text('Department of Information Science and Technology', textX, 28);
+    doc.setFontSize(12);
+    doc.text(title, textX, 36);
+    doc.setLineWidth(0.5);
+    doc.line(14, 45, doc.internal.pageSize.width - 14, 45);
+    return 55;
   };
 
   if (loadingUser) {
@@ -252,7 +267,6 @@ const fetchUgProjectsByProgram = async (programName) => {
             <th>Total</th>
             <th>Viva Total</th>
             <th>Assigned Teacher</th>
-            
           </tr>
         </thead>
         <tbody>
@@ -266,7 +280,6 @@ const fetchUgProjectsByProgram = async (programName) => {
               <td>{student.marks4}</td>
               <td>{Math.round(student.viva_total_awarded/3) || 0}</td>
               <td>{student.teacherDisplayName}</td>
-              
             </tr>
           )) : (
             <tr><td colSpan="9">No students found.</td></tr>
@@ -289,7 +302,6 @@ const fetchUgProjectsByProgram = async (programName) => {
             <th>Total</th>
             <th>Viva Total</th>
             <th>Assigned Teacher</th>
-            
           </tr>
         </thead>
         <tbody>
@@ -307,7 +319,6 @@ const fetchUgProjectsByProgram = async (programName) => {
               <td>{project.Total}</td>
               <td>{Math.round(project.viva_total_awarded / 3) || 0}</td>
               <td>{project.teacherDisplayName || 'N/A'}</td>
-              
             </tr>
           )) : (
             <tr><td colSpan="9">No projects found.</td></tr>
@@ -320,8 +331,6 @@ const fetchUgProjectsByProgram = async (programName) => {
   return (
    <div className='teacher-dashboard-layout'>
     <div className="hod-container">
-      
-
       {!selectedProgram && (
         <div className="programs-grid">
           {allPrograms.map((program) => (
