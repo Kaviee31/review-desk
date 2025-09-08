@@ -11,7 +11,7 @@ import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
 import { pgCourses, ugCourses, courses } from "../constants/courses";
 import Footer from './Footer';
-import annaUniversityLogo from '../assets/anna-university-logo.png'; // 1. LOGO IMPORT ADDED
+import annaUniversityLogo from '../assets/anna-university-logo.png'; 
 
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 

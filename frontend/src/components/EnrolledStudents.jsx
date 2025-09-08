@@ -30,6 +30,8 @@ function EnrolledStudents() {
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
   const [loading, setLoading] = useState(true);
   const [marksLockStatus, setMarksLockStatus] = useState('Unlocked');
+  const [showPdfDropdown, setShowPdfDropdown] = useState(false);
+  const [showExcelDropdown, setShowExcelDropdown] = useState(false);
 
   // Modified to store objects with pdfPath, pptPath, otherPath, and uploadedAt
   const [latestReviewFiles, setLatestReviewFiles] = useState({});
@@ -448,58 +450,179 @@ const addPdfHeader = (doc, title) => {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = (reportType) => {
     const doc = new jsPDF();
     const courseName = selectedProgram || "Students";
-    const tableStartY = addPdfHeader(doc, `${courseName} Marks Report`);
+    const currentDate = new Date().toLocaleDateString('en-GB');
+
+    let tableColumn = [];
+    let tableRows = [];
+    let reportTitle = "";
+    let fileName = "";
+
+    // Determine columns, rows, title, and filename based on the selected report type
+    switch (reportType) {
+      case 'assessment1':
+        reportTitle = `${courseName} 1st Assessment Report`;
+        fileName = `${courseName}_Assessment_1_Report.pdf`;
+        tableColumn = ["Register Number", "Student Name", "Assessment 1"];
+        tableRows = students.map((student) => [
+          student.registerNumber,
+          student.studentName,
+          student.marks1,
+        ]);
+        break;
+      case 'assessment2':
+        reportTitle = `${courseName} 2nd Assessment Report`;
+        fileName = `${courseName}_Assessment_2_Report.pdf`;
+        tableColumn = ["Register Number", "Student Name", "Assessment 2"];
+        tableRows = students.map((student) => [
+          student.registerNumber,
+          student.studentName,
+          student.marks2,
+        ]);
+        break;
+      case 'assessment3':
+        reportTitle = `${courseName} 3rd Assessment Report`;
+        fileName = `${courseName}_Assessment_3_Report.pdf`;
+        tableColumn = ["Register Number", "Student Name", "Assessment 3"];
+        tableRows = students.map((student) => [
+          student.registerNumber,
+          student.studentName,
+          student.marks3,
+        ]);
+        break;
+      case 'total':
+      default:
+        reportTitle = `${courseName} Total Marks Report`;
+        fileName = `${courseName}_Total_Marks_Report.pdf`;
+        tableColumn = ["Register Number", "Student Name", "Assess1", "Assess2", "Assess3", "Total"];
+        tableRows = students.map((student) => [
+          student.registerNumber,
+          student.studentName,
+          student.marks1,
+          student.marks2,
+          student.marks3,
+          student.marks4,
+        ]);
+        break;
+    }
     
-    const tableColumn = ["Register Number", "Project Name", "Assess1", "Assess2", "Assess3", "Total"];
-    const tableRows = students.map((student) => [
-      student.registerNumber,
-      student.projectName,
-      student.marks1,
-      student.marks2,
-      student.marks3,
-      student.marks4,
-    ]);
+    const tableStartY = addPdfHeader(doc, reportTitle);
+    
+    // Add date of download below the header
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'italic');
+    doc.text(`Generated on: ${currentDate}`, doc.internal.pageSize.width - 14, tableStartY - 5, { align: 'right' });
+
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
       startY: tableStartY,
     });
-    doc.save(`${courseName.replace(/[^a-zA-Z0-9]/g, '_')}_Marks_Report.pdf`);
+
+    doc.save(fileName.replace(/[^a-zA-Z0-9]/g, '_'));
+    setShowPdfDropdown(false); // Close dropdown after download
   };
 
-  const handleDownloadSpreadsheet = () => {
+  const handleDownloadSpreadsheet = (reportType) => {
     let dataToExport = [];
+    let fileName = "";
+    const baseFileName = `${selectedProgram || 'Report'}`;
+
+    // Logic for PG Programs
     if (pgPrograms.includes(selectedProgram)) {
-      dataToExport = students.map(student => ({
-        "Register Number": student.registerNumber,
-        "Assessment 1": student.marks1,
-        "Assessment 2": student.marks2,
-        "Assessment 3": student.marks3,
-        "Total": student.marks4,
-      }));
-    } else if (ugPrograms.includes(selectedProgram)) {
-      dataToExport = ugProjects.map(project => ({
-        "Project Name": project.projectName,
-        "Register Numbers": project.groupRegisterNumbers.join(', '), // Display all register numbers
-        "Assessment 1": project.Assessment1,
-        "Assessment 2": project.Assessment2,
-        "Assessment 3": project.Assessment3,
-        "Total": project.Total, // Added back total for excel consistency
-      }));
+      switch (reportType) {
+        case 'assessment1':
+          fileName = `${baseFileName}_Assessment_1.xlsx`;
+          dataToExport = students.map(student => ({
+            "Register Number": student.registerNumber,
+            "Student Name": student.studentName,
+            "Assessment 1": student.marks1,
+          }));
+          break;
+        case 'assessment2':
+          fileName = `${baseFileName}_Assessment_2.xlsx`;
+          dataToExport = students.map(student => ({
+            "Register Number": student.registerNumber,
+            "Student Name": student.studentName,
+            "Assessment 2": student.marks2,
+          }));
+          break;
+        case 'assessment3':
+          fileName = `${baseFileName}_Assessment_3.xlsx`;
+          dataToExport = students.map(student => ({
+            "Register Number": student.registerNumber,
+            "Student Name": student.studentName,
+            "Assessment 3": student.marks3,
+          }));
+          break;
+        case 'total':
+        default:
+          fileName = `${baseFileName}_Total_Marks.xlsx`;
+          dataToExport = students.map(student => ({
+            "Register Number": student.registerNumber,
+            "Student Name": student.studentName,
+            "Assessment 1": student.marks1,
+            "Assessment 2": student.marks2,
+            "Assessment 3": student.marks3,
+            "Total": student.marks4,
+          }));
+          break;
+      }
+    } 
+    // Logic for UG Programs
+    else if (ugPrograms.includes(selectedProgram)) {
+      switch (reportType) {
+        case 'assessment1':
+          fileName = `${baseFileName}_Projects_Assessment_1.xlsx`;
+          dataToExport = ugProjects.map(project => ({
+            "Project Name": project.projectName,
+            "Register Numbers": project.groupRegisterNumbers.join(', '),
+            "Assessment 1": project.Assessment1,
+          }));
+          break;
+        case 'assessment2':
+          fileName = `${baseFileName}_Projects_Assessment_2.xlsx`;
+          dataToExport = ugProjects.map(project => ({
+            "Project Name": project.projectName,
+            "Register Numbers": project.groupRegisterNumbers.join(', '),
+            "Assessment 2": project.Assessment2,
+          }));
+          break;
+        case 'assessment3':
+          fileName = `${baseFileName}_Projects_Assessment_3.xlsx`;
+          dataToExport = ugProjects.map(project => ({
+            "Project Name": project.projectName,
+            "Register Numbers": project.groupRegisterNumbers.join(', '),
+            "Assessment 3": project.Assessment3,
+          }));
+          break;
+        case 'total':
+        default:
+          fileName = `${baseFileName}_Projects_Total_Marks.xlsx`;
+          dataToExport = ugProjects.map(project => ({
+            "Project Name": project.projectName,
+            "Register Numbers": project.groupRegisterNumbers.join(', '),
+            "Assessment 1": project.Assessment1,
+            "Assessment 2": project.Assessment2,
+            "Assessment 3": project.Assessment3,
+            "Total": project.Total,
+          }));
+          break;
+      }
     }
 
     if (dataToExport.length === 0) {
-      toast.warn("No data to download for the selected program.");
+      toast.warn("No data available to download for the selected program.");
       return;
     }
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, selectedProgram ? `${selectedProgram} Data` : "Data");
-    XLSX.writeFile(workbook, `${selectedProgram ? selectedProgram + '_' : ''}Data_Report.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, selectedProgram || "Data");
+    XLSX.writeFile(workbook, fileName.replace(/[^a-zA-Z0-9_.]/g, '_')); // Sanitize filename
+    setShowExcelDropdown(false); // Close dropdown after download
   };
 
   const hasUnseenMessages = async (studentRegisterNumber) => {
@@ -1225,18 +1348,129 @@ const handleDownloadStudentReviewPDF = () => {
     </button>
                   
 
-                  <button
-                    onClick={handleDownloadPDF}
-                    className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75"
-                  >
-                    Download PDF
-                  </button>
-                  <button
-                    onClick={handleDownloadSpreadsheet}
-                    className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
-                  >
-                    Download Excel Sheet
-                  </button>
+<div className="dropdown-container">
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setShowPdfDropdown(!showPdfDropdown)}
+                        className="dropdown-button"
+                        id="options-menu"
+                        aria-haspopup="true"
+                        aria-expanded={showPdfDropdown}
+                      >
+                        Download PDF
+                        <svg className="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" style={{ transform: showPdfDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {showPdfDropdown && (
+                      <div
+                        className="dropdown-menu"
+                        role="menu"
+                        aria-orientation="vertical"
+                        aria-labelledby="options-menu"
+                      >
+                        <div className="py-1" role="none">
+                          <a
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); handleDownloadPDF('assessment1'); }}
+                            className="dropdown-item"
+                            role="menuitem"
+                          >
+                            1st Assessment Report
+                          </a>
+                          <a
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); handleDownloadPDF('assessment2'); }}
+                            className="dropdown-item"
+                            role="menuitem"
+                          >
+                            2nd Assessment Report
+                          </a>
+                          <a
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); handleDownloadPDF('assessment3'); }}
+                            className="dropdown-item"
+                            role="menuitem"
+                          >
+                            3rd Assessment Report
+                          </a>
+                          <a
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); handleDownloadPDF('total'); }}
+                            className="dropdown-item font-bold"
+                            role="menuitem"
+                          >
+                            Total Marks Report
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="dropdown-container">
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setShowExcelDropdown(!showExcelDropdown)}
+                        className="dropdown-button"
+                        style={{ boxShadow: '0 4px 15px rgba(22, 160, 133, 0.4)' }}
+                        id="excel-options-menu"
+                        aria-haspopup="true"
+                        aria-expanded={showExcelDropdown}
+                      >
+                        Download Excel
+                        <svg className="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" style={{ transform: showExcelDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {showExcelDropdown && (
+                      <div
+                        className="dropdown-menu"
+                        role="menu"
+                        aria-orientation="vertical"
+                        aria-labelledby="excel-options-menu"
+                      >
+                        <div className="py-1" role="none">
+                          <a
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); handleDownloadSpreadsheet('assessment1'); }}
+                            className="dropdown-item"
+                            role="menuitem"
+                          >
+                            1st Assessment Report
+                          </a>
+                          <a
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); handleDownloadSpreadsheet('assessment2'); }}
+                            className="dropdown-item"
+                            role="menuitem"
+                          >
+                            2nd Assessment Report
+                          </a>
+                          <a
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); handleDownloadSpreadsheet('assessment3'); }}
+                            className="dropdown-item"
+                            role="menuitem"
+                          >
+                            3rd Assessment Report
+                          </a>
+                          <a
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); handleDownloadSpreadsheet('total'); }}
+                            className="dropdown-item font-bold"
+                            role="menuitem"
+                          >
+                            Total Marks Report
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </>
             )}
