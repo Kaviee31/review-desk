@@ -1,57 +1,62 @@
+/* --- General Container and Page Background --- */
 .hod-container {
   min-height: 100vh;
   padding: 40px;
-  color: rgb(0, 0, 0);
   font-family: 'Segoe UI', sans-serif;
   text-align: center;
+  background-color: #ffffff; /* Set a clean white page background */
+  color: #333333; /* Default dark text color for readability */
 }
 
 h1 {
   font-size: 2.8rem;
   margin-bottom: 40px;
-  text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.1); /* Softer shadow for light theme */
 }
 
+/* --- Program Card Styles (Light Theme) --- */
 .programs-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
   justify-items: center;
- 
 }
 
 .program-card {
-  background: rgba(255, 255, 255, 0.1);
+  background: #f9f9f9; /* Light grey background for cards */
   padding: 30px 20px;
   border-radius: 16px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08); /* Softer shadow */
   cursor: pointer;
   transition: all 0.3s ease;
   width: 100%;
   max-width: 300px;
-  }
+  border: 1px solid #e0e0e0; /* Light border */
+}
 
 .program-card:hover {
   transform: scale(1.05);
-  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  border-color: #007bff; /* Highlight color on hover */
+  background: #ffffff;
 }
 
 .program-card h3 {
   font-size: 1.6rem;
   margin-bottom: 10px;
-  color:black;
+  color: black;
 }
 .program-card p {
-  
   margin-bottom: 10px;
-  color:black;
+  color: black;
 }
 
+/* --- Table Styles (Light Theme) --- */
 .students-section {
-  background: rgba(0, 0, 0, 0.2);
+  background: #ffffff; /* Removed dark background */
   padding: 30px;
   border-radius: 20px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
   margin: auto;
   max-width: 1200px;
 }
@@ -64,48 +69,126 @@ h1 {
 table {
   width: 100%;
   border-collapse: collapse;
-  background: rgba(255,255,255,0.1);
+  background: #ffffff;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 thead {
-  background: rgba(255,255,255,0.15);
-  color: #fff;
+  background: #f1f5f9; /* Light header for the table */
+  color: #333; /* Dark text for header */
 }
 
 th, td {
   padding: 12px 20px;
   text-align: center;
-  border-bottom: 1px solid rgba(255,255,255,0.2);
+  border-bottom: 1px solid #e2e8f0; /* Light line separator for rows */
 }
 
 tr:hover {
-  background: rgba(255,255,255,0.2);
+  background: #fafcff; /* Subtle hover effect for rows */
+}
+
+/* --- UNIFIED BUTTON STYLES --- */
+.download-btn,
+.back-button,
+.dropdown-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px; /* Unified padding */
+  font-size: 0.9rem;  /* Unified font size */
+  font-weight: bold;
+  color: white;
+  border: none;
+  border-radius: 50px; /* Unified pill shape */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.download-btn:hover,
+.back-button:hover,
+.dropdown-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Specific Button Background Colors --- */
+.download-btn {
+  background: linear-gradient(45deg, #2980b9, #3498db); /* Blue */
 }
 
 .back-button {
-  margin-top: 20px;
-  padding: 12px 24px;
-  background: #00c3ff;
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.3s;
+  background: linear-gradient(45deg, #2980b9, #3498db);
 }
 
-.back-button:hover {
-  background: #007bff;
+.dropdown-button {
+background: linear-gradient(45deg, #2980b9, #3498db);
 }
 
+
+/* --- Dropdown Menu Styles (No changes needed here) --- */
+.dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 5px);
+  min-width: 240px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+  padding: 8px 0;
+  animation: fadeIn-scaleUp 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.dropdown-item {
+  display: block;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  color: #34495e;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease, padding-left 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f2fc;
+  color: #8e44ad;
+  padding-left: 25px;
+}
+
+.dropdown-item.font-bold {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+@keyframes fadeIn-scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* --- Loading Spinner --- */
 .loading {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  color: #fff;
+  color: #333; /* Changed to dark for light background */
   font-size: 24px;
 }
