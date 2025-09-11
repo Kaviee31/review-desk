@@ -14,7 +14,8 @@ body {
   color: var(--text-light);
 }
 
-.teacher-dashboard-layout {
+/* FIX: Renamed to be specific to this component to avoid conflicts */
+.assign-coordinator-layout {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -38,6 +39,8 @@ body {
   margin-bottom: 50px;
 }
 
+/* --- From here, all styles are scoped to the container --- */
+
 .assign-coordinator-container h2 {
   font-size: 28px;
   font-weight: bold;
@@ -45,7 +48,7 @@ body {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.assign-coordinator-form label {
+.assign-coordinator-container .assign-coordinator-form label {
   display: block;
   text-align: left;
   margin: 15px 0 8px;
@@ -53,8 +56,8 @@ body {
   color: var(--text-light);
 }
 
-.assign-coordinator-form input,
-.assign-coordinator-form select {
+.assign-coordinator-container .assign-coordinator-form input,
+.assign-coordinator-container .assign-coordinator-form select {
   width: 100%;
   padding: 15px 20px;
   border: 1px solid var(--border-color);
@@ -67,19 +70,19 @@ body {
   box-sizing: border-box;
 }
 
-.assign-coordinator-form input::placeholder {
+.assign-coordinator-container .assign-coordinator-form input::placeholder {
   color: rgba(255, 255, 255, 0.6);
 }
 
-.assign-coordinator-form input:focus,
-.assign-coordinator-form select:focus {
+.assign-coordinator-container .assign-coordinator-form input:focus,
+.assign-coordinator-container .assign-coordinator-form select:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 15px rgba(74, 99, 231, 0.8);
   background: rgba(255, 255, 255, 0.25);
   outline: none;
 }
 
-.assign-coordinator-form select {
+.assign-coordinator-container .assign-coordinator-form select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -89,23 +92,18 @@ body {
   background-size: 20px;
 }
 
-/* --- ✨ IMPROVED DROPDOWN OPTION STYLES --- */
-
-/* FIX: Switched to a light, clean background for the dropdown options */
-.assign-coordinator-form select option {
-  background: var(--secondary-color); /* Light background (#f4f7fb) */
-  color: var(--text-dark); /* Dark text for readability */
-  padding: 8px 12px; /* Add some padding for better spacing */
+.assign-coordinator-container .assign-coordinator-form select option {
+  background: var(--secondary-color);
+  color: var(--text-dark);
+  padding: 8px 12px;
 }
 
-/* NEW: Added a custom hover style that matches the button color */
-.assign-coordinator-form select option:hover {
-  background: var(--primary-color); /* Blue highlight on hover */
-  color: var(--text-light); /* White text on hover */
+.assign-coordinator-container .assign-coordinator-form select option:hover {
+  background: var(--primary-color);
+  color: var(--text-light);
 }
 
-/* Button */
-.assign-coordinator-form button {
+.assign-coordinator-container .assign-coordinator-form button {
   margin-top: 30px;
   width: 100%;
   padding: 16px;
@@ -120,8 +118,8 @@ body {
   transition: all 0.3s ease;
 }
 
-.assign-coordinator-form button:hover,
-.assign-coordinator-form button:focus {
+.assign-coordinator-container .assign-coordinator-form button:hover,
+.assign-coordinator-container .assign-coordinator-form button:focus {
   transform: translateY(-3px);
   box-shadow: 0 10px 25px rgba(74, 99, 231, 0.6);
   outline: none;
