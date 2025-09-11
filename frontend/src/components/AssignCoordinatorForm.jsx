@@ -1,243 +1,172 @@
-import React, { useState } from 'react';
-import { auth, db } from '../firebase';
+import React, { useState, useEffect } from 'react';
+import { db } from '../firebase';
 import {
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-} from 'firebase/auth';
-import {
-  collection, query, where, getDocs, doc, setDoc, updateDoc, arrayUnion
+  collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion
 } from 'firebase/firestore';
 import emailjs from 'emailjs-com';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/AssignCoordinatorForm.css';
 import Footer from './Footer';
+import { courses } from "../constants/courses";
 
-import { pgCourses, ugCourses, courses } from "../constants/courses";
 function AssignCoordinatorForm() {
-  const [guideEmailId, setGuideEmailId] = useState('');
-  const [guideName, setGuideName] = useState('');
+  // State for the list of teachers and the selected teacher/course
+  const [teachers, setTeachers] = useState([]);
+  const [selectedTeacherId, setSelectedTeacherId] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
+
+  // Loading states for fetching teachers and submitting the form
   const [loading, setLoading] = useState(false);
+  const [teachersLoading, setTeachersLoading] = useState(true);
 
- 
+  // Fetch all teachers from Firestore when the component mounts
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const usersRef = collection(db, "users");
+        // Query for users who have "Teacher" in their 'roles' array
+        const q = query(usersRef, where("roles", "array-contains", "Teacher"));
+        const querySnapshot = await getDocs(q);
 
-  const generatePassword = () => {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-    let password = '';
-    for (let i = 0; i < 10; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return password;
-  };
+        const teachersList = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        setTeachers(teachersList);
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+        toast.error("Could not load the list of teachers.");
+      } finally {
+        setTeachersLoading(false);
+      }
+    };
+
+    fetchTeachers();
+  }, []); // The empty array ensures this runs only once on mount
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!guideEmailId || !guideName || !selectedCourse) {
-      toast.error('Please fill all fields');
+    if (!selectedTeacherId || !selectedCourse) {
+      toast.error('Please select a teacher and a course');
       return;
     }
 
     setLoading(true);
-    const password = generatePassword();
-    
-try {
+
+    try {
+      // Find the full teacher object from the state using the selected ID
+      const selectedTeacher = teachers.find(t => t.id === selectedTeacherId);
+      if (!selectedTeacher) {
+        toast.error("Selected teacher not found.");
+        setLoading(false);
+        return;
+      }
+
+      const { email: guideEmailId, username: guideName, id: userId } = selectedTeacher;
+
+      // --- Check if a different coordinator is already assigned to this course ---
       const usersRef = collection(db, "users");
+      const q = query(usersRef, where("department", "array-contains", selectedCourse), where("roles", "array-contains", "Coordinator"));
+      const querySnapshot = await getDocs(q);
 
-      // --- NEW: Check if the email belongs to an existing student ---
-      const studentQuery = query(usersRef, where("email", "==", guideEmailId));
-      const studentSnapshot = await getDocs(studentQuery);
-
-      if (!studentSnapshot.empty) {
-        const existingUserData = studentSnapshot.docs[0].data();
-        if (Array.isArray(existingUserData.roles) && existingUserData.roles.includes("Student")) {
-          toast.error(`Cannot assign ${guideEmailId} as a coordinator. This email is already registered as a student.`);
+      if (!querySnapshot.empty) {
+        const existingCoordinator = querySnapshot.docs[0].data();
+        // If a coordinator exists and it's not the one we're trying to assign
+        if (existingCoordinator.email !== guideEmailId) {
+          toast.error(`Course ${selectedCourse} is already assigned to ${existingCoordinator.username}.`);
           setLoading(false);
           return;
         }
       }
-      // --- END NEW CHECK ---
 
-      // --- Existing logic for unique coordinator per course ---
-      // Query only for documents where 'roles' array contains "Coordinator"
-      const q = query(usersRef, where("roles", "array-contains", "Coordinator"));
-      const querySnapshot = await getDocs(q);
+      const userRef = doc(db, "users", userId);
+      const userDoc = await getDoc(userRef);
+      const userData = userDoc.data();
 
-      let existingCoordinatorForCourse = null;
-      if (!querySnapshot.empty) {
-        // Client-side filtering to find if a coordinator is already assigned to this specific course
-        existingCoordinatorForCourse = querySnapshot.docs.find(doc => {
-          const data = doc.data();
-          // Check if 'department' field exists, is an array, and includes selectedCourse
-          return Array.isArray(data.department) && data.department.includes(selectedCourse);
-        });
-
-        if (existingCoordinatorForCourse) {
-          const existingCoordinatorData = existingCoordinatorForCourse.data();
-          if (existingCoordinatorData.email !== guideEmailId) {
-            toast.error(`A coordinator is already assigned to ${selectedCourse}: ${existingCoordinatorData.email}.`);
-            setLoading(false);
-            return;
-          }
-        }
-      }
-      // --- End of new logic ---
-
-      // Try creating new user directly
-      let user = null;
-      let isNewUser = false; // Flag to check if a new user was created
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, guideEmailId, password);
-        user = userCredential.user;
-        isNewUser = true;
-      } catch (authError) {
-        if (authError.code === 'auth/email-already-in-use') {
-          // If email already in use, find the user in Firestore
-          const qExisting = query(usersRef, where("email", "==", guideEmailId));
-          const querySnapshotExisting = await getDocs(qExisting);
-          if (!querySnapshotExisting.empty) {
-            user = querySnapshotExisting.docs[0]; // Get the existing user document
-            const userData = user.data();
-            // If the user is already a coordinator for this course, prevent re-assignment
-            // Also check if 'department' is an array and already contains the selectedCourse
-            if (Array.isArray(userData.department) && userData.department.includes(selectedCourse) && userData.roles.includes("Coordinator")) {
-              toast.info(`This user is already the coordinator for ${selectedCourse}.`);
-              setLoading(false);
-              return;
-            }
-          } else {
-            toast.error('User found in Auth but not in Firestore. Cannot assign role.');
-            setLoading(false);
-            return;
-          }
-        } else {
-          throw authError; // Re-throw other authentication errors
-        }
+      // Check if the teacher is already a coordinator for this specific course
+      if (Array.isArray(userData.department) && userData.department.includes(selectedCourse) && userData.roles.includes("Coordinator")) {
+        toast.info(`${guideName} is already the coordinator for ${selectedCourse}.`);
+        setLoading(false);
+        return;
       }
 
-      if (user) {
-        let userId = isNewUser ? user.uid : user.id; // Use uid for new user, id for existing doc
-        let currentRoles = existingCoordinatorForCourse?.data()?.roles || []; // Get existing roles if coordinator exists for this course
+      // Update the teacher's document to add the new role and course
+      await updateDoc(userRef, {
+        department: arrayUnion(selectedCourse),
+        roles: arrayUnion("Coordinator")
+      });
 
-        if (isNewUser) {
-          await setDoc(doc(db, "users", userId), {
-            username: guideName,
-            email: guideEmailId,
-            department: [selectedCourse], // Ensure department is an array
-            roles: ["Coordinator"]
-          });
-          await sendEmailVerification(user); // Send verification for new user
+      // Send an email notification
+      const emailParams = {
+        to_name: guideName,
+        to_email: guideEmailId,
+        message: `Hello ${guideName},\n\nYou have been assigned as a Coordinator for the ${selectedCourse} program.\n\nPlease log in with your existing credentials to see your new role.`
+      };
 
-          const emailParams = {
-            to_name: guideName,
-            to_email: guideEmailId,
-            message: `Hello ${guideName},
+      await emailjs.send(
+        'service_zdkw9wb', 'template_j69ex9q', emailParams, 'lBI3Htk5CKshSzMFg'
+      );
 
-You have been assigned as Coordinator for the ${selectedCourse} program.
+      toast.success(`${guideName} has been successfully assigned as Coordinator for ${selectedCourse}.`);
 
-Your login credentials are:
-Email: ${guideEmailId}
-Password: ${password}
-
-Please log in and change your password after your first login.`
-          };
-
-          await emailjs.send(
-            'service_zdkw9wb',
-            'template_j69ex9q',
-            emailParams,
-            'lBI3Htk5CKshSzMFg'
-          );
-
-          toast.success(`New Coordinator created and email sent to ${guideEmailId}`);
-        } else {
-          // Update existing user: add "Coordinator" role and selectedCourse to department array
-          const userRef = doc(db, "users", userId);
-          await updateDoc(userRef, {
-            username: guideName, // Update name in case it changed
-            // Use arrayUnion to add selectedCourse to department if it's not already there
-            department: arrayUnion(selectedCourse),
-            // Use arrayUnion to add "Coordinator" role if it's not already there
-            roles: arrayUnion("Coordinator")
-          });
-
-          const emailParams = {
-            to_name: guideName,
-            to_email: guideEmailId,
-            message: `Hello ${guideName},
-
-You have been assigned as Coordinator for the ${selectedCourse} program.
-
-Please login using your existing credentials.`
-          };
-
-          await emailjs.send(
-            'service_zdkw9wb',
-            'template_j69ex9q',
-            emailParams,
-            'lBI3Htk5CKshSzMFg'
-          );
-
-          toast.success(`Existing user updated and email sent to ${guideEmailId}`);
-        }
-      }
     } catch (error) {
       console.error("Error assigning coordinator:", error);
-      toast.error(`Failed: ${error.message}`);
+      toast.error(`Failed to assign coordinator: ${error.message}`);
     } finally {
       setLoading(false);
-      setGuideEmailId('');
-      setGuideName('');
+      setSelectedTeacherId('');
       setSelectedCourse('');
     }
   };
 
   return (
     <div className='teacher-dashboard-layout'>
-    <div className="assign-coordinator-container">
-      <h2>Assign Coordinator</h2>
-      <form className="assign-coordinator-form" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Email ID:</label>
-          <input
-            type="email"
-            value={guideEmailId}
-            onChange={(e) => setGuideEmailId(e.target.value)}
-            required
-          />
-        </div>
+      <div className="assign-coordinator-container">
+        <h2>Assign Coordinator</h2>
+        <form className="assign-coordinator-form" onSubmit={handleSubmit}>
 
-        <div className="form-group">
-          <label>Name:</label>
-          <input
-            type="text"
-            value={guideName}
-            onChange={(e) => setGuideName(e.target.value)}
-            required
-          />
-        </div>
+          <div className="form-group">
+            <label>Teacher:</label>
+            <select
+              value={selectedTeacherId}
+              onChange={(e) => setSelectedTeacherId(e.target.value)}
+              required
+              disabled={teachersLoading}
+            >
+              <option value="">
+                {teachersLoading ? "Loading teachers..." : "Select a Teacher"}
+              </option>
+              {teachers.map(teacher => (
+                <option key={teacher.id} value={teacher.id}>
+                  {teacher.username} ({teacher.facultyId || 'No ID'})
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div className="form-group">
-          <label>Course:</label>
-          <select
-            value={selectedCourse}
-            onChange={(e) => setSelectedCourse(e.target.value)}
-            required
-          >
-            <option value="">Select a Course</option>
-            {courses.map(course => (
-              <option key={course} value={course}>{course}</option>
-            ))}
-          </select>
-        </div>
+          <div className="form-group">
+            <label>Course:</label>
+            <select
+              value={selectedCourse}
+              onChange={(e) => setSelectedCourse(e.target.value)}
+              required
+            >
+              <option value="">Select a Course</option>
+              {courses.map(course => (
+                <option key={course} value={course}>{course}</option>
+              ))}
+            </select>
+          </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Assigning..." : "Assign Coordinator"}
-        </button>
-      </form>
-    </div>
-    <Footer />
+          <button type="submit" disabled={loading || teachersLoading}>
+            {loading ? "Assigning..." : "Assign Coordinator"}
+          </button>
+        </form>
+      </div>
+      <Footer />
     </div>
   );
 }

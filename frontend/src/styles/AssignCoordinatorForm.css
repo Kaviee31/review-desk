@@ -1,43 +1,48 @@
 :root {
   --primary-color: #4a63e7;
   --secondary-color: #f4f7fb;
-  --accent-color: #ffb347;
+  --text-light: #ffffff;
+  --text-dark: #333333;
   --border-color: rgba(255, 255, 255, 0.3);
-  --text-dark: #ffffff;
   --input-bg: rgba(255, 255, 255, 0.15);
 }
 
 body {
-  background: #fffdd0;
+  background: linear-gradient(135deg, #232526, #414345);
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
-  padding: 0;
-  color: var(--text-dark);
-  min-height: 100vh;
+  color: var(--text-light);
+}
+
+.teacher-dashboard-layout {
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .assign-coordinator-container {
+  width: 100%;
   max-width: 500px;
   padding: 40px;
-  margin: 50px auto;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid var(--border-color);
   text-align: center;
-  color: #030303;
+  color: var(--text-light);
+  margin-bottom: 50px;
 }
 
 .assign-coordinator-container h2 {
   font-size: 28px;
   font-weight: bold;
   margin-bottom: 30px;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .assign-coordinator-form label {
@@ -45,59 +50,58 @@ body {
   text-align: left;
   margin: 15px 0 8px;
   font-weight: 600;
-  color: #070707;
+  color: var(--text-light);
 }
 
 .assign-coordinator-form input,
 .assign-coordinator-form select {
   width: 100%;
   padding: 15px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.15);
-  color: #000000;
+  background: var(--input-bg);
+  color: var(--text-light);
   font-size: 16px;
-  backdrop-filter: blur(10px);
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
+  box-sizing: border-box;
 }
 
 .assign-coordinator-form input::placeholder {
-  color: rgba(7, 7, 7, 0.6);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .assign-coordinator-form input:focus,
 .assign-coordinator-form select:focus {
-  border-color: #5ac8fa;
-  box-shadow: 0 0 15px rgba(90, 200, 250, 0.8);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 15px rgba(74, 99, 231, 0.8);
   background: rgba(255, 255, 255, 0.25);
   outline: none;
 }
 
-/* Modern glass dropdown style */
 .assign-coordinator-form select {
-  width: 100%;
-  padding: 15px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1); /* lighter glass */
-  color: #070707; /* white text */
-  font-size: 16px;
-  backdrop-filter: blur(20px);
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 15px center;
   background-size: 20px;
 }
 
+/* --- ✨ IMPROVED DROPDOWN OPTION STYLES --- */
+
+/* FIX: Switched to a light, clean background for the dropdown options */
 .assign-coordinator-form select option {
-  background-color:#fffdd0;
-  color: #000000;
+  background: var(--secondary-color); /* Light background (#f4f7fb) */
+  color: var(--text-dark); /* Dark text for readability */
+  padding: 8px 12px; /* Add some padding for better spacing */
+}
+
+/* NEW: Added a custom hover style that matches the button color */
+.assign-coordinator-form select option:hover {
+  background: var(--primary-color); /* Blue highlight on hover */
+  color: var(--text-light); /* White text on hover */
 }
 
 /* Button */
@@ -105,18 +109,20 @@ body {
   margin-top: 30px;
   width: 100%;
   padding: 16px;
-  background: rgba(0, 123, 255, 0.8);
+  background: var(--primary-color);
   border: none;
   border-radius: 12px;
   font-size: 18px;
   font-weight: bold;
   color: white;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(141, 202, 252, 0.6);
-  transition: 0.3s ease;
+  box-shadow: 0 8px 20px rgba(74, 99, 231, 0.4);
+  transition: all 0.3s ease;
 }
 
-.assign-coordinator-form button:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 10px 25px rgba(105, 13, 1, 0.8);
+.assign-coordinator-form button:hover,
+.assign-coordinator-form button:focus {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(74, 99, 231, 0.6);
+  outline: none;
 }
