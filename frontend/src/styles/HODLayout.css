@@ -20,14 +20,36 @@
   flex-wrap: wrap;
   width: 100%;
   box-sizing: border-box;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
+/* Header section with logo and text */
+.navbar-header {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Adds space between the image and the text */
+}
 
+.navbar-image {
+  height: 50px;
+  width: 50px;
+}
 
-/* Links section */
+.navbar-logo-container {
+  display: flex;
+  flex-direction: column; /* This stacks the two text lines */
+}
+
+.navbar-logo {
+  font-size: 22px;
+  font-weight: bold;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+/* Links and actions section */
 .navbar-links {
   display: flex;
+  align-items: center; /* Vertically align items */
   flex-wrap: wrap;
   gap: 15px;
   margin-top: 10px;
@@ -58,35 +80,46 @@
   color: white;
 }
 
-/* Main content */
+/* Main content area */
 .hod-body {
   flex: 1;
   width: 100%;
   padding: 30px;
   box-sizing: border-box;
-  background:  #fffdd0
+  background: #fffdd0;
 }
 
-
-
-.navbar-header {
+/* --- ✨ NEW Styles for Role Switcher Dropdown --- */
+.role-switcher {
   display: flex;
   align-items: center;
-  gap: 15px; /* Adds space between the image and the text */
+  gap: 8px;
 }
 
-.navbar-image {
-  height: 50px;
-  width: 50px;
-   /* Optional: gives the image rounded corners */
+.role-switcher label {
+  font-size: 16px;
+  color: #f0f0f0; /* Slightly off-white for better readability */
 }
 
-.navbar-logo-container {
-  display: flex;
-  flex-direction: column; /* This stacks the two text lines */
+.role-switcher select {
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  -webkit-appearance: none; /* Removes default browser styling */
+  appearance: none;
 }
-.navbar-logo {
-  font-size: 22px;
-  font-weight: bold;
-  font-family: 'Times New Roman', Times, serif;
+
+.role-switcher select:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Style for the options within the dropdown */
+.role-switcher select option {
+  background-color: #34495e; /* Dark background for dropdown options */
+  color: white;
 }
