@@ -14,8 +14,8 @@ body {
   color: var(--text-light);
 }
 
-/* FIX: Renamed to be specific to this component to avoid conflicts */
-.assign-coordinator-layout {
+
+.teacher-dashboard-layout {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -23,6 +23,7 @@ body {
   padding: 20px;
   box-sizing: border-box;
 }
+
 
 .assign-coordinator-container {
   width: 100%;

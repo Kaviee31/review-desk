@@ -67,14 +67,18 @@ function AssignCoordinatorForm() {
 
       const { email: guideEmailId, username: guideName, id: userId } = selectedTeacher;
 
-      // --- Check if a different coordinator is already assigned to this course ---
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("department", "array-contains", selectedCourse), where("roles", "array-contains", "Coordinator"));
+const usersRef = collection(db, "users");
+      const q = query(usersRef, where("roles", "array-contains", "Coordinator"));
       const querySnapshot = await getDocs(q);
 
-      if (!querySnapshot.empty) {
-        const existingCoordinator = querySnapshot.docs[0].data();
-        // If a coordinator exists and it's not the one we're trying to assign
+      // Then, filter those results in your code to find one matching the selected course
+      const existingCoordinatorDoc = querySnapshot.docs.find(doc => 
+        doc.data().department && doc.data().department.includes(selectedCourse)
+      );
+
+      if (existingCoordinatorDoc) {
+        const existingCoordinator = existingCoordinatorDoc.data();
+        // If a coordinator for this course exists and it's not the same teacher
         if (existingCoordinator.email !== guideEmailId) {
           toast.error(`Course ${selectedCourse} is already assigned to ${existingCoordinator.username}.`);
           setLoading(false);

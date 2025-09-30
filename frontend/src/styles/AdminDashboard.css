@@ -2,14 +2,14 @@
 :root {
   --primary-blue: #007bff;
   --light-blue: #00c3ff;
-  --text-light: #f0f0f0; /* Slightly off-white for better readability */
+  --text-light: #f0f0f0;
 }
 
-/* Main container for the entire Admin Dashboard page */
+/* Main container for the entire page */
 .cont {
   display: flex;
   height: 100vh;
-  background: url("https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=2070") no-repeat center center/cover; /* Changed to a higher-res, more suitable background */
+  background: url("https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=2070") no-repeat center center/cover;
   position: relative;
   box-sizing: border-box;
   overflow: hidden;
@@ -17,7 +17,7 @@
   font-family: 'Inter', sans-serif;
 }
 
-/* Glassmorphism background overlay for .cont */
+/* Glassmorphism background overlay */
 .cont::before {
   content: "";
   position: absolute;
@@ -28,17 +28,22 @@
 
 /* Admin Sidebar */
 .admin-sidebar {
-  flex: 0 0 250px; /* Slightly wider for better spacing */
+  flex: 0 0 250px;
   background: rgba(10, 20, 30, 0.4);
   backdrop-filter: blur(15px);
   padding: 30px 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;   /* 👈 align content to left */
+  justify-content: flex-start;
   z-index: 2;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   height: 100vh;
   box-sizing: border-box;
+
+  position: fixed;  /* 👈 pin sidebar to left side */
+  top: 0;
+  left: 0;
 }
 
 .admin-sidebar h2 {
@@ -90,19 +95,18 @@
 .dashboard-content {
   width: 100%;
   max-width: 700px;
-  /* FIX: Unified glass background */
   background: rgba(10, 20, 30, 0.4);
   backdrop-filter: blur(15px);
   padding: 40px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  margin-left:250px;
 }
 
 .dashboard-content h2,
 .dashboard-content h3 {
   text-align: center;
-  /* FIX: Light text color for contrast */
   color: var(--text-light);
   font-weight: 700;
   margin-top: 0;
@@ -114,11 +118,9 @@
   text-align: left;
   margin: 15px 0 8px;
   font-weight: 500;
-  /* FIX: Light text color for contrast */
   color: rgba(255, 255, 255, 0.8);
 }
 
-/* FIX: Unified glass style for all inputs */
 .dashboard-content input,
 .dashboard-content select,
 .dashboard-content textarea {
@@ -152,8 +154,8 @@
   color: var(--text-light);
 }
 
-/* Unified style for all buttons inside the form */
-.dashboard-content button, .excel-upload-section .excel-button {
+/* Unified style for all primary form buttons */
+.dashboard-content button[type="submit"] {
   margin-top: 20px;
   padding: 15px;
   width: 100%;
@@ -168,165 +170,95 @@
   box-shadow: 0 6px 15px rgba(0, 150, 255, 0.4);
 }
 
-.dashboard-content button:hover, .excel-upload-section .excel-button:hover {
+.dashboard-content button[type="submit"]:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 20px rgba(0, 150, 255, 0.6);
 }
 
+/* --- Improved UG 'Add/Remove' Button Styles --- */
 .ug-button-group {
   display: flex;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 15px;
+  margin-top: 15px;
 }
 
-/* Excel Upload Section */
+.ug-button-group button {
+  flex: 1; /* Make them share space equally */
+  padding: 10px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.ug-button-group button:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* --- ✨ NEW Attractive Excel Upload Section --- */
 .excel-upload-section {
   margin-top: 40px;
   padding-top: 30px;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.excel-upload-section p {
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 15px;
-  text-align: center;
-}
-
 .excel-input-label {
-  display: block;
-  padding: 15px;
-  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.05);
   border: 2px dashed rgba(255, 255, 255, 0.3);
   border-radius: 10px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .excel-input-label:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
   border-color: var(--light-blue);
+  color: var(--text-light);
 }
 
 .excel-input-label input[type="file"] {
   display: none;
-}:root {
-  --primary-blue: #6a5af9; /* A more vibrant purple-blue */
-  --secondary-color: #f4f7fb;
-  --text-light: #ffffff;
 }
 
-/* Base layout styles for the page */
-.assign-coordinator-layout {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 20px;
-  box-sizing: border-box;
-  background: #111827; /* A solid, dark navy background for better contrast */
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text-light);
-}
-
-
-/* --- ✨ THIS IS THE NEW AND IMPROVED FORM CONTAINER --- */
-.assign-coordinator-container {
-  width: 100%;
-  max-width: 480px;
-  padding: 40px;
-  border-radius: 20px;
-
-  /* A vibrant but transparent gradient background */
-  background: linear-gradient(135deg, rgba(106, 90, 249, 0.15), rgba(70, 50, 180, 0.25));
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-
-  /* A brighter border and a softer shadow */
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-
+.file-name-display {
   text-align: center;
-  color: var(--text-light);
+  margin-top: 15px;
+  color: var(--light-blue);
+  font-style: italic;
+  font-size: 14px;
 }
 
-.assign-coordinator-container h2 {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 30px;
-  color: var(--text-light);
-  /* A subtle glow that matches the button color */
-  text-shadow: 0 0 15px rgba(106, 90, 249, 0.5);
-}
-
-.assign-coordinator-container .assign-coordinator-form label {
+.excel-upload-section .excel-button {
   display: block;
-  text-align: left;
-  margin: 18px 0 8px;
-  font-weight: 500;
-  /* Brighter label text for readability */
-  color: rgba(8, 8, 8, 0.9);
-}
-
-/* Brighter, cleaner inputs */
-.assign-coordinator-container .assign-coordinator-form input,
-.assign-coordinator-container .assign-coordinator-form select {
-  width: 100%;
-  padding: 14px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(0, 0, 0, 0.25); /* Darker input for better contrast */
-  color: var(--text-light);
-  border-radius: 10px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-}
-
-.assign-coordinator-container .assign-coordinator-form input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.assign-coordinator-container .assign-coordinator-form input:focus,
-.assign-coordinator-container .assign-coordinator-form select:focus {
-  outline: none;
-  border-color: var(--primary-blue);
-  background: rgba(0, 0, 0, 0.3);
-  box-shadow: 0 0 15px rgba(106, 90, 249, 0.5);
-}
-
-/* Custom dropdown arrow */
-.assign-coordinator-container .assign-coordinator-form select {
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 18px center;
-  background-size: 20px;
-}
-
-/* Clean, dark dropdown options */
-.assign-coordinator-container .assign-coordinator-form select option {
-  background-color: #2c334a;
-  color: #070707;
-}
-
-/* A more vibrant button */
-.assign-coordinator-container .assign-coordinator-form button {
-  margin-top: 30px;
-  width: 100%;
-  padding: 16px;
-  background: var(--primary-blue);
+  width: auto;
+  margin: 20px auto 0;
+  padding: 12px 40px;
+  background: #28a745;
   border: none;
   border-radius: 10px;
-  font-size: 1.1rem;
+  color: white;
   font-weight: bold;
-  color: rgb(17, 17, 17);
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(106, 90, 249, 0.4);
   transition: all 0.3s ease;
 }
 
-.assign-coordinator-container .assign-coordinator-form button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(106, 90, 249, 0.6);
+.excel-upload-section .excel-button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.excel-upload-section .excel-button:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-2px);
 }

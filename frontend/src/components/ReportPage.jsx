@@ -193,7 +193,7 @@ function ReportPage() {
         <div className='teacher-dashboard-content'>
         <div className='cont'>
             <div className="dashboard-content">
-                <h2 className="text-2xl font-bold mb-4 text-gray-700">Manage Course Settings</h2>
+                <h2 className="text-2xl font-bold mb-4 text-gray-700">Manage Review Deadlines</h2>
 
                 {!selectedProgram ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -210,7 +210,7 @@ function ReportPage() {
                 ) : (
                     <>
                         <h3 className="text-xl font-semibold mb-4 text-gray-600">
-                            Settings for: <span className="text-purple-700">{selectedProgram}</span>
+                             <span className="text-purple-700">{selectedProgram}</span>
                         </h3>
                         
                         {/* Section for Deadlines */}
