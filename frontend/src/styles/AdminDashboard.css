@@ -1,13 +1,13 @@
-/* src/styles/AdminDashboard.css */
+
 :root {
   --primary-blue: #007bff;
   --light-blue: #00c3ff;
   --text-light: #f0f0f0;
 }
 
-/* Main container for the entire page */
+/* Main container */
 .cont {
-  display: flex;
+  display: block;
   height: 100vh;
   background: url("https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=2070") no-repeat center center/cover;
   position: relative;
@@ -17,7 +17,7 @@
   font-family: 'Inter', sans-serif;
 }
 
-/* Glassmorphism background overlay */
+/* Background overlay */
 .cont::before {
   content: "";
   position: absolute;
@@ -26,7 +26,7 @@
   z-index: 1;
 }
 
-/* Admin Sidebar */
+/* Sidebar */
 .admin-sidebar {
   flex: 0 0 250px;
   background: rgba(10, 20, 30, 0.4);
@@ -34,14 +34,13 @@
   padding: 30px 20px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;   /* 👈 align content to left */
+  align-items: flex-start;
   justify-content: flex-start;
   z-index: 2;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   height: 100vh;
   box-sizing: border-box;
-
-  position: fixed;  /* 👈 pin sidebar to left side */
+  position: fixed;
   top: 0;
   left: 0;
 }
@@ -78,30 +77,28 @@
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Wrapper for the main content area */
+/* Main content wrapper (respects sidebar) */
 .dashboard-content-wrapper {
-  flex-grow: 1;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  margin-left: 250px;          /* push content to right of sidebar */
   padding: 40px;
-  overflow-y: auto;
-  height: 100vh;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;     /* center content horizontally */
+  align-items: flex-start;
   box-sizing: border-box;
   z-index: 2;
 }
 
-/* The actual form container */
+/* Form container */
 .dashboard-content {
   width: 100%;
-  max-width: 700px;
+  max-width: 900px;            /* keep it neat */
   background: rgba(10, 20, 30, 0.4);
   backdrop-filter: blur(15px);
   padding: 40px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  margin-left:250px;
 }
 
 .dashboard-content h2,
@@ -154,7 +151,7 @@
   color: var(--text-light);
 }
 
-/* Unified style for all primary form buttons */
+/* Submit button */
 .dashboard-content button[type="submit"] {
   margin-top: 20px;
   padding: 15px;
@@ -175,7 +172,7 @@
   box-shadow: 0 8px 20px rgba(0, 150, 255, 0.6);
 }
 
-/* --- Improved UG 'Add/Remove' Button Styles --- */
+/* UG Add/Remove buttons */
 .ug-button-group {
   display: flex;
   gap: 15px;
@@ -183,7 +180,7 @@
 }
 
 .ug-button-group button {
-  flex: 1; /* Make them share space equally */
+  flex: 1;
   padding: 10px;
   font-size: 14px;
   background: rgba(255, 255, 255, 0.15);
@@ -198,7 +195,7 @@
   background: rgba(255, 255, 255, 0.25);
 }
 
-/* --- ✨ NEW Attractive Excel Upload Section --- */
+/* Excel upload section */
 .excel-upload-section {
   margin-top: 40px;
   padding-top: 30px;
