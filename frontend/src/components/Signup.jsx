@@ -84,7 +84,7 @@ function Signup() {
 
         // Faculty Role assignment
         if (facultyRole === "Admin") {
-          userData.roles = ["Admin"];
+          userData.roles = ["Admin","Teacher"];
         } else if (facultyRole === "HOD") {
           userData.roles = ["HOD"];
         } else if (facultyRole === "Guide") {

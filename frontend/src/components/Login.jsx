@@ -38,7 +38,7 @@ function Login() {
         } else {
           roles = ["Student"]; // fallback
         }
-        if (roles.includes("HOD")) {
+        if ((roles.includes("Admin") || roles.includes("HOD")) && !roles.includes("Teacher")) {
           roles.push("Teacher");
         }
 
@@ -48,7 +48,8 @@ function Login() {
 
         if (roles.length === 1) {
           localStorage.setItem("currentRole", roles[0]);
-          redirectToDashboard(navigate, roles[0]);
+          // Line 48: Pass the 'roles' array to the helper function.
+          redirectToDashboard(navigate, roles[0], roles);
         } else {
           setRoleSelection(roles);
           toast.info("Select your role to continue");
@@ -64,7 +65,9 @@ function Login() {
 
   const handleRoleSelect = (role) => {
     localStorage.setItem("currentRole", role);
-    redirectToDashboard(navigate, role);
+    // Lines 60-61: Get all roles and pass them to the helper function.
+    const availableRoles = JSON.parse(localStorage.getItem("availableRoles")) || [];
+    redirectToDashboard(navigate, role, availableRoles);
   };
 
 return (

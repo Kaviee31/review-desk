@@ -72,6 +72,7 @@ function App() {
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="report" element={<ReportPage />} />
             <Route path="assign-coordinator" element={<AssignCoordinator />} />
+            
           </Route>
 
           <Route path="/student*" element={<RoleProtectedRoute allowedRoles={["Student"]}><StudentLayout /></RoleProtectedRoute>}>
@@ -79,9 +80,9 @@ function App() {
             <Route path="courses" element={<StudentCourses />} />
           </Route>
 
-          <Route path="/teacher*" element={<RoleProtectedRoute allowedRoles={["Teacher", "Coordinator"]}><TeacherLayout /></RoleProtectedRoute>}>
+          <Route path="/teacher*" element={<RoleProtectedRoute allowedRoles={["Admin","Teacher", "Coordinator"]}><TeacherLayout /></RoleProtectedRoute>}>
             <Route path="dashboard" element={<TeacherDashboard />} />
-            <Route path="enrolled-students" element={<EnrolledStudents />} />
+            <Route path="enrolled-students" element={<EnrolledStudents />} /> 
             <Route path="coordinator-dashboard" element={<CoordinatorDashboard />} />
             <Route path="change-password" element={<ChangePassword />} />
           </Route>

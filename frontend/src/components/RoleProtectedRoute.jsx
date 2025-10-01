@@ -26,6 +26,9 @@ function RoleProtectedRoute({ children, allowedRoles }) {
       if (roles.includes("HOD") && !roles.includes("Teacher")) {
         roles.push("Teacher");
       }
+      if (roles.includes("Admin") && !roles.includes("Teacher")) {
+        roles.push("Teacher");
+      }
       const hasAccess = roles.some(role => allowedRoles.includes(role));
       setAuthorized(hasAccess);
     };

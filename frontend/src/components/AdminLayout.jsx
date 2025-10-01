@@ -4,6 +4,7 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { LogOut, BarChart2, LayoutDashboard, UserPlus } from "lucide-react"; // Import UserPlus icon
 import { getAuth } from "firebase/auth";
 import "../styles/AdminLayout.css";
+import RoleSwitcherDropdown from "./RoleSwitcherDropdown";
 
 // Assuming you'll define your routes in a higher-level component like App.jsx
 // For now, the button will navigate to '/admin/assign-coordinator'
@@ -54,6 +55,9 @@ function AdminLayout() {
           >
             <UserPlus size={18} /> Assign Coordinator
           </button>
+
+          <RoleSwitcherDropdown /> 
+
           <button onClick={handleLogout}>
             <LogOut size={18} /> Logout
           </button>
