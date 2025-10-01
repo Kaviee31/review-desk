@@ -15,7 +15,7 @@ function Signup() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState(""); // New state for confirm password
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [userType, setUserType] = useState("Student");
   const [facultyRole, setFacultyRole] = useState("");
@@ -23,21 +23,30 @@ function Signup() {
   const [facultyId, setFacultyId] = useState("");
   const [courseType, setCourseType] = useState("");
   const [loading, setLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState(""); // New state for password error message
+  const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
+
+  // ✨ NEW: useEffect for real-time password validation
+  useEffect(() => {
+    // Only check if the user has started typing in the confirm password field
+    if (confirmPassword && password !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+    } else {
+      // Clear the error if they match or if the field is empty
+      setPasswordError("");
+    }
+  }, [password, confirmPassword]); // This effect runs whenever password or confirmPassword changes
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // --- Password Match Validation ---
+    // --- Final Password Match Validation (Good practice to keep this) ---
     if (password !== confirmPassword) {
       toast.error("Passwords do not match.");
-      setPasswordError("Passwords do not match. Please try again."); // Set a user-friendly error message
-      return; // Stop the function if passwords don't match
+      // The error message state is already set by the useEffect, but we still stop submission
+      return; 
     }
     
-    // If they match, clear any previous error
-    setPasswordError(""); 
     setLoading(true);
 
     try {
@@ -90,7 +99,7 @@ function Signup() {
         } else if (facultyRole === "Guide") {
           userData.roles = ["Teacher"];
         } else {
-          toast.error("Please select valid Faculty Role.");
+          toast.error("Please select a valid Faculty Role.");
           setLoading(false);
           return;
         }
@@ -119,96 +128,95 @@ function Signup() {
   return (
     <div className="teacher-dashboard-layout">
       <PartialFooter />
-    <div className="signup-page">
-      <form className="signup-form" onSubmit={handleSubmit}>
-        <h2>Create Account</h2>
+      <div className="signup-page">
+        <form className="signup-form" onSubmit={handleSubmit}>
+          <h2>Create Account</h2>
 
-        <label>Username</label>
-        <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
+          <label>Username</label>
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
 
-        <label>Email</label>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <label>Email</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
 
-        <label>Phone Number</label>
-        <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required />
+          <label>Phone Number</label>
+          <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required />
 
-        <label>Password</label>
-        <input 
-          type="password" 
-          value={password} 
-          onChange={(e) => setPassword(e.target.value)} 
-          required 
-          style={passwordError ? errorInputStyle : {}} // Apply style on error
-        />
+          <label>Password</label>
+          <input 
+            type="password" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            required 
+            style={passwordError ? errorInputStyle : {}} // Apply style on error
+          />
 
-        <label>Confirm Password</label>
-        <input 
-          type="password" 
-          value={confirmPassword} 
-          onChange={(e) => setConfirmPassword(e.target.value)} 
-          required 
-          style={passwordError ? errorInputStyle : {}} // Apply style on error
-        />
-        
-        {/* Display error message directly below the input field */}
-        {passwordError && (
-          <p style={{ 
-            color: '#e53e3e', 
-            fontSize: '0.8rem', 
-            marginTop: '-10px', 
-            marginBottom: '10px',
-            textAlign: 'center'
-          }}>
-            {passwordError}
-          </p>
-        )}
+          <label>Confirm Password</label>
+          <input 
+            type="password" 
+            value={confirmPassword} 
+            onChange={(e) => setConfirmPassword(e.target.value)} 
+            required 
+            style={passwordError ? errorInputStyle : {}} // Apply style on error
+          />
+          
+          {/* Display error message directly below the input field */}
+          {passwordError && (
+            <p style={{ 
+              color: '#e53e3e', 
+              fontSize: '0.8rem', 
+              marginTop: '-10px', 
+              marginBottom: '10px',
+              textAlign: 'center'
+            }}>
+              {passwordError}
+            </p>
+          )}
 
-        <label>Choose Your Role</label>
-        <select value={userType} onChange={(e) => setUserType(e.target.value)}>
-          <option value="Student">Student</option>
-          <option value="Faculty">Faculty</option>
-        </select>
+          <label>Choose Your Role</label>
+          <select value={userType} onChange={(e) => setUserType(e.target.value)}>
+            <option value="Student">Student</option>
+            <option value="Faculty">Faculty</option>
+          </select>
 
-        {userType === "Student" && (
-          <>
-            <label>Register Number</label>
-            <input type="text" value={registerNumber} onChange={(e) => setRegisterNumber(e.target.value)} required />
-            <label>Course Type</label>
-            <select 
-                value={courseType} 
-                onChange={(e) => setCourseType(e.target.value)} 
-                required
-              >
-                <option value="">Select Course</option>
-                {courses.map(course => (
-                  <option key={course} value={course}>
-                    {course}
-                  </option>
-                ))}
+          {userType === "Student" && (
+            <>
+              <label>Register Number</label>
+              <input type="text" value={registerNumber} onChange={(e) => setRegisterNumber(e.target.value)} required />
+              <label>Course Type</label>
+              <select 
+                  value={courseType} 
+                  onChange={(e) => setCourseType(e.target.value)} 
+                  required
+                >
+                  <option value="">Select Course</option>
+                  {courses.map(course => (
+                    <option key={course} value={course}>
+                      {course}
+                    </option>
+                  ))}
+                </select>
+            </>
+          )}
+
+          {userType === "Faculty" && (
+            <>
+              <label>Faculty ID</label>
+              <input type="text" value={facultyId} onChange={(e) => setFacultyId(e.target.value)} required />
+              <label>Faculty Role</label>
+              <select value={facultyRole} onChange={(e) => setFacultyRole(e.target.value)} required>
+                <option value="">Select Role</option>
+                <option value="Guide">Guide</option>
+                <option value="Admin">Admin</option>
+                <option value="HOD">HOD</option>
               </select>
+            </>
+          )}
 
-          </>
-        )}
-
-        {userType === "Faculty" && (
-          <>
-            <label>Faculty ID</label>
-            <input type="text" value={facultyId} onChange={(e) => setFacultyId(e.target.value)} required />
-            <label>Faculty Role</label>
-            <select value={facultyRole} onChange={(e) => setFacultyRole(e.target.value)} required>
-              <option value="">Select Role</option>
-              <option value="Guide">Guide</option>
-              <option value="Admin">Admin</option>
-              <option value="HOD">HOD</option>
-            </select>
-          </>
-        )}
-
-        <button type="submit" disabled={loading}>{loading ? "Registering..." : "Register"}</button>
-        <p>Already have an account? <Link to="/">Login</Link></p>
-      </form>
-    </div>
-    <Footer />
+          <button type="submit" disabled={loading}>{loading ? "Registering..." : "Register"}</button>
+          <p>Already have an account? <Link to="/">Login</Link></p>
+        </form>
+      </div>
+      <Footer />
     </div>
   );
 }
