@@ -504,11 +504,7 @@ function HODDashboard() {
             <div
               key={program}
               className="program-card"
-              style={{
-                border: "2px solid orange",
-                borderRadius: "8px",
-                transition: "border-color 0.3s ease"
-              }}
+              
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "darkorange")}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = "orange")}
               onClick={() => handleProgramClick(program)}

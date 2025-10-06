@@ -241,83 +241,96 @@ function AdminDashboard() {
         <button onClick={() => setStudentType('PG')} className={studentType === 'PG' ? 'active' : ''}>PG Students</button>
       </div>
 
-      <div className="dashboard-content">
-        <h2>Enroll Students</h2>
-        {studentType === 'PG' && (
-          <div>
-            <h3>Assign PG Student to Guide</h3>
-            <form onSubmit={handlePgSubmit}>
-              <label htmlFor="pgStudentRegNo">Student Register Number:</label>
-              <input type="text" id="pgStudentRegNo" value={pgStudentRegNo} onChange={(e) => setPgStudentRegNo(e.target.value)} placeholder="Enter student's register number" required />
-              <label htmlFor="pgProjectName">Project Name:</label>
-              <input type="text" id="pgProjectName" value={pgProjectName} onChange={(e) => setPgProjectName(e.target.value)} placeholder="Enter project name" required />
-              <label htmlFor="pgTeacherEmail">Teacher Email:</label>
-              <input type="email" id="pgTeacherEmail" value={pgTeacherEmail} onChange={(e) => setPgTeacherEmail(e.target.value)} placeholder="Enter teacher's email" required />
-              <label htmlFor="pgStudentCourseName">PG Course Name:</label>
-              <select id="pgStudentCourseName" value={pgStudentCourseName} onChange={(e) => setPgStudentCourseName(e.target.value)} required>
-                <option value="">Select PG Course</option>
-                {pgCourses.map(course => (<option key={course} value={course}>{course}</option>))}
-              </select>
-              <button type="submit" disabled={loadingPgEnroll}>{loadingPgEnroll ? 'Enrolling...' : 'Enroll PG Student'}</button>
-            </form>
-          </div>
-        )}
+      <div className="main-content-wrapper">
+        <div className="dashboard-content">
+          <h2>Enroll Students</h2>
+          {studentType === 'PG' && (
+            <div>
+              <h3>Assign PG Student to Guide</h3>
+              <form onSubmit={handlePgSubmit}>
+                <label htmlFor="pgStudentRegNo">Student Register Number:</label>
+                <input type="text" id="pgStudentRegNo" value={pgStudentRegNo} onChange={(e) => setPgStudentRegNo(e.target.value)} placeholder="Enter student's register number" required />
+                <label htmlFor="pgProjectName">Project Name:</label>
+                <input type="text" id="pgProjectName" value={pgProjectName} onChange={(e) => setPgProjectName(e.target.value)} placeholder="Enter project name" required />
+                <label htmlFor="pgTeacherEmail">Teacher Email:</label>
+                <input type="email" id="pgTeacherEmail" value={pgTeacherEmail} onChange={(e) => setPgTeacherEmail(e.target.value)} placeholder="Enter teacher's email" required />
+                <label htmlFor="pgStudentCourseName">PG Course Name:</label>
+                <select id="pgStudentCourseName" value={pgStudentCourseName} onChange={(e) => setPgStudentCourseName(e.target.value)} required>
+                  <option value="">Select PG Course</option>
+                  {pgCourses.map(course => (<option key={course} value={course}>{course}</option>))}
+                </select>
+                <button type="submit" disabled={loadingPgEnroll}>{loadingPgEnroll ? 'Enrolling...' : 'Enroll PG Student'}</button>
+              </form>
+            </div>
+          )}
 
-        {studentType === 'UG' && (
-          <div>
-            <h3>Assign UG Students to Guide</h3>
-            <form onSubmit={handleUgSubmit}>
-              <label htmlFor="ugProjectName">Project Name:</label>
-              <input type="text" id="ugProjectName" value={ugProjectName} onChange={(e) => setUgProjectName(e.target.value)} placeholder="Enter project name" required />
-              {ugStudentRegNos.map((regNo, index) => (
-                <div key={index}>
-                  <label htmlFor={`ugStudentRegNo${index}`}>Student Register Number {index + 1}:</label>
-                  <input type="text" id={`ugStudentRegNo${index}`} value={regNo} onChange={(e) => handleUgRegNoChange(index, e.target.value)} placeholder="Enter student's register number" />
+          {studentType === 'UG' && (
+            <div>
+              <h3>Assign UG Students to Guide</h3>
+              <form onSubmit={handleUgSubmit}>
+                <label htmlFor="ugProjectName">Project Name:</label>
+                <input type="text" id="ugProjectName" value={ugProjectName} onChange={(e) => setUgProjectName(e.target.value)} placeholder="Enter project name" required />
+                {ugStudentRegNos.map((regNo, index) => (
+                  <div key={index}>
+                    <label htmlFor={`ugStudentRegNo${index}`}>Student Register Number {index + 1}:</label>
+                    <input type="text" id={`ugStudentRegNo${index}`} value={regNo} onChange={(e) => handleUgRegNoChange(index, e.target.value)} placeholder="Enter student's register number" />
+                  </div>
+                ))}
+                <div className="ug-button-group">
+                  <button type="button" onClick={handleAddUgStudentInput} className="add-student-button">Add Student</button>
+                  <button type="button" onClick={handleRemoveUgStudentInput} className="remove-student-button">Remove</button>
                 </div>
-              ))}
-              <div className="ug-button-group">
-                <button type="button" onClick={handleAddUgStudentInput} className="add-student-button">Add Student</button>
-                <button type="button" onClick={handleRemoveUgStudentInput} className="remove-student-button">Remove</button>
-              </div>
-              <label htmlFor="ugTeacherEmail">Teacher Email:</label>
-              <input type="email" id="ugTeacherEmail" value={ugTeacherEmail} onChange={(e) => setUgTeacherEmail(e.target.value)} placeholder="Enter teacher's email" required />
-              <label htmlFor="ugStudentCourseName">UG Course Name:</label>
-              <select id="ugStudentCourseName" value={ugStudentCourseName} onChange={(e) => setUgStudentCourseName(e.target.value)} required>
-                <option value="">Select UG Course</option>
-                {ugCourses.map(course => (<option key={course} value={course}>{course}</option>))}
-              </select>
-              <button type="submit" disabled={loadingUgEnroll}>{loadingUgEnroll ? 'Enrolling...' : 'Enroll UG Students'}</button>
-            </form>
-          </div>
-        )}
+                <label htmlFor="ugTeacherEmail">Teacher Email:</label>
+                <input type="email" id="ugTeacherEmail" value={ugTeacherEmail} onChange={(e) => setUgTeacherEmail(e.target.value)} placeholder="Enter teacher's email" required />
+                <label htmlFor="ugStudentCourseName">UG Course Name:</label>
+                <select id="ugStudentCourseName" value={ugStudentCourseName} onChange={(e) => setUgStudentCourseName(e.target.value)} required>
+                  <option value="">Select UG Course</option>
+                  {ugCourses.map(course => (<option key={course} value={course}>{course}</option>))}
+                </select>
+                <button type="submit" disabled={loadingUgEnroll}>{loadingUgEnroll ? 'Enrolling...' : 'Enroll UG Students'}</button>
+              </form>
+            </div>
+          )}
+          
+          <div className="excel-upload" style={{ marginTop: "40px", paddingTop: "30px", borderTop: "1px solid rgba(255, 255, 255, 0.2)" }}>
+            <h3 style={{ marginBottom: '20px' }}>Bulk Import from Excel</h3>
+            <h6> ***The Excel sheet's columns for UG Students should be in the order : RegisterNumber , StudentName, Email, CourseName, ProjectName,
+              TeacherEmail, GroupRegisterNumbers
+            </h6>
 
-        <div className="excel-upload" style={{ marginTop: "40px", paddingTop: "30px", borderTop: "1px solid rgba(255, 255, 255, 0.2)" }}>
-          <h3 style={{ marginBottom: '20px' }}>Bulk Import from Excel</h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255, 255, 255, 0.05)', padding: '15px', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '8px', maxWidth: '550px' }}>
-            <input id="excel-file-upload" type="file" accept=".xlsx, .xls" onChange={(e) => setExcelFile(e.target.files[0])} style={{ display: 'none' }} />
-            <label htmlFor="excel-file-upload" style={{ padding: '8px 16px', borderRadius: '6px', backgroundColor: '#007BFF', color: 'white', cursor: 'pointer', border: 'none', whiteSpace: 'nowrap' }}>
-              Select File
-            </label>
-            <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'black' }}>
-              {excelFile ? excelFile.name : "No file chosen"}
-            </span>
-            <button
-              onClick={handleExcelEnroll}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              style={{
-                padding: '8px 16px', borderRadius: '6px', border: 'none',
-                backgroundColor: isHovered ? '#218838' : '#28a745',
-                color: 'white', cursor: 'pointer', transition: 'background-color 0.2s'
-              }}
-            >
-              Enroll
-            </button>
+            
+            <h6> ***The Excel sheet's columns for PG Students should be in the order : RegisterNumber , StudentName, Email, CourseName, ProjectName,
+              TeacherEmail
+            </h6>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255, 255, 255, 0.05)', padding: '15px', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '8px', maxWidth: '550px' }}>
+              <input id="excel-file-upload" type="file" accept=".xlsx, .xls" onChange={(e) => setExcelFile(e.target.files[0])} style={{ display: 'none' }} />
+              <label htmlFor="excel-file-upload" style={{ padding: '8px 16px', borderRadius: '6px', backgroundColor: '#007BFF', color: 'white', cursor: 'pointer', border: 'none', whiteSpace: 'nowrap' }}>
+                Select File
+              </label>
+              <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'black' }}>
+                {excelFile ? excelFile.name : "No file chosen"}
+              </span>
+              <button
+                onClick={handleExcelEnroll}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                style={{
+                  padding: '8px 16px', borderRadius: '6px', border: 'none',
+                  backgroundColor: isHovered ? '#218838' : '#28a745',
+                  color: 'white', cursor: 'pointer', transition: 'background-color 0.2s'
+                }}
+              >
+                Enroll
+              </button>
+            </div>
           </div>
+          
         </div>
+        <div className='footer-st'>
+          <Footer />
+        </div>
+        
       </div>
-      {/* Footer might need its own styling to not be covered by the background */}
-      {/* <Footer /> */}
     </div>
   );
 }

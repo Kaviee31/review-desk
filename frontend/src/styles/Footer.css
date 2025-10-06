@@ -7,6 +7,8 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   position: relative;
   width:100%;
+  align-self: stretch;
+  
 }
 
 /* Flex container for the three main columns */

@@ -125,3 +125,6 @@ body {
   box-shadow: 0 10px 25px rgba(74, 99, 231, 0.6);
   outline: none;
 }
+.footer-st{
+  margin-left: -280px;
+}

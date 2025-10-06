@@ -162,7 +162,10 @@ function TeacherDashboard() {
         </form>
       </div>
     </div>
-    <Footer />
+    <div className='footer-st'>
+      <Footer />
+    </div>
+    
     </div>
   );
 }

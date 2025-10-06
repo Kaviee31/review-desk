@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import { setDoc, doc, collection, query, where, getDocs } from "firebase/firestore";
+import { setDoc, doc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "../styles/Signup.css";
@@ -11,7 +11,7 @@ import Footer from './Footer';
 import PartialFooter from './PartialFooter';
 
 function Signup() {
-  useEffect(() => { document.title = "Signup"; }, []);
+  
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,8 +25,35 @@ function Signup() {
   const [loading, setLoading] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
+  const [showAdminRole, setShowAdminRole] = useState(false);
+   
 
-  // ✨ NEW: useEffect for real-time password validation
+
+  useEffect(() => {
+    document.title = "Signup";
+    
+    const checkAdminExists = async () => {
+      try {
+        const usersRef = collection(db, "users");
+        // Query to find if any user has "Admin" in their roles array
+        const q = query(usersRef, where("roles", "array-contains", "Admin"), limit(1));
+        const querySnapshot = await getDocs(q);
+
+        // If no documents are returned, no admin exists, so show the option
+        if (querySnapshot.empty) {
+          setShowAdminRole(true);
+        } else {
+          setShowAdminRole(false);
+        }
+      } catch (error) {
+        console.error("Error checking for admin existence:", error);
+        toast.error("Could not verify admin status. Please try again later.");
+      }
+    };
+
+    checkAdminExists();
+  }, []);
+  
   useEffect(() => {
     // Only check if the user has started typing in the confirm password field
     if (confirmPassword && password !== confirmPassword) {
@@ -132,7 +159,7 @@ function Signup() {
         <form className="signup-form" onSubmit={handleSubmit}>
           <h2>Create Account</h2>
 
-          <label>Username</label>
+          <label>Full Name</label>
           <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
 
           <label>Email</label>
@@ -206,7 +233,7 @@ function Signup() {
               <select value={facultyRole} onChange={(e) => setFacultyRole(e.target.value)} required>
                 <option value="">Select Role</option>
                 <option value="Guide">Guide</option>
-                <option value="Admin">Admin</option>
+                {showAdminRole && <option value="Admin">Admin</option>}
                 <option value="HOD">HOD</option>
               </select>
             </>

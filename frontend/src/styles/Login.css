@@ -147,3 +147,58 @@ body {
     width: 90%;
   }
 }
+/* Add these styles to your existing Login.css file or create a new one */
+
+.captcha-container {
+  margin-top: 15px;
+  width: 100%;
+}
+
+.captcha-container label {
+  display: block;
+  text-align: left;
+  margin-bottom: 5px;
+}
+
+.captcha-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+
+.captcha-text {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 5px;
+  text-decoration: none;
+  color: #333;
+  user-select: none; /* Prevents text selection */
+}
+
+.refresh-captcha-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #555;
+  transition: transform 0.3s;
+  padding: 5px;
+}
+
+.refresh-captcha-btn:clicked {
+  transform: rotate(180deg);
+}
+
+.captcha-container input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+}

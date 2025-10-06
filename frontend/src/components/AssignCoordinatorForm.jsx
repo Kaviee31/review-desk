@@ -170,7 +170,10 @@ const usersRef = collection(db, "users");
           </button>
         </form>
       </div>
-      <Footer />
+      <div className='footer-st'>
+        <Footer />
+      </div>
+      
     </div>
   );
 }

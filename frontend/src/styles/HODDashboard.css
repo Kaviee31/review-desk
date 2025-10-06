@@ -16,11 +16,15 @@ h1 {
 
 /* --- Program Card Styles (Light Theme) --- */
 .programs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  justify-items: center;
+  display: flex;
+  flex-wrap: wrap;        /* allow wrapping to next row if screen is small */
+  justify-content: center;/* center items horizontally */
+  align-items: flex-start; /* align items at top */
+  gap: 20px;              /* spacing between cards */
+  row-gap: 30px;          /* extra vertical spacing between rows */
 }
+
+
 
 .program-card {
   background: #f9f9f9; /* Light grey background for cards */

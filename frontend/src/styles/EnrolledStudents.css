@@ -287,3 +287,7 @@ button:disabled {
     transform: scale(1) translateY(0);
   }
 }
+
+.footer-st{
+  margin-left:-280px;
+}

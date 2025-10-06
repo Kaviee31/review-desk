@@ -16,8 +16,22 @@ function Login() {
   const [password, setPassword] = useState("");
   const [roleSelection, setRoleSelection] = useState([]);
   const navigate = useNavigate();
+  const [captcha, setCaptcha] = useState("");
+  const [userCaptcha, setUserCaptcha] = useState("");
 
-  useEffect(() => { document.title = "Login"; }, []);
+  const generateCaptcha = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let captchaText = "";
+    for (let i = 0; i < 6; i++) {
+      captchaText += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setCaptcha(captchaText);
+  };
+
+  useEffect(() => { document.title = "Login";
+    generateCaptcha();
+   }, []);
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -93,6 +107,7 @@ return (
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
               <label>Password</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              
               <button type="submit">Login</button>
               <p>Don't have an account? <Link to="/signup">Sign up</Link></p>
               <p><Link to="/forgot-password">Forgot password?</Link></p>

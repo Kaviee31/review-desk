@@ -2069,7 +2069,10 @@ const handleDownloadStudentReviewPDF = () => {
         )}
 
       </div>
-      <Footer />
+      <div className='footer-st'>
+        <Footer />
+      </div>
+      
     </div>
   );
 }
