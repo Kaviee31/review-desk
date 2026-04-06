@@ -1,5 +1,5 @@
 // Line 1: Modify the function to accept an array of all roles.
-export function redirectToDashboard(navigate, role, allRoles = []) {
+export function redirectToDashboard(navigate, role) {
   switch (role) {
     case "Admin":
       navigate("/admin/dashboard");

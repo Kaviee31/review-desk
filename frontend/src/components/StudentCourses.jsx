@@ -38,11 +38,12 @@ function StudentCourses() {
       }
     };
 
-    onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         fetchRegisterNumber(user);
       }
     });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {

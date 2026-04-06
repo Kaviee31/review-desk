@@ -1,7 +1,7 @@
 // src/layouts/AdminLayout.jsx
 import React from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
-import { LogOut, BarChart2, LayoutDashboard, UserPlus } from "lucide-react"; // Import UserPlus icon
+import { LogOut, BarChart2, LayoutDashboard, UserPlus, Users } from "lucide-react";
 import { getAuth } from "firebase/auth";
 import "../styles/AdminLayout.css";
 import RoleSwitcherDropdown from "./RoleSwitcherDropdown";
@@ -54,6 +54,12 @@ function AdminLayout() {
             onClick={() => navigate("/admin/assign-coordinator")}
           >
             <UserPlus size={18} /> Assign Coordinator
+          </button>
+          <button
+            className={isActive("/admin/panels") ? "active" : ""}
+            onClick={() => navigate("/admin/panels")}
+          >
+            <Users size={18} /> Manage Panels
           </button>
 
           <RoleSwitcherDropdown /> 

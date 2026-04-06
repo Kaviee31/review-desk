@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import '../styles/HODDashboard.css';
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 import { pgCourses, ugCourses, courses } from "../constants/courses";
 import Footer from './Footer';
 import annaUniversityLogo from '../assets/anna-university-logo.png'; 
@@ -30,6 +31,9 @@ function HODDashboard() {
   const allPrograms = courses;
   const [showPdfDropdown, setShowPdfDropdown] = useState(false);
   const [showExcelDropdown, setShowExcelDropdown] = useState(false);
+  const [panels, setPanels] = useState([]);
+  const [showPanels, setShowPanels] = useState(false);
+  const [loadingPanels, setLoadingPanels] = useState(false);
 
   useEffect(() => {
     document.title = "HOD Dashboard";
@@ -83,6 +87,26 @@ function HODDashboard() {
     }
   };
  
+  const fetchPanels = async () => {
+    setLoadingPanels(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/panels`);
+      const sorted = [...response.data].sort((a, b) => a.courseName.localeCompare(b.courseName));
+      setPanels(sorted);
+    } catch (err) {
+      console.error("Error fetching panels:", err);
+      toast.error("Failed to load panels.");
+    } finally {
+      setLoadingPanels(false);
+    }
+  };
+
+  const handleShowPanels = () => {
+    setShowPanels(true);
+    setSelectedProgram(null);
+    fetchPanels();
+  };
+
   const handleDownloadMarksPDF = (reportType) => {
     const doc = new jsPDF();
     const courseName = selectedProgram || "Report";
@@ -445,7 +469,7 @@ function HODDashboard() {
               <td>{student.marks2}</td>
               <td>{student.marks3}</td>
               <td>{student.marks4}</td>
-              <td>{Math.round(student.viva_total_awarded/3) || 0}</td>
+              <td>{student.viva_total_awarded || 0}</td>
               <td>{student.teacherDisplayName}</td>
             </tr>
           )) : (
@@ -484,7 +508,7 @@ function HODDashboard() {
               <td>{project.Assessment2}</td>
               <td>{project.Assessment3}</td>
               <td>{project.Total}</td>
-              <td>{Math.round(project.viva_total_awarded / 3) || 0}</td>
+              <td>{project.viva_total_awarded || 0}</td>
               <td>{project.teacherDisplayName || 'N/A'}</td>
             </tr>
           )) : (
@@ -498,21 +522,64 @@ function HODDashboard() {
   return (
    <div className='teacher-dashboard-layout'>
     <div className="hod-container">
-      {!selectedProgram && (
-        <div className="programs-grid">
-          {allPrograms.map((program) => (
-            <div
-              key={program}
-              className="program-card"
-              
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "darkorange")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "orange")}
-              onClick={() => handleProgramClick(program)}
-            >
-              <h3>{program}</h3>
-              <p>{programCounts[program] || 0} {ugPrograms.includes(program) ? 'Projects' : 'Students'}</p>
+      {!selectedProgram && !showPanels && (
+        <div>
+          <div className="programs-grid">
+            {allPrograms.map((program) => (
+              <div
+                key={program}
+                className="program-card"
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "darkorange")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "orange")}
+                onClick={() => handleProgramClick(program)}
+              >
+                <h3>{program}</h3>
+                <p>{programCounts[program] || 0} {ugPrograms.includes(program) ? 'Projects' : 'Students'}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+            <button className="download-btn" onClick={handleShowPanels}>
+              View Review Panels
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showPanels && (
+        <div>
+          <div className="section-header">
+            <h2>Review Panels</h2>
+          </div>
+          {loadingPanels ? (
+            <p>Loading panels...</p>
+          ) : panels.length === 0 ? (
+            <p>No panels have been created yet.</p>
+          ) : (
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Course Name</th>
+                    <th>Panel Teachers</th>
+                    <th>Created By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {panels.map((panel) => (
+                    <tr key={panel._id}>
+                      <td>{panel.courseName}</td>
+                      <td>{Array.isArray(panel.teachers) && panel.teachers.length > 0 ? panel.teachers.join(', ') : 'No teachers assigned'}</td>
+                      <td>{panel.createdBy || 'N/A'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ))}
+          )}
+          <button className="back-button" onClick={() => setShowPanels(false)}>
+            Back to Programs
+          </button>
         </div>
       )}
 
@@ -573,7 +640,7 @@ function HODDashboard() {
               {ugPrograms.includes(selectedProgram) ? renderUgProjectsTable() : renderPgStudentsTable()}
             </>
           )}
-          <button onClick={() => setSelectedProgram(null)} className="back-button">
+          <button onClick={() => { setSelectedProgram(null); setShowPanels(false); }} className="back-button">
             Back to Programs
           </button>
         </div>

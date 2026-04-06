@@ -16,21 +16,9 @@ function Login() {
   const [password, setPassword] = useState("");
   const [roleSelection, setRoleSelection] = useState([]);
   const navigate = useNavigate();
-  const [captcha, setCaptcha] = useState("");
-  const [userCaptcha, setUserCaptcha] = useState("");
-
-  const generateCaptcha = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let captchaText = "";
-    for (let i = 0; i < 6; i++) {
-      captchaText += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setCaptcha(captchaText);
-  };
-
-  useEffect(() => { document.title = "Login";
-    generateCaptcha();
-   }, []);
+  useEffect(() => {
+    document.title = "Login";
+  }, []);
 
 
   const handleLogin = async (e) => {
@@ -63,7 +51,7 @@ function Login() {
         if (roles.length === 1) {
           localStorage.setItem("currentRole", roles[0]);
           // Line 48: Pass the 'roles' array to the helper function.
-          redirectToDashboard(navigate, roles[0], roles);
+          redirectToDashboard(navigate, roles[0]);
         } else {
           setRoleSelection(roles);
           toast.info("Select your role to continue");
@@ -81,7 +69,7 @@ function Login() {
     localStorage.setItem("currentRole", role);
     // Lines 60-61: Get all roles and pass them to the helper function.
     const availableRoles = JSON.parse(localStorage.getItem("availableRoles")) || [];
-    redirectToDashboard(navigate, role, availableRoles);
+    redirectToDashboard(navigate, role);
   };
 
 return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -57,6 +57,7 @@ function EnrolledStudents() {
 
   // NEW: Consolidated state for Viva marks
   const [vivaMarks, setVivaMarks] = useState({ guide: 0, panel: 0, external: 0 });
+  const marksRef = useRef(null);
   const pdfIcon = <FaFilePdf className="h-8 w-8 text-red-600 hover:opacity-75" title="PDF Document" />;
   const pptIcon = <FaFilePowerpoint className="h-5 w-5 text-orange-600 hover:opacity-75" title="PowerPoint Presentation" />;
   const otherIcon = <FaFileAlt className="h-5 w-5 text-gray-500 hover:opacity-75" title="Other File" />;
@@ -676,6 +677,12 @@ const addPdfHeader = (doc, title) => {
 
   // Function to handle opening the review modal
   const handleOpenReviewModal = async (student) => {
+    // Toggle: clicking the same student again closes the section
+    if (currentStudentForReview?.registerNumber === student.registerNumber && showReviewModal) {
+      setShowReviewModal(false);
+      setCurrentStudentForReview(null);
+      return;
+    }
     setCurrentStudentForReview(student);
     setShowReviewModal(true);
     setLoadingReviewData(true);
@@ -775,6 +782,9 @@ const addPdfHeader = (doc, title) => {
       setStudentReviewMarks([]);
     } finally {
       setLoadingReviewData(false);
+      setTimeout(() => {
+        marksRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
     }
   };
 
@@ -1329,7 +1339,6 @@ const handleDownloadStudentReviewPDF = () => {
                       )}
                     </tbody>
                   </table>
-                  ```
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-4 mt-6">
@@ -1823,247 +1832,283 @@ const handleDownloadStudentReviewPDF = () => {
           />
         )}
 
-        {/* Review Marks Modal (Remains the same, but now callable from UG project student list) */}
+        {/* Review Marks — inline section below tables */}
         {showReviewModal && currentStudentForReview && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
-              <h3 className="text-2xl font-bold mb-4 text-gray-800">
-                Review Marks for {currentStudentForReview.studentName} ({currentStudentForReview.registerNumber})
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Program: {selectedProgram}
-              </p>
-
-
-              <table className="w-full mt-4 border-separate border-spacing-4">
-                <tbody>
-                  <tr>
-                    {/* Zeroth Review */}
-                    <td className="border border-gray-300 rounded-md p-3 align-top">
-                      <h4 className="font-semibold capitalize text-gray-700 mb-2">Zeroth Review Comment</h4>
-                      <input
-                        type="text"
-                        placeholder="Enter zeroth review comment"
-                        value={newComments[currentStudentForReview.registerNumber]?.['zeroth'] || ""}
-                        onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'zeroth', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                        style={{ width: '100%' }}
-                      />
-                      <button
-                        onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'zeroth')}
-                        className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                      >
-                        Submit
-                      </button>
-                      {reviewComments[currentStudentForReview.registerNumber]?.['zeroth'] && (
-                        <p className="mt-1 text-xs text-gray-600 italic">
-                          Saved: {reviewComments[currentStudentForReview.registerNumber]?.['zeroth']}
-                        </p>
-                      )}
-                    </td>
-
-                    {/* First Review */}
-                    <td className="border border-gray-300 rounded-md p-3 align-top">
-                      <h4 className="font-semibold capitalize text-gray-700 mb-2">First Review Comment</h4>
-                      <input
-                        type="text"
-                        placeholder="Enter first review comment"
-                        value={newComments[currentStudentForReview.registerNumber]?.['first'] || ""}
-                        onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'first', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                        style={{ width: '100%' }}
-                      />
-                      <button
-                        onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'first')}
-                        className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                      >
-                        Submit
-                      </button>
-                      {reviewComments[currentStudentForReview.registerNumber]?.['first'] && (
-                        <p className="mt-1 text-xs text-gray-600 italic">
-                          Saved: {reviewComments[currentStudentForReview.registerNumber]?.['first']}
-                        </p>
-                      )}
-                    </td>
-                  </tr>
-                  <tr>
-                    {/* Second Review */}
-                    <td className="border border-gray-300 rounded-md p-3 align-top">
-                      <h4 className="font-semibold capitalize text-gray-700 mb-2">Second Review Comment</h4>
-                      <input
-                        type="text"
-                        placeholder="Enter second review comment"
-                        value={newComments[currentStudentForReview.registerNumber]?.['second'] || ""}
-                        onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'second', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                        style={{ width: '100%' }}
-                      />
-                      <button
-                        onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'second')}
-                        className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                      >
-                        Submit
-                      </button>
-                      {reviewComments[currentStudentForReview.registerNumber]?.['second'] && (
-                        <p className="mt-1 text-xs text-gray-600 italic">
-                          Saved: {reviewComments[currentStudentForReview.registerNumber]?.['second']}
-                        </p>
-                      )}
-                    </td>
-
-                    {/* Third Review */}
-                    <td className="border border-gray-300 rounded-md p-3 align-top">
-                      <h4 className="font-semibold capitalize text-gray-700 mb-2">Third Review Comment</h4>
-                      <input
-                        type="text"
-                        placeholder="Enter third review comment"
-                        value={newComments[currentStudentForReview.registerNumber]?.['third'] || ""}
-                        onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'third', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                        style={{ width: '100%' }}
-                      />
-                      <button
-                        onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'third')}
-                        className="mt-2 text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                      >
-                        Submit
-                      </button>
-                      {reviewComments[currentStudentForReview.registerNumber]?.['third'] && (
-                        <p className="mt-1 text-xs text-gray-600 italic">
-                          Saved: {reviewComments[currentStudentForReview.registerNumber]?.['third']}
-                        </p>
-                      )}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-
-
-
-              {loadingReviewData ? (
-                <div className="flex justify-center items-center h-32">
-                  <p className="text-lg text-blue-600">Loading review items...</p>
-                </div>
-              ) : (
-                <>
-                  {coordinatorReviewStructure.length > 0 ? (
-                    <div className="overflow-x-auto mt-6">
-                      <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-sm">
-                        {/* Table Head */}
-                        <thead className="bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
-                          <tr>
-                            <th className="py-2 px-4 text-left border-b">Review Item (R1)</th>
-                            <th className="py-2 px-4 text-center border-b">R1 Max</th>
-                            <th className="py-2 px-4 text-center border-b">R1 Awarded</th>
-                            <th className="py-2 px-4 text-left border-b">Review Item (R2)</th>
-                            <th className="py-2 px-4 text-center border-b">R2 Max</th>
-                            <th className="py-2 px-4 text-center border-b">R2 Awarded</th>
-                            <th className="py-2 px-4 text-left border-b">Review Item (R3)</th>
-                            <th className="py-2 px-4 text-center border-b">R3 Max</th>
-                            <th className="py-2 px-4 text-center border-b">R3 Awarded</th>
-
-                          </tr>
-                        </thead>
-
-<tbody className="text-gray-700 text-sm">
-  {studentReviewMarks.map((item, index) => (
-    <tr key={index} className="border-b border-gray-200">
-      <td className="py-2 px-4">{item.r1_item_desc}</td>
-      <td className="py-2 px-4 text-center">{item.coord_r1_max}</td>
-      <td className="py-2 px-4 text-center">
-        <input
-          type="number"
-          min="0"
-          max={item.coord_r1_max}
-          value={item.r1_mark}
-          onChange={(e) => handleStudentReviewMarkChange(index, 'r1_mark', e.target.value)}
-          readOnly={marksLockStatus === 'Locked'} // 👈 ADD THIS
-          className={`w-20 p-1 border rounded text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`} // 👈 MODIFY THIS
-        />
-      </td>
-
-      <td className="py-2 px-4">{item.r2_item_desc}</td>
-      <td className="py-2 px-4 text-center">{item.coord_r2_max}</td>
-      <td className="py-2 px-4 text-center">
-        <input
-          type="number"
-          min="0"
-          max={item.coord_r2_max}
-          value={item.r2_mark}
-          onChange={(e) => handleStudentReviewMarkChange(index, 'r2_mark', e.target.value)}
-          readOnly={marksLockStatus === 'Locked'} // 👈 ADD THIS
-          className={`w-20 p-1 border rounded text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`} // 👈 MODIFY THIS
-        />
-      </td>
-
-      <td className="py-2 px-4">{item.r3_item_desc}</td>
-      <td className="py-2 px-4 text-center">{item.coord_r3_max}</td>
-      <td className="py-2 px-4 text-center">
-        <input
-          type="number"
-          min="0"
-          max={item.coord_r3_max}
-          value={item.r3_mark}
-          onChange={(e) => handleStudentReviewMarkChange(index, 'r3_mark', e.target.value)}
-          readOnly={marksLockStatus === 'Locked'} // 👈 ADD THIS
-          className={`w-20 p-1 border rounded text-center ${marksLockStatus === 'Locked' ? 'bg-gray-200 cursor-not-allowed' : 'bg-white'}`} // 👈 MODIFY THIS
-        />
-      </td>
-    </tr>
-  ))}
-</tbody>
-                        <tfoot className="bg-gray-100 font-bold">
-                          <tr>
-                            <td className="py-2 px-4 text-right" colSpan="2">Total Awarded (R1):</td>
-                            <td className="py-2 px-4 text-center">{totalAwardedR1}</td>
-                            <td className="py-2 px-4 text-right" colSpan="2">Total Awarded (R2):</td>
-                            <td className="py-2 px-4 text-center">{totalAwardedR2}</td>
-                            <td className="py-2 px-4 text-right" colSpan="2">Total Awarded (R3):</td>
-                            <td className="py-2 px-4 text-center">{totalAwardedR3}</td>
-                            <td className="py-2 px-4 text-center">{totalViva / 3}</td>
-                          </tr>
-                        </tfoot>
-                      </table>
-
-
-
-
-
-
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-center py-4">No review items defined by the coordinator for this program. Please ensure the coordinator for {selectedProgram} has set up review items in their dashboard.</p>
-                  )}
-                </>
-              )}
-
-              {savingReviewMarks && (
-                <div className="flex justify-center mt-4">
-                  <p className="text-blue-600">Saving marks...</p>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  onClick={() => setShowReviewModal(false)}
-                  className="bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveStudentReviewMarks}
-                  disabled={savingReviewMarks || loadingReviewData}
-                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {savingReviewMarks ? "Saving..." : "Save Marks"}
-                </button>
-                <button
-                  onClick={handleDownloadStudentReviewPDF}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75"
-                >
-                  Download as PDF
-                </button>
+          <div
+            ref={marksRef}
+            style={{
+              marginTop: "28px",
+              border: "1px solid #bfdbfe",
+              borderRadius: "10px",
+              background: "#f0f9ff",
+              padding: "20px 24px",
+              boxShadow: "0 2px 8px rgba(37,99,235,0.08)",
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: "700", color: "#1e3a8a" }}>
+                  Review Marks for {currentStudentForReview.studentName}
+                </h3>
+                <span style={{ fontSize: "0.8rem", color: "#3b82f6" }}>
+                  {currentStudentForReview.registerNumber} &nbsp;·&nbsp; {selectedProgram}
+                </span>
               </div>
+              <button
+                onClick={() => { setShowReviewModal(false); setCurrentStudentForReview(null); }}
+                title="Close"
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "1.4rem",
+                  cursor: "pointer",
+                  color: "#6b7280",
+                  lineHeight: 1,
+                  padding: "4px 8px",
+                  borderRadius: "6px",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Review comments (zeroth / first / second / third) */}
+            <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "12px", marginBottom: "8px" }}>
+              <tbody>
+                <tr>
+                  <td style={{ border: "1px solid #d1d5db", borderRadius: "8px", padding: "12px", verticalAlign: "top", background: "#fff" }}>
+                    <h4 style={{ margin: "0 0 8px", fontWeight: "600", color: "#374151", fontSize: "0.85rem" }}>Zeroth Review Comment</h4>
+                    <input
+                      type="text"
+                      placeholder="Enter zeroth review comment"
+                      value={newComments[currentStudentForReview.registerNumber]?.['zeroth'] || ""}
+                      onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'zeroth', e.target.value)}
+                      style={{ width: "100%", padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "0.85rem" }}
+                    />
+                    <button
+                      onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'zeroth')}
+                      style={{ marginTop: "6px", fontSize: "0.75rem", background: "#3b82f6", color: "#fff", border: "none", padding: "4px 12px", borderRadius: "4px", cursor: "pointer" }}
+                    >
+                      Submit
+                    </button>
+                    {reviewComments[currentStudentForReview.registerNumber]?.['zeroth'] && (
+                      <p style={{ marginTop: "4px", fontSize: "0.75rem", color: "#6b7280", fontStyle: "italic" }}>
+                        Saved: {reviewComments[currentStudentForReview.registerNumber]?.['zeroth']}
+                      </p>
+                    )}
+                  </td>
+                  <td style={{ border: "1px solid #d1d5db", borderRadius: "8px", padding: "12px", verticalAlign: "top", background: "#fff" }}>
+                    <h4 style={{ margin: "0 0 8px", fontWeight: "600", color: "#374151", fontSize: "0.85rem" }}>First Review Comment</h4>
+                    <input
+                      type="text"
+                      placeholder="Enter first review comment"
+                      value={newComments[currentStudentForReview.registerNumber]?.['first'] || ""}
+                      onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'first', e.target.value)}
+                      style={{ width: "100%", padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "0.85rem" }}
+                    />
+                    <button
+                      onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'first')}
+                      style={{ marginTop: "6px", fontSize: "0.75rem", background: "#3b82f6", color: "#fff", border: "none", padding: "4px 12px", borderRadius: "4px", cursor: "pointer" }}
+                    >
+                      Submit
+                    </button>
+                    {reviewComments[currentStudentForReview.registerNumber]?.['first'] && (
+                      <p style={{ marginTop: "4px", fontSize: "0.75rem", color: "#6b7280", fontStyle: "italic" }}>
+                        Saved: {reviewComments[currentStudentForReview.registerNumber]?.['first']}
+                      </p>
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ border: "1px solid #d1d5db", borderRadius: "8px", padding: "12px", verticalAlign: "top", background: "#fff" }}>
+                    <h4 style={{ margin: "0 0 8px", fontWeight: "600", color: "#374151", fontSize: "0.85rem" }}>Second Review Comment</h4>
+                    <input
+                      type="text"
+                      placeholder="Enter second review comment"
+                      value={newComments[currentStudentForReview.registerNumber]?.['second'] || ""}
+                      onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'second', e.target.value)}
+                      style={{ width: "100%", padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "0.85rem" }}
+                    />
+                    <button
+                      onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'second')}
+                      style={{ marginTop: "6px", fontSize: "0.75rem", background: "#3b82f6", color: "#fff", border: "none", padding: "4px 12px", borderRadius: "4px", cursor: "pointer" }}
+                    >
+                      Submit
+                    </button>
+                    {reviewComments[currentStudentForReview.registerNumber]?.['second'] && (
+                      <p style={{ marginTop: "4px", fontSize: "0.75rem", color: "#6b7280", fontStyle: "italic" }}>
+                        Saved: {reviewComments[currentStudentForReview.registerNumber]?.['second']}
+                      </p>
+                    )}
+                  </td>
+                  <td style={{ border: "1px solid #d1d5db", borderRadius: "8px", padding: "12px", verticalAlign: "top", background: "#fff" }}>
+                    <h4 style={{ margin: "0 0 8px", fontWeight: "600", color: "#374151", fontSize: "0.85rem" }}>Third Review Comment</h4>
+                    <input
+                      type="text"
+                      placeholder="Enter third review comment"
+                      value={newComments[currentStudentForReview.registerNumber]?.['third'] || ""}
+                      onChange={(e) => handleCommentChange(currentStudentForReview.registerNumber, 'third', e.target.value)}
+                      style={{ width: "100%", padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "0.85rem" }}
+                    />
+                    <button
+                      onClick={() => handleSubmitComment(currentStudentForReview.registerNumber, 'third')}
+                      style={{ marginTop: "6px", fontSize: "0.75rem", background: "#3b82f6", color: "#fff", border: "none", padding: "4px 12px", borderRadius: "4px", cursor: "pointer" }}
+                    >
+                      Submit
+                    </button>
+                    {reviewComments[currentStudentForReview.registerNumber]?.['third'] && (
+                      <p style={{ marginTop: "4px", fontSize: "0.75rem", color: "#6b7280", fontStyle: "italic" }}>
+                        Saved: {reviewComments[currentStudentForReview.registerNumber]?.['third']}
+                      </p>
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            {/* Marks table */}
+            {loadingReviewData ? (
+              <div style={{ padding: "32px", textAlign: "center", color: "#3b82f6", fontSize: "0.95rem" }}>
+                Loading review items...
+              </div>
+            ) : (
+              <>
+                {coordinatorReviewStructure.length > 0 ? (
+                  <div style={{ overflowX: "auto", marginTop: "12px" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem", background: "#fff", borderRadius: "8px", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+                      <thead>
+                        <tr style={{ background: "#e0e7ff" }}>
+                          <th style={esThStyle}>Review Item (R1)</th>
+                          <th style={{ ...esThStyle, width: "80px", textAlign: "center" }}>R1 Max</th>
+                          <th style={{ ...esThStyle, width: "110px", textAlign: "center" }}>R1 Awarded</th>
+                          <th style={esThStyle}>Review Item (R2)</th>
+                          <th style={{ ...esThStyle, width: "80px", textAlign: "center" }}>R2 Max</th>
+                          <th style={{ ...esThStyle, width: "110px", textAlign: "center" }}>R2 Awarded</th>
+                          <th style={esThStyle}>Review Item (R3)</th>
+                          <th style={{ ...esThStyle, width: "80px", textAlign: "center" }}>R3 Max</th>
+                          <th style={{ ...esThStyle, width: "110px", textAlign: "center" }}>R3 Awarded</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {studentReviewMarks.map((item, index) => (
+                          <tr key={index} style={{ borderBottom: "1px solid #e5e7eb", background: index % 2 === 0 ? "#fff" : "#f9fafb" }}>
+                            <td style={esTdStyle}>{item.r1_item_desc}</td>
+                            <td style={{ ...esTdStyle, textAlign: "center" }}>{item.coord_r1_max}</td>
+                            <td style={{ ...esTdStyle, textAlign: "center" }}>
+                              <input
+                                type="number"
+                                min="0"
+                                max={item.coord_r1_max}
+                                value={item.r1_mark}
+                                onChange={(e) => handleStudentReviewMarkChange(index, 'r1_mark', e.target.value)}
+                                readOnly={marksLockStatus === 'Locked'}
+                                style={{ ...esInputStyle, background: marksLockStatus === 'Locked' ? '#f3f4f6' : '#fff', cursor: marksLockStatus === 'Locked' ? 'not-allowed' : 'auto' }}
+                              />
+                            </td>
+                            <td style={esTdStyle}>{item.r2_item_desc}</td>
+                            <td style={{ ...esTdStyle, textAlign: "center" }}>{item.coord_r2_max}</td>
+                            <td style={{ ...esTdStyle, textAlign: "center" }}>
+                              <input
+                                type="number"
+                                min="0"
+                                max={item.coord_r2_max}
+                                value={item.r2_mark}
+                                onChange={(e) => handleStudentReviewMarkChange(index, 'r2_mark', e.target.value)}
+                                readOnly={marksLockStatus === 'Locked'}
+                                style={{ ...esInputStyle, background: marksLockStatus === 'Locked' ? '#f3f4f6' : '#fff', cursor: marksLockStatus === 'Locked' ? 'not-allowed' : 'auto' }}
+                              />
+                            </td>
+                            <td style={esTdStyle}>{item.r3_item_desc}</td>
+                            <td style={{ ...esTdStyle, textAlign: "center" }}>{item.coord_r3_max}</td>
+                            <td style={{ ...esTdStyle, textAlign: "center" }}>
+                              <input
+                                type="number"
+                                min="0"
+                                max={item.coord_r3_max}
+                                value={item.r3_mark}
+                                onChange={(e) => handleStudentReviewMarkChange(index, 'r3_mark', e.target.value)}
+                                readOnly={marksLockStatus === 'Locked'}
+                                style={{ ...esInputStyle, background: marksLockStatus === 'Locked' ? '#f3f4f6' : '#fff', cursor: marksLockStatus === 'Locked' ? 'not-allowed' : 'auto' }}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr style={{ background: "#f0fdf4", fontWeight: "700", fontSize: "0.85rem" }}>
+                          <td style={{ ...esTdStyle, textAlign: "right" }} colSpan={2}>Total Awarded (R1):</td>
+                          <td style={{ ...esTdStyle, textAlign: "center" }}>{totalAwardedR1}</td>
+                          <td style={{ ...esTdStyle, textAlign: "right" }} colSpan={2}>Total Awarded (R2):</td>
+                          <td style={{ ...esTdStyle, textAlign: "center" }}>{totalAwardedR2}</td>
+                          <td style={{ ...esTdStyle, textAlign: "right" }} colSpan={2}>Total Awarded (R3):</td>
+                          <td style={{ ...esTdStyle, textAlign: "center" }}>{totalAwardedR3}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                ) : (
+                  <p style={{ color: "#9ca3af", fontSize: "0.9rem", padding: "16px 0" }}>
+                    No review items defined by the coordinator for {selectedProgram}.
+                  </p>
+                )}
+              </>
+            )}
+
+            {savingReviewMarks && (
+              <p style={{ marginTop: "12px", color: "#3b82f6", fontSize: "0.9rem" }}>Saving marks...</p>
+            )}
+
+            {/* Action buttons */}
+            <div style={{ marginTop: "18px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              <button
+                onClick={handleSaveStudentReviewMarks}
+                disabled={savingReviewMarks || loadingReviewData}
+                style={{
+                  padding: "9px 22px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: savingReviewMarks || loadingReviewData ? "#9ca3af" : "#16a34a",
+                  color: "#fff",
+                  fontWeight: "600",
+                  fontSize: "0.875rem",
+                  cursor: savingReviewMarks || loadingReviewData ? "not-allowed" : "pointer",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+                }}
+              >
+                {savingReviewMarks ? "Saving..." : "Save Marks"}
+              </button>
+              <button
+                onClick={() => { setShowReviewModal(false); setCurrentStudentForReview(null); }}
+                style={{
+                  padding: "9px 22px",
+                  borderRadius: "8px",
+                  border: "1px solid #d1d5db",
+                  background: "#fff",
+                  color: "#374151",
+                  fontWeight: "600",
+                  fontSize: "0.875rem",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDownloadStudentReviewPDF}
+                style={{
+                  padding: "9px 22px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "#7c3aed",
+                  color: "#fff",
+                  fontWeight: "600",
+                  fontSize: "0.875rem",
+                  cursor: "pointer",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+                }}
+              >
+                Download as PDF
+              </button>
             </div>
           </div>
         )}
@@ -2076,5 +2121,32 @@ const handleDownloadStudentReviewPDF = () => {
     </div>
   );
 }
+
+const esThStyle = {
+  padding: "10px 16px",
+  textAlign: "left",
+  fontWeight: "600",
+  color: "#3730a3",
+  borderBottom: "1px solid #c7d2fe",
+  fontSize: "0.75rem",
+  textTransform: "uppercase",
+  letterSpacing: "0.04em",
+};
+
+const esTdStyle = {
+  padding: "10px 16px",
+  color: "#374151",
+  verticalAlign: "middle",
+};
+
+const esInputStyle = {
+  width: "72px",
+  padding: "5px 8px",
+  border: "1px solid #d1d5db",
+  borderRadius: "6px",
+  textAlign: "center",
+  fontSize: "0.875rem",
+  outline: "none",
+};
 
 export default EnrolledStudents;

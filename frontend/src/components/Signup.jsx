@@ -233,6 +233,7 @@ function Signup() {
               <select value={facultyRole} onChange={(e) => setFacultyRole(e.target.value)} required>
                 <option value="">Select Role</option>
                 <option value="Guide">Guide</option>
+                <option value="Teacher">Teacher</option>
                 {showAdminRole && <option value="Admin">Admin</option>}
                 <option value="HOD">HOD</option>
               </select>

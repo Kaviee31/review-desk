@@ -4,6 +4,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { toast } from 'react-toastify'; // For notifications
 import 'react-toastify/dist/ReactToastify.css';
+import axios from "axios";
 import "../styles/CoordinatorDashboard.css"; 
 import Footer from './Footer';
 import { pgCourses, ugCourses, courses } from "../constants/courses";// Assuming this CSS provides styling
@@ -79,21 +80,11 @@ function CoordinatorDashboard() {
     }
     setSavingReviews(true); // Indicate saving process
     try {
-      const response = await fetch(`${API_BASE_URL}/coordinator-reviews`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          coordinatorId: coordinatorUid,
-          program: selectedProgram, // This remains a single program as coordinator manages one at a time
-          reviewData: extraRowsData,
-        }),
+      await axios.post(`${API_BASE_URL}/coordinator-reviews`, {
+        coordinatorId: coordinatorUid,
+        program: selectedProgram,
+        reviewData: extraRowsData,
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save review data.");
-      }
       if (showSuccessToast) {
         toast.success("Review data submitted successfully!");
       } else {
@@ -101,7 +92,7 @@ function CoordinatorDashboard() {
       }
     } catch (error) {
       console.error("Error saving review data:", error);
-      toast.error(`Failed to save review data: ${error.message}`);
+      toast.error(`Failed to save review data: ${error.response?.data?.error || error.message}`);
     } finally {
       setSavingReviews(false); // End saving process
     }
@@ -113,12 +104,7 @@ function CoordinatorDashboard() {
       if (selectedProgram && coordinatorUid) {
         setLoadingReviews(true); // Indicate loading reviews
         try {
-          const response = await fetch(`${API_BASE_URL}/coordinator-reviews/${coordinatorUid}/${selectedProgram}`);
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Failed to load review data.");
-          }
-          const data = await response.json();
+          const { data } = await axios.get(`${API_BASE_URL}/coordinator-reviews/${coordinatorUid}/${selectedProgram}`);
           // Ensure data.reviewData is an array, default to empty if not found or null
           const loadedData = Array.isArray(data.reviewData) ? data.reviewData : [];
           setExtraRowsData(loadedData);
@@ -126,7 +112,7 @@ function CoordinatorDashboard() {
           toast.info("Review data loaded.");
         } catch (error) {
           console.error("Error loading review data:", error);
-          toast.error(`Failed to load previous review data: ${error.message}`);
+          toast.error(`Failed to load previous review data: ${error.response?.data?.error || error.message}`);
           setExtraRowsData([]); // Clear data on error
           setExtraRowsCount(0);
         } finally {

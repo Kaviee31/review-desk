@@ -35,6 +35,7 @@ function AdminDashboard() {
   const [ugStudentCourseName, setUgStudentCourseName] = useState('');
   const [ugProjectName, setUgProjectName] = useState('');
   const [loadingUgEnroll, setLoadingUgEnroll] = useState(false);
+  const [loadingBulk, setLoadingBulk] = useState(false);
 
   const fetchTeacherName = async (teacherEmailToSearch) => {
     try {
@@ -174,6 +175,7 @@ function AdminDashboard() {
       toast.error("Please select an Excel file first.");
       return;
     }
+    setLoadingBulk(true);
     try {
       const data = await excelFile.arrayBuffer();
       const workbook = XLSX.read(data);
@@ -216,6 +218,8 @@ function AdminDashboard() {
     } catch (err) {
       console.error("Excel upload error:", err);
       toast.error("Failed to process Excel file.");
+    } finally {
+      setLoadingBulk(false);
     }
   };
 
@@ -312,15 +316,16 @@ function AdminDashboard() {
               </span>
               <button
                 onClick={handleExcelEnroll}
+                disabled={loadingBulk}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 style={{
                   padding: '8px 16px', borderRadius: '6px', border: 'none',
-                  backgroundColor: isHovered ? '#218838' : '#28a745',
-                  color: 'white', cursor: 'pointer', transition: 'background-color 0.2s'
+                  backgroundColor: loadingBulk ? '#6c757d' : isHovered ? '#218838' : '#28a745',
+                  color: 'white', cursor: loadingBulk ? 'not-allowed' : 'pointer', transition: 'background-color 0.2s'
                 }}
               >
-                Enroll
+                {loadingBulk ? 'Importing...' : 'Enroll'}
               </button>
             </div>
           </div>

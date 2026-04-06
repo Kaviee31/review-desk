@@ -7,17 +7,19 @@ function RoleProtectedRoute({ children, allowedRoles }) {
   const [authorized, setAuthorized] = useState(null);
 
   useEffect(() => {
+    let mounted = true;
+
     const checkRole = async () => {
       const user = auth.currentUser;
       if (!user) {
-        setAuthorized(false);
+        if (mounted) setAuthorized(false);
         return;
       }
 
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       if (!userSnap.exists()) {
-        setAuthorized(false);
+        if (mounted) setAuthorized(false);
         return;
       }
 
@@ -30,10 +32,11 @@ function RoleProtectedRoute({ children, allowedRoles }) {
         roles.push("Teacher");
       }
       const hasAccess = roles.some(role => allowedRoles.includes(role));
-      setAuthorized(hasAccess);
+      if (mounted) setAuthorized(hasAccess);
     };
 
     checkRole();
+    return () => { mounted = false; };
   }, [allowedRoles]);
 
   if (authorized === null) return <p>Loading...</p>;

@@ -1,5 +1,5 @@
 // StudentDashboard.jsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -43,6 +43,7 @@ function StudentDashboard() {
   const [thirdOtherFile, setThirdOtherFile] = useState(null);
 
   const [loading, setLoading] = useState(false);
+  const [panelMarks, setPanelMarks] = useState(null); // { hasPanel, rounds }
   const navigate = useNavigate();
   
 
@@ -72,7 +73,7 @@ function StudentDashboard() {
 
 
   // Moved fetchReviewDeadlines outside of any useEffect to make it globally accessible within the component
-  const fetchReviewDeadlines = async (courseName) => {
+  const fetchReviewDeadlines = useCallback(async (courseName) => {
     if (!courseName) return; // Don't fetch if courseName is not available
 
     try {
@@ -86,7 +87,7 @@ function StudentDashboard() {
     } catch (error) {
       console.error("Error fetching review deadlines:", error);
     }
-  };
+  }, []);
 
 
   useEffect(() => {
@@ -123,6 +124,17 @@ function StudentDashboard() {
           // Fetch uploaded review files after registerNumber is set
           if (userData?.registerNumber) {
             fetchUploadedReviews(userData.registerNumber);
+          }
+
+          // Fetch panel marks
+          if (userData?.registerNumber) {
+            try {
+              const panelRes = await axios.get(`${API_BASE_URL}/api/student-panel-marks/${userData.registerNumber}`);
+              setPanelMarks(panelRes.data);
+            } catch (err) {
+              console.warn("Could not fetch panel marks:", err.message);
+              setPanelMarks(null);
+            }
           }
         }
       } catch (error) {
@@ -180,7 +192,7 @@ function StudentDashboard() {
         fetchUserData(user);
         fetchAnnouncements();
       } else {
-        navigate("/login");
+        navigate("/");
       }
     });
 
@@ -371,6 +383,46 @@ function StudentDashboard() {
               </>
             )}
           </div>
+
+          {panelMarks?.hasPanel && (
+            <div className="review-upload-section" style={{ marginBottom: '1.5rem' }}>
+              <h3>📊 Panel Review Marks</h3>
+              <div className="table-responsive-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Review</th>
+                      <th>Status</th>
+                      <th>Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {panelMarks.rounds && panelMarks.rounds.length > 0 ? (
+                      panelMarks.rounds.map((round) => (
+                        <tr key={round.reviewNumber}>
+                          <td>Review {round.reviewNumber}</td>
+                          <td>
+                            {!round.enabled
+                              ? 'Not yet open'
+                              : round.percentage === null
+                              ? 'Pending marks'
+                              : 'Marked'}
+                          </td>
+                          <td>
+                            {round.percentage !== null && round.enabled
+                              ? `${round.percentage.toFixed(1)}%`
+                              : '—'}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr><td colSpan="3">No panel review data available yet.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           <div className="review-upload-section">
             <h3>📂 Upload Review Documents</h3>

@@ -1,12 +1,25 @@
-import React, { useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { LogOut, Users, LayoutDashboard } from "lucide-react";
+import { LogOut, Users, LayoutDashboard, ClipboardList } from "lucide-react";
 import { getAuth } from "firebase/auth";
-import RoleSwitcherDropdown from "./RoleSwitcherDropdown";  // ✅ imported
+import axios from "axios";
+import RoleSwitcherDropdown from "./RoleSwitcherDropdown";
+import { API_BASE_URL } from "./TeacherDashboard";
 import "../styles/TeacherLayout.css";
 
 function TeacherLayout() {
   const navigate = useNavigate();
+  const [isOnPanel, setIsOnPanel] = useState(false);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user?.email) return;
+    axios
+      .get(`${API_BASE_URL}/api/panels/teacher/${encodeURIComponent(user.email)}`)
+      .then((res) => setIsOnPanel(res.data.length > 0))
+      .catch(() => {});
+  }, []);
 
   const handleLogout = async () => {
     await getAuth().signOut();
@@ -32,6 +45,12 @@ function TeacherLayout() {
           <button onClick={() => navigate("/teacher/enrolled-students")}>
             <Users size={18} /> Enrolled Students
           </button>
+
+          {isOnPanel && (
+            <button onClick={() => navigate("/teacher/panel-review")}>
+              <ClipboardList size={18} /> Panel Review
+            </button>
+          )}
 
           <RoleSwitcherDropdown />  {/* ✅ The dropdown inserted here */}
 

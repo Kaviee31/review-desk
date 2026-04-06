@@ -23,7 +23,7 @@ function ReportPage() {
     const today = new Date().toISOString().split('T')[0];
     
     const allPrograms = [
-        "MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(AI_DS)",
+        "MCA(R)", "MCA(SS)", "MTECH(IT)", "MTECH(AI_DS)",
         "B.TECH(IT) BATCH1", "B.TECH(IT) BATCH2"
     ];
 
@@ -152,10 +152,10 @@ function ReportPage() {
             };
 
             await emailjs.send(
-                'service_zdkw9wb',
-                'template_bdoxrlm',
+                import.meta.env.VITE_EMAILJS_SERVICE_ID,
+                import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
                 templateParams,
-                'lBI3Htk5CKshSzMFg'
+                import.meta.env.VITE_EMAILJS_PUBLIC_KEY
             );
 
             toast.success(`Email sent to ${bccEmails.length} students in ${courseName}.`);
