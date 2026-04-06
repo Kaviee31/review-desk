@@ -57,7 +57,10 @@ const enrollmentSchema = new mongoose.Schema({
   // NEW FIELDS FOR UG STUDENTS' PROJECT DATA
   projectName: { type: String }, // Stores the project name for the group
   groupRegisterNumbers: { type: [String], default: [] },// Stores all register numbers in the UG group
-  zerothReviewComment: { type: String, default: "" }
+  zerothReviewComment: { type: String, default: "" },
+  firstReviewComment: { type: String, default: "" },
+  secondReviewComment: { type: String, default: "" },
+  thirdReviewComment: { type: String, default: "" }
 });
 
 const messageSchema = new mongoose.Schema({
@@ -85,12 +88,46 @@ const coordinatorReviewSchema = new mongoose.Schema({
   lastUpdated: { type: Date, default: Date.now } // Timestamp of last update
 }, { timestamps: true });
 
+const marksLockSchema = new mongoose.Schema({
+  courseName: { type: String, required: true, unique: true },
+  locked: { type: Boolean, default: false },
+  lockedAt: { type: Date }
+});
+
+// SCHEMA for Review Panel (one panel per course)
+const panelSchema = new mongoose.Schema({
+  courseName: { type: String, required: true, unique: true },
+  teachers: [{
+    email: { type: String, required: true },
+    name:  { type: String, required: true }
+  }],
+  createdBy: { type: String, required: true }, // admin UID
+}, { timestamps: true });
+
+// SCHEMA for individual panel teacher marks per student per review round
+const panelMarkSchema = new mongoose.Schema({
+  panelId:        { type: mongoose.Schema.Types.ObjectId, ref: "Panel", required: true },
+  courseName:     { type: String, required: true },
+  registerNumber: { type: String, required: true },
+  teacherEmail:   { type: String, required: true },
+  reviewNumber:   { type: Number, required: true }, // 1, 2, or 3
+  marks: [{
+    description: String,
+    mark:        { type: Number, default: 0 }
+  }],
+  submittedAt: { type: Date, default: Date.now }
+});
+// Unique: one submission per teacher per student per review round per panel
+panelMarkSchema.index({ panelId: 1, registerNumber: 1, teacherEmail: 1, reviewNumber: 1 }, { unique: true });
 
 // === MODELS ===
 const Enrollment = mongoose.model("Enrollment", enrollmentSchema);
 const Message = mongoose.model("Message", messageSchema);
 const ReviewDeadline = mongoose.model("ReviewDeadline", reviewDeadlineSchema);
 const CoordinatorReview = mongoose.model("CoordinatorReview", coordinatorReviewSchema);
+const MarksLock = mongoose.model("MarksLock", marksLockSchema);
+const Panel = mongoose.model("Panel", panelSchema);
+const PanelMark = mongoose.model("PanelMark", panelMarkSchema);
 
 
 // === MULTER CONFIG ===
@@ -251,22 +288,28 @@ app.get("/student-zeroth-review/:registerNumber", async (req, res) => {
   }
 });
 
-app.post("/zeroth-review/submit", async (req, res) => {
-  const { registerNumber, projectName, comment, teacherEmail } = req.body;
+app.post("/review/submit", async (req, res) => {
+  const { registerNumber, projectName, comment, reviewType } = req.body;
+
+  if (!reviewType || !['zeroth', 'first', 'second', 'third'].includes(reviewType)) {
+    return res.status(400).json({ error: "Invalid review type provided." });
+  }
+
   try {
+    const commentField = `${reviewType}ReviewComment`;
+    const update = { $set: { [commentField]: comment } };
+
     let result;
     if (registerNumber) {
-      // Logic for PG students
       result = await Enrollment.findOneAndUpdate(
         { registerNumber },
-        { $set: { zerothReviewComment: comment } },
+        update,
         { new: true }
       );
     } else if (projectName) {
-      // Logic for UG projects, update all students in the project
       result = await Enrollment.updateMany(
         { projectName },
-        { $set: { zerothReviewComment: comment } },
+        update,
         { new: true }
       );
     } else {
@@ -276,10 +319,10 @@ app.post("/zeroth-review/submit", async (req, res) => {
     if (!result) {
       return res.status(404).json({ error: "Student or project not found." });
     }
-    res.status(200).json({ message: "Zeroth review comment submitted successfully." });
+    res.status(200).json({ message: "Review comment submitted successfully." });
   } catch (error) {
-    console.error("Error submitting zeroth review comment:", error);
-    res.status(500).json({ error: "Failed to submit zeroth review comment." });
+    console.error("Error submitting review comment:", error);
+    res.status(500).json({ error: "Failed to submit review comment." });
   }
 });
 
@@ -385,6 +428,61 @@ app.post("/update-marks", async (req, res) => {
   } catch (error) {
     console.error("Error saving marks:", error);
     res.status(500).json({ error: "Failed to update marks" });
+  }
+});
+
+// GET: Check the lock status for a specific course
+// Used by: ReportPage.jsx (Admin) and EnrolledStudents.jsx (Teacher)
+app.get("/marks-lock/status/:courseName", async (req, res) => {
+  try {
+    const { courseName } = req.params;
+    const lock = await MarksLock.findOne({ courseName });
+    if (lock && lock.locked) {
+      res.json({ status: "Locked" });
+    } else {
+      res.json({ status: "Unlocked" });
+    }
+  } catch (error) {
+    console.error("Error fetching lock status:", error);
+    res.status(500).json({ error: "Failed to fetch lock status." });
+  }
+});
+
+// POST: Lock marks for a course
+// Used by: EnrolledStudents.jsx (Teacher)
+app.post("/marks-lock/lock", async (req, res) => {
+  try {
+    const { courseName } = req.body;
+    if (!courseName) return res.status(400).json({ error: "Course name is required." });
+
+    await MarksLock.updateOne(
+      { courseName },
+      { $set: { locked: true, lockedAt: new Date() } },
+      { upsert: true }
+    );
+    res.json({ message: `Marks for ${courseName} have been locked.` });
+  } catch (error) {
+    console.error("Error locking marks:", error);
+    res.status(500).json({ error: "Failed to lock marks." });
+  }
+});
+
+// POST: Unlock marks for a course
+// Used by: ReportPage.jsx (Admin)
+app.post("/marks-lock/unlock", async (req, res) => {
+  try {
+    const { courseName } = req.body;
+    if (!courseName) return res.status(400).json({ error: "Course name is required." });
+
+    await MarksLock.updateOne(
+      { courseName },
+      { $set: { locked: false } },
+      { upsert: true }
+    );
+    res.json({ message: `Marks for ${courseName} have been unlocked.` });
+  } catch (error) {
+    console.error("Error unlocking marks:", error);
+    res.status(500).json({ error: "Failed to unlock marks." });
   }
 });
 
@@ -655,66 +753,8 @@ app.post("/student-review-marks", async (req, res) => {
 
 
 
-app.get("/students-by-program/:programName", async (req, res) => {
-  const { programName } = req.params;
-  try {
-    const students = await Enrollment.find({ courseName: programName });
-    res.json(students);
-  } catch (error) {
-    console.error(`Error fetching students for program ${programName}:`, error);
-    res.status(500).json({ error: `Failed to fetch students for program ${programName}.` });
-  }
-});
 
 
-app.get("/ug-projects-by-program/:programName", async (req, res) => {
-  const { programName } = req.params;
-
-  try {
-    const projects = await Enrollment.aggregate([
-      {
-        $match: {
-          courseName: programName,
-          projectName: { $ne: null, $exists: true, $ne: '' }
-        }
-      },
-      {
-        $group: {
-          _id: "$projectName",
-          groupRegisterNumbers: { $addToSet: "$registerNumber" },
-          // ADDED: Get the teacher's email for the project.
-          teacherEmail: { $first: "$teacherEmail" },
-          // ADDED: Get the zeroth review comment for the project.
-          zerothReviewComment: { $first: "$zerothReviewComment" },
-          Assessment1: { $first: "$Assessment1" },
-          Assessment2: { $first: "$Assessment2" },
-          Assessment3: { $first: "$Assessment3" },
-          Total: { $first: "$Total" },
-          viva_total_awarded: { $first: "$viva_total_awarded" },
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          projectName: "$_id",
-          groupRegisterNumbers: 1,
-          // ADDED: Make sure the new fields are included in the final output.
-          teacherEmail: 1,
-          zerothReviewComment: 1,
-          Assessment1: 1,
-          Assessment2: 1,
-          Assessment3: 1,
-          Total: 1,
-          viva_total_awarded: 1,
-        }
-      }
-    ]);
-    res.json(projects);
-  } catch (error) {
-    console.error(`Error fetching UG projects for program ${programName}:`, error);
-    res.status(500).json({ error: `Failed to fetch UG projects for program ${programName}.` });
-  }
-});
 // =====================================================================================
 // === NEW ROUTE FOR COORDINATOR STUDENT VIEW ===
 // =====================================================================================
@@ -896,6 +936,275 @@ app.get('/teacher-ug-projects/:teacherEmail/:programName', async (req, res) => {
   }
 });
 
+
+app.post("/update-viva-marks", async (req, res) => {
+  const { registerNumber, courseName, viva } = req.body;
+
+  if (!registerNumber || !courseName || !viva) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+
+  try {
+    const totalViva = (Number(viva.guide) || 0) + (Number(viva.panel) || 0) + (Number(viva.external) || 0);
+    
+    // Find the student to check if they are part of a UG project
+    const student = await Enrollment.findOne({ registerNumber, courseName });
+
+    if (!student) {
+      return res.status(404).json({ error: "Student not found." });
+    }
+
+    // If the student is in a project (has a projectName), update all project members
+    if (student.projectName && student.groupRegisterNumbers?.length > 0) {
+      await Enrollment.updateMany(
+        { projectName: student.projectName, courseName: courseName },
+        { $set: { viva: viva, viva_total_awarded: totalViva } }
+      );
+    } else { // Otherwise, just update the single PG student
+      await Enrollment.findOneAndUpdate(
+        { registerNumber, courseName },
+        { $set: { viva: viva, viva_total_awarded: totalViva } }
+      );
+    }
+
+    res.json({ message: "Viva marks updated successfully!" });
+  } catch (error) {
+    console.error("Error updating viva marks:", error);
+    res.status(500).json({ error: "Failed to update viva marks" });
+  }
+});
+app.post("/bulk-enroll", async (req, res) => {
+  try {
+    const { students } = req.body; // array of student objects
+    const results = [];
+    for (const s of students) {
+      const exists = await Enrollment.findOne({ registerNumber: s.registerNumber, courseName: s.courseName });
+      if (exists) {
+        results.push({ regNo: s.registerNumber, status: "exists" });
+        continue;
+      }
+      const newEnrollment = new Enrollment(s);
+      await newEnrollment.save();
+      results.push({ regNo: s.registerNumber, status: "enrolled" });
+    }
+    res.json({ message: "Bulk enrollment completed", results });
+  } catch (err) {
+    console.error("Bulk enroll error:", err);
+    res.status(500).json({ error: "Failed to bulk enroll" });
+  }
+});
+
+
+// GET /api/coordinator-review-data/:courseName — fetch coordinator criteria by course name (used by panel review)
+app.get("/api/coordinator-review-data/:courseName", async (req, res) => {
+  try {
+    const review = await CoordinatorReview.findOne({ program: req.params.courseName });
+    if (!review) return res.json({ reviewData: [] });
+    res.json({ reviewData: review.reviewData || [] });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch coordinator review data." });
+  }
+});
+
+// =====================================================================
+// === PANEL ROUTES ===
+// =====================================================================
+
+// POST /api/panels — Admin creates a panel for a course (one per course enforced by unique index)
+app.post("/api/panels", async (req, res) => {
+  const { courseName, createdBy } = req.body;
+  if (!courseName || !createdBy) return res.status(400).json({ error: "courseName and createdBy are required." });
+  try {
+    const existing = await Panel.findOne({ courseName });
+    if (existing) return res.status(400).json({ error: `A panel already exists for ${courseName}.` });
+    const panel = new Panel({ courseName, teachers: [], createdBy });
+    await panel.save();
+    res.status(201).json(panel);
+  } catch (err) {
+    console.error("Error creating panel:", err);
+    res.status(500).json({ error: "Failed to create panel." });
+  }
+});
+
+// GET /api/panels — Admin + HOD: list all panels
+app.get("/api/panels", async (req, res) => {
+  try {
+    const panels = await Panel.find().sort({ courseName: 1 });
+    res.json(panels);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch panels." });
+  }
+});
+
+// GET /api/panels/teacher/:email — Teacher: get panels this teacher belongs to
+app.get("/api/panels/teacher/:email", async (req, res) => {
+  try {
+    const panels = await Panel.find({ "teachers.email": req.params.email });
+    res.json(panels);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch panels for teacher." });
+  }
+});
+
+// PUT /api/panels/:id/teachers — Admin: add or remove teachers from a panel
+// Body: { action: "add"|"remove", teacher: { email, name } }
+app.put("/api/panels/:id/teachers", async (req, res) => {
+  const { action, teacher } = req.body;
+  if (!action || !teacher?.email) return res.status(400).json({ error: "action and teacher.email are required." });
+  try {
+    const panel = await Panel.findById(req.params.id);
+    if (!panel) return res.status(404).json({ error: "Panel not found." });
+    if (action === "add") {
+      const alreadyIn = panel.teachers.some(t => t.email === teacher.email);
+      if (alreadyIn) return res.status(400).json({ error: "Teacher already in panel." });
+      panel.teachers.push({ email: teacher.email, name: teacher.name });
+    } else if (action === "remove") {
+      panel.teachers = panel.teachers.filter(t => t.email !== teacher.email);
+    } else {
+      return res.status(400).json({ error: "action must be 'add' or 'remove'." });
+    }
+    await panel.save();
+    res.json(panel);
+  } catch (err) {
+    console.error("Error updating panel teachers:", err);
+    res.status(500).json({ error: "Failed to update panel teachers." });
+  }
+});
+
+// DELETE /api/panels/:id — Admin: delete a panel
+app.delete("/api/panels/:id", async (req, res) => {
+  try {
+    await Panel.findByIdAndDelete(req.params.id);
+    await PanelMark.deleteMany({ panelId: req.params.id });
+    res.json({ message: "Panel deleted." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete panel." });
+  }
+});
+
+// GET /api/panel-students/:courseName — Panel teacher: list all students for a course
+app.get("/api/panel-students/:courseName", async (req, res) => {
+  try {
+    const students = await Enrollment.find(
+      { courseName: req.params.courseName },
+      { studentName: 1, registerNumber: 1, email: 1, teacherName: 1, teacherEmail: 1, courseName: 1 }
+    ).sort({ studentName: 1 });
+    res.json(students);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch students for panel." });
+  }
+});
+
+// POST /api/panel-marks — Panel teacher: submit or update marks for a student
+// Body: { panelId, courseName, registerNumber, teacherEmail, reviewNumber, marks: [{ description, mark }] }
+app.post("/api/panel-marks", async (req, res) => {
+  const { panelId, courseName, registerNumber, teacherEmail, reviewNumber, marks } = req.body;
+  if (!panelId || !courseName || !registerNumber || !teacherEmail || !reviewNumber || !Array.isArray(marks)) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+  try {
+    const existing = await PanelMark.findOne({ panelId, registerNumber, teacherEmail, reviewNumber });
+    if (existing) {
+      existing.marks = marks;
+      existing.submittedAt = new Date();
+      await existing.save();
+      return res.json({ message: "Marks updated.", panelMark: existing });
+    }
+    const panelMark = new PanelMark({ panelId, courseName, registerNumber, teacherEmail, reviewNumber, marks });
+    await panelMark.save();
+    res.status(201).json({ message: "Marks submitted.", panelMark });
+  } catch (err) {
+    console.error("Error saving panel marks:", err);
+    res.status(500).json({ error: "Failed to save panel marks." });
+  }
+});
+
+// GET /api/panel-marks/:panelId/:registerNumber — Teacher: load existing marks for a student
+app.get("/api/panel-marks/:panelId/:registerNumber", async (req, res) => {
+  try {
+    const marks = await PanelMark.find({
+      panelId: req.params.panelId,
+      registerNumber: req.params.registerNumber
+    });
+    res.json(marks);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch panel marks." });
+  }
+});
+
+// GET /api/student-panel-marks/:registerNumber — Student dashboard: combined aggregate
+// Returns per-review aggregate (average of guide + all panel teachers), converted to %
+app.get("/api/student-panel-marks/:registerNumber", async (req, res) => {
+  try {
+    const { registerNumber } = req.params;
+
+    // Get the student's enrollment to find courseName and guide marks
+    const enrollment = await Enrollment.findOne({ registerNumber });
+    if (!enrollment) return res.status(404).json({ error: "Student not found." });
+
+    const { courseName, reviewsAssessment } = enrollment;
+
+    // Get the panel for this course
+    const panel = await Panel.findOne({ courseName });
+    if (!panel) return res.json({ hasPanel: false, rounds: [] });
+
+    // Get all panel marks for this student
+    const allPanelMarks = await PanelMark.find({ panelId: panel._id, registerNumber });
+
+    // Get coordinator criteria to know max marks per criterion per review
+    const coordReview = await CoordinatorReview.findOne({ program: courseName });
+    const reviewData = coordReview?.reviewData || [];
+
+    const rounds = [1, 2, 3].map(rNum => {
+      const rKey = `r${rNum}`;
+
+      // Check if coordinator has set up this round (has criteria with max marks > 0)
+      const criteriaForRound = reviewData
+        .filter(item => item[`${rKey}_mark`] > 0)
+        .map(item => ({ description: item[`${rKey}_desc`] || item.description || "", maxMark: item[`${rKey}_mark`] }));
+
+      if (!criteriaForRound.length) return { reviewNumber: rNum, enabled: false, aggregate: null };
+
+      // Guide marks for this round from reviewsAssessment
+      const guideMarksTotal = reviewsAssessment.reduce((sum, ra) => {
+        const markKey = `r${rNum}_mark`;
+        return sum + (Number(ra[markKey]) || 0);
+      }, 0);
+      const guideMaxTotal = criteriaForRound.reduce((sum, c) => sum + c.maxMark, 0);
+
+      // Panel teacher marks for this round
+      const panelRoundMarks = allPanelMarks.filter(pm => pm.reviewNumber === rNum);
+      const teacherTotals = panelRoundMarks.map(pm =>
+        pm.marks.reduce((sum, m) => sum + (Number(m.mark) || 0), 0)
+      );
+
+      // Combine: guide total + all panel teacher totals → average
+      const allTotals = guideMaxTotal > 0 ? [guideMarksTotal, ...teacherTotals] : teacherTotals;
+      const combined = allTotals.length
+        ? allTotals.reduce((a, b) => a + b, 0) / allTotals.length
+        : 0;
+
+      const percentage = guideMaxTotal > 0 ? Math.round((combined / guideMaxTotal) * 100) : 0;
+
+      return {
+        reviewNumber: rNum,
+        enabled: true,
+        rawAverage: Math.round(combined * 100) / 100,
+        maxMark: guideMaxTotal,
+        percentage
+      };
+    });
+
+    res.json({ hasPanel: true, courseName, rounds });
+  } catch (err) {
+    console.error("Error computing student panel marks:", err);
+    res.status(500).json({ error: "Failed to compute panel marks." });
+  }
+});
+
+// =====================================================================
+// === END PANEL ROUTES ===
+// =====================================================================
 
 // Start server
 const PORT = process.env.PORT || 5000;

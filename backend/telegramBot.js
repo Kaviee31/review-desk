@@ -15,7 +15,7 @@ bot.on("message", async (msg) => {
     bot.sendMessage(chatId, "👋 Hi! Please reply with your register number to link your Telegram account.");
   } else if (/^\d{10}$/.test(text)) {
     try {
-      await axios.post("http://localhost:5000/api/save-telegram-id", {
+      await axios.post(`${process.env.API_BASE_URL || "http://localhost:5000"}/api/save-telegram-id`, {
         registerNumber: text,
         chatId,
       });

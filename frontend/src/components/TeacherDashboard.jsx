@@ -6,23 +6,18 @@ import emailjs from '@emailjs/browser';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/TeacherDashboard.css';
+import { courses } from "../constants/courses";
+import Footer from './Footer'; 
+import '../styles/Footer.css';
 
+export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function TeacherDashboard() {
   const [announcement, setAnnouncement] = useState('');
   const [teacherEmail, setTeacherEmail] = useState('');
   const [programFilter, setProgramFilter] = useState('');
   const navigate = useNavigate();
-  const BASE_URL = "http://localhost:5000";
 
-  const allPrograms = [
-    "MCA(R)",
-    "MCA(SS)",
-    "MTECH(R)",
-    "MTECH(SS)",
-    "B.TECH(IT)",
-    "B.TECH(IT) SS"
-  ];
-
+  const allPrograms = courses;
   useEffect(() => {
     document.title = "Guide Dashboard";
     const auth = getAuth();
@@ -45,7 +40,7 @@ function TeacherDashboard() {
     }
 
     try {
-      const response = await axios.get(`${BASE_URL}/teacher-courses/${teacherEmail}`);
+      const response = await axios.get(`${API_BASE_URL}/teacher-courses/${teacherEmail}`);
       let enrolledStudents = response.data;
 
       if (programFilter) {
@@ -91,7 +86,7 @@ function TeacherDashboard() {
 
       // Send Telegram
       if (mode === 'telegram' || mode === 'both') {
-        const telegramRes = await axios.post(`${BASE_URL}/api/send-telegram`, {
+        const telegramRes = await axios.post(`${API_BASE_URL}/api/send-telegram`, {
           message: announcement,
           registerNumbers: registerNumbers,
         });
@@ -113,24 +108,25 @@ function TeacherDashboard() {
   };
 
   return (
+    <div className="teacher-dashboard-layout">
     <div className="containers">
       <div className="dashboard-content">
         <h2>📣 Send Announcement to Students</h2>
 
         {/* Program Filter Dropdown */}
         <select
-  value={programFilter}
-  onChange={(e) => setProgramFilter(e.target.value)}
-  className="program-dropdown"
-  style={{ color: programFilter === "" ? "black" : "initial" }}
->
-  <option value="">🎓 All Programs</option>
-  {allPrograms.map(program => (
-    <option key={program} value={program}>
-      {program}
-    </option>
-  ))}
-</select>
+          value={programFilter}
+          onChange={(e) => setProgramFilter(e.target.value)}
+          className="program-dropdown"
+          style={{ color: programFilter === "" ? "black" : "initial" }}
+        >
+          <option value="">🎓 All Programs</option>
+          {allPrograms.map(program => (
+            <option key={program} value={program}>
+              {program}
+            </option>
+          ))}
+        </select>
 
 
         <form onSubmit={handleAnnouncementSubmit}>
@@ -165,6 +161,11 @@ function TeacherDashboard() {
           </div>
         </form>
       </div>
+    </div>
+    <div className='footer-st'>
+      <Footer />
+    </div>
+    
     </div>
   );
 }

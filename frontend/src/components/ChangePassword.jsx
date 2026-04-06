@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import "../styles/ChangePassword.css"
 import Lottie from 'lottie-react';
 import animationData from '../assets/password-lock.json';
+import Footer from './Footer';
 
 function ChangePassword() {
   const [newPassword, setNewPassword] = useState('');
@@ -44,6 +45,7 @@ function ChangePassword() {
   };
 
   return (
+    <div className='teacher-dashboard-layout'>
     <div className="change-password">
          <div style={{ maxWidth: 200, margin: "0 auto" }}>
         <Lottie animationData={animationData} loop={true} />
@@ -66,6 +68,8 @@ function ChangePassword() {
         />
         <button type="submit">Update Password</button>
       </form>
+    </div>
+    <Footer />
     </div>
   );
 }

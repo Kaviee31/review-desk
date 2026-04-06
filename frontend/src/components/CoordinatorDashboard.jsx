@@ -4,8 +4,11 @@ import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { toast } from 'react-toastify'; // For notifications
 import 'react-toastify/dist/ReactToastify.css';
-import "../styles/CoordinatorDashboard.css"; // Assuming this CSS provides styling
-
+import axios from "axios";
+import "../styles/CoordinatorDashboard.css"; 
+import Footer from './Footer';
+import { pgCourses, ugCourses, courses } from "../constants/courses";// Assuming this CSS provides styling
+export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function CoordinatorDashboard() {
   const [selectedProgram, setSelectedProgram] = useState(null);
   // Changed assignedCourse to assignedCourses (array)
@@ -22,10 +25,10 @@ function CoordinatorDashboard() {
   const [loadingReviews, setLoadingReviews] = useState(false); // New loading state for reviews
   const [savingReviews, setSavingReviews] = useState(false); // New saving state for reviews
 
-  const allPrograms = ["MCA(R)", "MCA(SS)", "MTECH(R)", "MTECH(SS)","B.TECH(IT)","B.TECH(IT) SS"];
+  const allPrograms = courses;
 
   // Base URL for your backend API
-  const API_BASE_URL = "http://localhost:5000"; // Ensure this matches your backend server URL
+ // Ensure this matches your backend server URL
 
   useEffect(() => {
     document.title = "Coordinator Dashboard";
@@ -77,21 +80,11 @@ function CoordinatorDashboard() {
     }
     setSavingReviews(true); // Indicate saving process
     try {
-      const response = await fetch(`${API_BASE_URL}/coordinator-reviews`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          coordinatorId: coordinatorUid,
-          program: selectedProgram, // This remains a single program as coordinator manages one at a time
-          reviewData: extraRowsData,
-        }),
+      await axios.post(`${API_BASE_URL}/coordinator-reviews`, {
+        coordinatorId: coordinatorUid,
+        program: selectedProgram,
+        reviewData: extraRowsData,
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save review data.");
-      }
       if (showSuccessToast) {
         toast.success("Review data submitted successfully!");
       } else {
@@ -99,7 +92,7 @@ function CoordinatorDashboard() {
       }
     } catch (error) {
       console.error("Error saving review data:", error);
-      toast.error(`Failed to save review data: ${error.message}`);
+      toast.error(`Failed to save review data: ${error.response?.data?.error || error.message}`);
     } finally {
       setSavingReviews(false); // End saving process
     }
@@ -111,12 +104,7 @@ function CoordinatorDashboard() {
       if (selectedProgram && coordinatorUid) {
         setLoadingReviews(true); // Indicate loading reviews
         try {
-          const response = await fetch(`${API_BASE_URL}/coordinator-reviews/${coordinatorUid}/${selectedProgram}`);
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Failed to load review data.");
-          }
-          const data = await response.json();
+          const { data } = await axios.get(`${API_BASE_URL}/coordinator-reviews/${coordinatorUid}/${selectedProgram}`);
           // Ensure data.reviewData is an array, default to empty if not found or null
           const loadedData = Array.isArray(data.reviewData) ? data.reviewData : [];
           setExtraRowsData(loadedData);
@@ -124,7 +112,7 @@ function CoordinatorDashboard() {
           toast.info("Review data loaded.");
         } catch (error) {
           console.error("Error loading review data:", error);
-          toast.error(`Failed to load previous review data: ${error.message}`);
+          toast.error(`Failed to load previous review data: ${error.response?.data?.error || error.message}`);
           setExtraRowsData([]); // Clear data on error
           setExtraRowsCount(0);
         } finally {
@@ -293,6 +281,7 @@ function CoordinatorDashboard() {
   }
 
   return (
+    <div className="teacher-dashboard-layout">
     <div className="flex flex-col items-center justify-start min-h-screen p-4 bg-gray-100 font-inter">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">
         Coordinator Dashboard
@@ -475,6 +464,8 @@ function CoordinatorDashboard() {
           </div>
         </div>
       )}
+    </div>
+    <Footer />
     </div>
   );
 }

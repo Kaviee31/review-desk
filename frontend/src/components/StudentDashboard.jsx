@@ -1,12 +1,13 @@
 // StudentDashboard.jsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import axios from "axios";
 import "../styles/StudentDashboard.css";
-
+import Footer from './Footer';
+export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function StudentDashboard() {
   useEffect(() => {
     document.title = "Student Dashboard";
@@ -42,8 +43,9 @@ function StudentDashboard() {
   const [thirdOtherFile, setThirdOtherFile] = useState(null);
 
   const [loading, setLoading] = useState(false);
+  const [panelMarks, setPanelMarks] = useState(null); // { hasPanel, rounds }
   const navigate = useNavigate();
-  const BASE_URL = "http://localhost:5000";
+  
 
   // States to store uploaded file paths (objects containing pdfPath, pptPath, otherPath, and uploadedAt)
   const [uploadedZerothReview, setUploadedZerothReview] = useState({ pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
@@ -71,11 +73,11 @@ function StudentDashboard() {
 
 
   // Moved fetchReviewDeadlines outside of any useEffect to make it globally accessible within the component
-  const fetchReviewDeadlines = async (courseName) => {
+  const fetchReviewDeadlines = useCallback(async (courseName) => {
     if (!courseName) return; // Don't fetch if courseName is not available
 
     try {
-      const response = await axios.get(`${BASE_URL}/get-review-dates?courseName=${courseName}`);
+      const response = await axios.get(`${API_BASE_URL}/get-review-dates?courseName=${courseName}`);
       setDeadlines({
         zerothReviewDeadline: response.data?.zerothReviewDeadline || null,
         firstReviewDeadline: response.data?.firstReviewDeadline || null,
@@ -85,7 +87,7 @@ function StudentDashboard() {
     } catch (error) {
       console.error("Error fetching review deadlines:", error);
     }
-  };
+  }, []);
 
 
   useEffect(() => {
@@ -100,7 +102,7 @@ function StudentDashboard() {
 
           // Fetch student's enrollment to get courseName
           if (userData?.registerNumber) {
-            const enrollmentResponse = await axios.get(`${BASE_URL}/student-courses/${userData.registerNumber}`);
+            const enrollmentResponse = await axios.get(`${API_BASE_URL}/student-courses/${userData.registerNumber}`);
             if (enrollmentResponse.data && enrollmentResponse.data.length > 0) {
               // Assuming a student is primarily enrolled in one course for deadline purposes
               // You might need more sophisticated logic if a student can be in multiple courses
@@ -111,7 +113,7 @@ function StudentDashboard() {
           // Telegram status check
           if (userData?.registerNumber) {
             try {
-              const res = await axios.get(`${BASE_URL}/api/telegram-status/${userData.registerNumber}`);
+              const res = await axios.get(`${API_BASE_URL}/api/telegram-status/${userData.registerNumber}`);
               setTelegramLinked(res.data.linked);
             } catch (error) {
               console.error("Failed to check Telegram status:", error);
@@ -123,6 +125,17 @@ function StudentDashboard() {
           if (userData?.registerNumber) {
             fetchUploadedReviews(userData.registerNumber);
           }
+
+          // Fetch panel marks
+          if (userData?.registerNumber) {
+            try {
+              const panelRes = await axios.get(`${API_BASE_URL}/api/student-panel-marks/${userData.registerNumber}`);
+              setPanelMarks(panelRes.data);
+            } catch (err) {
+              console.warn("Could not fetch panel marks:", err.message);
+              setPanelMarks(null);
+            }
+          }
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -131,7 +144,7 @@ function StudentDashboard() {
 
     const fetchAnnouncements = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/all-messages`);
+        const response = await axios.get(`${API_BASE_URL}/all-messages`);
         setAnnouncement(response.data);
       } catch (error) {
         console.error("Error fetching announcements:", error);
@@ -141,7 +154,7 @@ function StudentDashboard() {
     // Function to fetch uploaded reviews (now expects object with paths and uploadedAt)
     const fetchUploadedReviews = async (regNo) => {
       try {
-        const zerothResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/zeroth`);
+        const zerothResponse = await axios.get(`${API_BASE_URL}/get-latest-review/${regNo}/zeroth`);
         setUploadedZerothReview(zerothResponse.data || { pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
       } catch (error) {
         console.warn("No zeroth review found or error fetching:", error.message);
@@ -149,7 +162,7 @@ function StudentDashboard() {
       }
 
       try {
-        const firstResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/first`);
+        const firstResponse = await axios.get(`${API_BASE_URL}/get-latest-review/${regNo}/first`);
         setUploadedFirstReview(firstResponse.data || { pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
       } catch (error) {
         console.warn("No first review found or error fetching:", error.message);
@@ -157,7 +170,7 @@ function StudentDashboard() {
       }
 
       try {
-        const secondResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/second`);
+        const secondResponse = await axios.get(`${API_BASE_URL}/get-latest-review/${regNo}/second`);
         setUploadedSecondReview(secondResponse.data || { pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
       } catch (error) {
         console.warn("No second review found or error fetching:", error.message);
@@ -166,7 +179,7 @@ function StudentDashboard() {
 
       // NEW: Fetch third review
       try {
-        const thirdResponse = await axios.get(`${BASE_URL}/get-latest-review/${regNo}/third`);
+        const thirdResponse = await axios.get(`${API_BASE_URL}/get-latest-review/${regNo}/third`);
         setUploadedThirdReview(thirdResponse.data || { pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null });
       } catch (error) {
         console.warn("No third review found or error fetching:", error.message);
@@ -179,12 +192,12 @@ function StudentDashboard() {
         fetchUserData(user);
         fetchAnnouncements();
       } else {
-        navigate("/login");
+        navigate("/");
       }
     });
 
     return () => unsubscribe();
-  }, [navigate, BASE_URL]); // Add BASE_URL to dependency array
+  }, [navigate, API_BASE_URL]); // Add BASE_URL to dependency array
 
   // New useEffect to call fetchReviewDeadlines once studentCourseName is set
   useEffect(() => {
@@ -239,7 +252,7 @@ function StudentDashboard() {
 
     try {
       setLoading(true);
-      const response = await axios.post(`${BASE_URL}/upload-review`, formData, {
+      const response = await axios.post(`${API_BASE_URL}/upload-review`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -298,7 +311,7 @@ function StudentDashboard() {
         <label className="file-label">{fileType.toUpperCase()}:</label>
         {isFileUploaded ? (
           <a
-            href={`${BASE_URL}/${isFileUploaded}`}
+            href={`${API_BASE_URL}/${isFileUploaded}`}
             target="_blank"
             rel="noopener noreferrer"
             className="uploaded-file-link"
@@ -328,6 +341,7 @@ function StudentDashboard() {
 
 
   return (
+    <div className="teacher-dashboard-layout">
     <>
       <div className="contain">
         <div className="box">
@@ -369,6 +383,46 @@ function StudentDashboard() {
               </>
             )}
           </div>
+
+          {panelMarks?.hasPanel && (
+            <div className="review-upload-section" style={{ marginBottom: '1.5rem' }}>
+              <h3>📊 Panel Review Marks</h3>
+              <div className="table-responsive-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Review</th>
+                      <th>Status</th>
+                      <th>Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {panelMarks.rounds && panelMarks.rounds.length > 0 ? (
+                      panelMarks.rounds.map((round) => (
+                        <tr key={round.reviewNumber}>
+                          <td>Review {round.reviewNumber}</td>
+                          <td>
+                            {!round.enabled
+                              ? 'Not yet open'
+                              : round.percentage === null
+                              ? 'Pending marks'
+                              : 'Marked'}
+                          </td>
+                          <td>
+                            {round.percentage !== null && round.enabled
+                              ? `${round.percentage.toFixed(1)}%`
+                              : '—'}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr><td colSpan="3">No panel review data available yet.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           <div className="review-upload-section">
             <h3>📂 Upload Review Documents</h3>
@@ -449,6 +503,8 @@ function StudentDashboard() {
 
       <Outlet />
     </>
+    <Footer />
+    </div>
   );
 }
 

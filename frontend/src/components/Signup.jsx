@@ -2,16 +2,20 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import { setDoc, doc, collection, query, where, getDocs } from "firebase/firestore";
+import { setDoc, doc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "../styles/Signup.css";
+import { courses } from "../constants/courses";
+import Footer from './Footer';
+import PartialFooter from './PartialFooter';
 
 function Signup() {
-  useEffect(() => { document.title = "Signup"; }, []);
+  
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [userType, setUserType] = useState("Student");
   const [facultyRole, setFacultyRole] = useState("");
@@ -19,10 +23,57 @@ function Signup() {
   const [facultyId, setFacultyId] = useState("");
   const [courseType, setCourseType] = useState("");
   const [loading, setLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
+  const [showAdminRole, setShowAdminRole] = useState(false);
+   
+
+
+  useEffect(() => {
+    document.title = "Signup";
+    
+    const checkAdminExists = async () => {
+      try {
+        const usersRef = collection(db, "users");
+        // Query to find if any user has "Admin" in their roles array
+        const q = query(usersRef, where("roles", "array-contains", "Admin"), limit(1));
+        const querySnapshot = await getDocs(q);
+
+        // If no documents are returned, no admin exists, so show the option
+        if (querySnapshot.empty) {
+          setShowAdminRole(true);
+        } else {
+          setShowAdminRole(false);
+        }
+      } catch (error) {
+        console.error("Error checking for admin existence:", error);
+        toast.error("Could not verify admin status. Please try again later.");
+      }
+    };
+
+    checkAdminExists();
+  }, []);
+  
+  useEffect(() => {
+    // Only check if the user has started typing in the confirm password field
+    if (confirmPassword && password !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+    } else {
+      // Clear the error if they match or if the field is empty
+      setPasswordError("");
+    }
+  }, [password, confirmPassword]); // This effect runs whenever password or confirmPassword changes
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // --- Final Password Match Validation (Good practice to keep this) ---
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      // The error message state is already set by the useEffect, but we still stop submission
+      return; 
+    }
+    
     setLoading(true);
 
     try {
@@ -69,13 +120,13 @@ function Signup() {
 
         // Faculty Role assignment
         if (facultyRole === "Admin") {
-          userData.roles = ["Admin"];
+          userData.roles = ["Admin","Teacher"];
         } else if (facultyRole === "HOD") {
           userData.roles = ["HOD"];
         } else if (facultyRole === "Guide") {
           userData.roles = ["Teacher"];
         } else {
-          toast.error("Please select valid Faculty Role.");
+          toast.error("Please select a valid Faculty Role.");
           setLoading(false);
           return;
         }
@@ -94,63 +145,106 @@ function Signup() {
     }
   };
 
+  // Inline style for error state on password fields
+  const errorInputStyle = {
+    borderColor: '#e53e3e', // A nice red color
+    borderWidth: '2px',
+    boxShadow: '0 0 0 1px #e53e3e',
+  };
+
   return (
-    <div className="signup-page">
-      <form className="signup-form" onSubmit={handleSubmit}>
-        <h2>Create Account</h2>
+    <div className="teacher-dashboard-layout">
+      <PartialFooter />
+      <div className="signup-page">
+        <form className="signup-form" onSubmit={handleSubmit}>
+          <h2>Create Account</h2>
 
-        <label>Username</label>
-        <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
+          <label>Full Name</label>
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
 
-        <label>Email</label>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <label>Email</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
 
-        <label>Phone Number</label>
-        <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required />
+          <label>Phone Number</label>
+          <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required />
 
-        <label>Password</label>
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <label>Password</label>
+          <input 
+            type="password" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            required 
+            style={passwordError ? errorInputStyle : {}} // Apply style on error
+          />
 
-        <label>Choose Your Role</label>
-        <select value={userType} onChange={(e) => setUserType(e.target.value)}>
-          <option value="Student">Student</option>
-          <option value="Faculty">Faculty</option>
-        </select>
+          <label>Confirm Password</label>
+          <input 
+            type="password" 
+            value={confirmPassword} 
+            onChange={(e) => setConfirmPassword(e.target.value)} 
+            required 
+            style={passwordError ? errorInputStyle : {}} // Apply style on error
+          />
+          
+          {/* Display error message directly below the input field */}
+          {passwordError && (
+            <p style={{ 
+              color: '#e53e3e', 
+              fontSize: '0.8rem', 
+              marginTop: '-10px', 
+              marginBottom: '10px',
+              textAlign: 'center'
+            }}>
+              {passwordError}
+            </p>
+          )}
 
-        {userType === "Student" && (
-          <>
-            <label>Register Number</label>
-            <input type="text" value={registerNumber} onChange={(e) => setRegisterNumber(e.target.value)} required />
-            <label>Course Type</label>
-            <select value={courseType} onChange={(e) => setCourseType(e.target.value)} required>
-              <option value="">Select Course</option>
-              <option value="MCA(R)">MCA(R)</option>
-              <option value="MCA(SS)">MCA(SS)</option>
-              <option value="MTECH(R)">MTECH(R)</option>
-              <option value="MTECH(SS)">MTECH(SS)</option>
-              <option value="B.TECH(IT)">B.TECH(IT)</option>
-              <option value="B.TECH(IT) SS">B.TECH(IT) SS</option>
-            </select>
-          </>
-        )}
+          <label>Choose Your Role</label>
+          <select value={userType} onChange={(e) => setUserType(e.target.value)}>
+            <option value="Student">Student</option>
+            <option value="Faculty">Faculty</option>
+          </select>
 
-        {userType === "Faculty" && (
-          <>
-            <label>Faculty ID</label>
-            <input type="text" value={facultyId} onChange={(e) => setFacultyId(e.target.value)} required />
-            <label>Faculty Role</label>
-            <select value={facultyRole} onChange={(e) => setFacultyRole(e.target.value)} required>
-              <option value="">Select Role</option>
-              <option value="Guide">Guide</option>
-              <option value="Admin">Admin</option>
-              <option value="HOD">HOD</option>
-            </select>
-          </>
-        )}
+          {userType === "Student" && (
+            <>
+              <label>Register Number</label>
+              <input type="text" value={registerNumber} onChange={(e) => setRegisterNumber(e.target.value)} required />
+              <label>Course Type</label>
+              <select 
+                  value={courseType} 
+                  onChange={(e) => setCourseType(e.target.value)} 
+                  required
+                >
+                  <option value="">Select Course</option>
+                  {courses.map(course => (
+                    <option key={course} value={course}>
+                      {course}
+                    </option>
+                  ))}
+                </select>
+            </>
+          )}
 
-        <button type="submit" disabled={loading}>{loading ? "Registering..." : "Register"}</button>
-        <p>Already have an account? <Link to="/">Login</Link></p>
-      </form>
+          {userType === "Faculty" && (
+            <>
+              <label>Faculty ID</label>
+              <input type="text" value={facultyId} onChange={(e) => setFacultyId(e.target.value)} required />
+              <label>Faculty Role</label>
+              <select value={facultyRole} onChange={(e) => setFacultyRole(e.target.value)} required>
+                <option value="">Select Role</option>
+                <option value="Guide">Guide</option>
+                <option value="Teacher">Teacher</option>
+                {showAdminRole && <option value="Admin">Admin</option>}
+                <option value="HOD">HOD</option>
+              </select>
+            </>
+          )}
+
+          <button type="submit" disabled={loading}>{loading ? "Registering..." : "Register"}</button>
+          <p>Already have an account? <Link to="/">Login</Link></p>
+        </form>
+      </div>
+      <Footer />
     </div>
   );
 }

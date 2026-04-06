@@ -48,14 +48,17 @@ function ChatWindow({ currentUser, contactUser, onClose }) {
       : `${contactUser}_${currentUser}`;
 
     const messagesRef = collection(db, "chats", chatKey, "messages");
-    await addDoc(messagesRef, {
-      senderId: currentUser,
-      receiverId: contactUser,
-      message: newMessage,
-      timestamp: new Date(),
-    });
-
-    setNewMessage("");
+    try {
+      await addDoc(messagesRef, {
+        senderId: currentUser,
+        receiverId: contactUser,
+        message: newMessage,
+        timestamp: new Date(),
+      });
+      setNewMessage("");
+    } catch (err) {
+      console.error("Failed to send message:", err);
+    }
   };
 
   return (
