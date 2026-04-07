@@ -6,6 +6,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { courses } from "../constants/courses";
 import { API_BASE_URL } from "./TeacherDashboard";
+import "../styles/AdminPanelManagement.css";
 
 function AdminPanelManagement() {
   const [panels, setPanels] = useState([]);
@@ -145,36 +146,20 @@ function AdminPanelManagement() {
     : teachers;
 
   return (
-    <div style={{ padding: "24px", maxWidth: "900px", margin: "0 auto" }}>
-      <h2 style={{ marginBottom: "24px", fontSize: "1.5rem", fontWeight: "700" }}>
-        Panel Management
-      </h2>
+    <div className="apm-container">
+      <h2 className="apm-heading">Panel Management</h2>
 
       {/* Create Panel */}
-      <div
-        style={{
-          background: "#f9fafb",
-          border: "1px solid #e5e7eb",
-          borderRadius: "10px",
-          padding: "20px",
-          marginBottom: "28px",
-        }}
-      >
-        <h3 style={{ marginBottom: "14px", fontWeight: "600" }}>Create New Panel</h3>
+      <div className="apm-create-card">
+        <h3 className="apm-create-title">Create New Panel</h3>
         {availableCourses.length === 0 ? (
-          <p style={{ color: "#6b7280" }}>All courses already have a panel.</p>
+          <p className="apm-empty-msg">All courses already have a panel.</p>
         ) : (
-          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+          <div className="apm-create-row">
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "6px",
-                border: "1px solid #d1d5db",
-                minWidth: "200px",
-                fontSize: "0.95rem",
-              }}
+              className="apm-select"
             >
               <option value="">Select a course</option>
               {availableCourses.map((c) => (
@@ -186,15 +171,7 @@ function AdminPanelManagement() {
             <button
               onClick={handleCreatePanel}
               disabled={creatingPanel || !selectedCourse}
-              style={{
-                padding: "8px 20px",
-                background: creatingPanel || !selectedCourse ? "#9ca3af" : "#2563eb",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: creatingPanel || !selectedCourse ? "not-allowed" : "pointer",
-                fontWeight: "600",
-              }}
+              className="apm-btn-primary"
             >
               {creatingPanel ? "Creating..." : "Create Panel"}
             </button>
@@ -203,36 +180,24 @@ function AdminPanelManagement() {
       </div>
 
       {/* Panels List + Detail */}
-      <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: "24px" }}>
+      <div className="apm-grid">
         {/* Left: panels list */}
         <div>
-          <h3 style={{ fontWeight: "600", marginBottom: "12px" }}>
+          <h3 className="apm-section-title">
             All Panels ({panels.length})
           </h3>
           {panels.length === 0 ? (
-            <p style={{ color: "#6b7280", fontSize: "0.9rem" }}>No panels created yet.</p>
+            <p className="apm-no-items">No panels created yet.</p>
           ) : (
             panels.map((panel) => (
               <div
                 key={panel._id}
                 onClick={() => setSelectedPanel(panel)}
-                style={{
-                  padding: "12px 16px",
-                  marginBottom: "8px",
-                  borderRadius: "8px",
-                  border: `1px solid ${selectedPanel?._id === panel._id ? "#2563eb" : "#e5e7eb"}`,
-                  background: selectedPanel?._id === panel._id ? "#eff6ff" : "#fff",
-                  cursor: "pointer",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
+                className={`apm-panel-item${selectedPanel?._id === panel._id ? " apm-panel-item--selected" : ""}`}
               >
                 <div>
-                  <div style={{ fontWeight: "600", fontSize: "0.95rem" }}>
-                    {panel.courseName}
-                  </div>
-                  <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+                  <div className="apm-panel-name">{panel.courseName}</div>
+                  <div className="apm-panel-meta">
                     {panel.teachers.length} teacher{panel.teachers.length !== 1 ? "s" : ""}
                   </div>
                 </div>
@@ -241,14 +206,7 @@ function AdminPanelManagement() {
                     e.stopPropagation();
                     handleDeletePanel(panel._id, panel.courseName);
                   }}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#ef4444",
-                    cursor: "pointer",
-                    fontSize: "0.8rem",
-                    fontWeight: "600",
-                  }}
+                  className="apm-btn-delete"
                 >
                   Delete
                 </button>
@@ -259,35 +217,19 @@ function AdminPanelManagement() {
 
         {/* Right: panel detail */}
         {selectedPanel ? (
-          <div
-            style={{
-              background: "#fff",
-              border: "1px solid #e5e7eb",
-              borderRadius: "10px",
-              padding: "20px",
-            }}
-          >
-            <h3 style={{ fontWeight: "700", marginBottom: "4px" }}>
-              {selectedPanel.courseName}
-            </h3>
-            <p style={{ color: "#6b7280", fontSize: "0.85rem", marginBottom: "20px" }}>
+          <div className="apm-detail-pane">
+            <h3 className="apm-detail-title">{selectedPanel.courseName}</h3>
+            <p className="apm-detail-subtitle">
               {selectedPanel.teachers.length} panel member
               {selectedPanel.teachers.length !== 1 ? "s" : ""}
             </p>
 
             {/* Add teacher */}
-            <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap" }}>
+            <div className="apm-add-row">
               <select
                 value={selectedTeacher}
                 onChange={(e) => setSelectedTeacher(e.target.value)}
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid #d1d5db",
-                  flexGrow: 1,
-                  minWidth: "200px",
-                  fontSize: "0.9rem",
-                }}
+                className="apm-select apm-select--grow"
               >
                 <option value="">Select teacher to add</option>
                 {availableTeachers.map((t) => (
@@ -299,15 +241,7 @@ function AdminPanelManagement() {
               <button
                 onClick={handleAddTeacher}
                 disabled={loading || !selectedTeacher}
-                style={{
-                  padding: "8px 18px",
-                  background: loading || !selectedTeacher ? "#9ca3af" : "#16a34a",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: loading || !selectedTeacher ? "not-allowed" : "pointer",
-                  fontWeight: "600",
-                }}
+                className="apm-btn-success"
               >
                 Add
               </button>
@@ -315,38 +249,26 @@ function AdminPanelManagement() {
 
             {/* Teachers list */}
             {selectedPanel.teachers.length === 0 ? (
-              <p style={{ color: "#9ca3af", fontSize: "0.9rem" }}>
-                No teachers in this panel yet.
-              </p>
+              <p className="apm-no-items">No teachers in this panel yet.</p>
             ) : (
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+              <table className="apm-table">
                 <thead>
-                  <tr style={{ background: "#f3f4f6" }}>
-                    <th style={{ textAlign: "left", padding: "8px 12px", borderRadius: "6px 0 0 6px" }}>
-                      Name
-                    </th>
-                    <th style={{ textAlign: "left", padding: "8px 12px" }}>Email</th>
-                    <th style={{ padding: "8px 12px", borderRadius: "0 6px 6px 0" }}></th>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {selectedPanel.teachers.map((t) => (
-                    <tr key={t.email} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                      <td style={{ padding: "10px 12px", fontWeight: "500" }}>{t.name}</td>
-                      <td style={{ padding: "10px 12px", color: "#6b7280" }}>{t.email}</td>
-                      <td style={{ padding: "10px 12px", textAlign: "right" }}>
+                    <tr key={t.email}>
+                      <td className="apm-td-name">{t.name}</td>
+                      <td className="apm-td-email">{t.email}</td>
+                      <td className="apm-td-action">
                         <button
                           onClick={() => handleRemoveTeacher(t.email, t.name)}
                           disabled={loading}
-                          style={{
-                            background: "none",
-                            border: "1px solid #ef4444",
-                            color: "#ef4444",
-                            padding: "4px 10px",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            fontSize: "0.8rem",
-                          }}
+                          className="apm-btn-remove"
                         >
                           Remove
                         </button>
@@ -358,17 +280,7 @@ function AdminPanelManagement() {
             )}
           </div>
         ) : (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#9ca3af",
-              border: "1px dashed #d1d5db",
-              borderRadius: "10px",
-              fontSize: "0.95rem",
-            }}
-          >
+          <div className="apm-placeholder">
             Select a panel to manage its teachers
           </div>
         )}

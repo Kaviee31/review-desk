@@ -1,0 +1,260 @@
+/* ── Page container ── */
+.apm-container {
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.apm-heading {
+  margin-bottom: 24px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--brand-heading);
+}
+
+/* ── Create panel card ── */
+.apm-create-card {
+  background: var(--brand-page-bg);
+  border: 1px solid var(--brand-card-border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 28px;
+}
+
+.apm-create-title {
+  margin-bottom: 14px;
+  font-weight: 600;
+  color: var(--brand-heading);
+}
+
+.apm-empty-msg {
+  color: var(--brand-text-muted);
+}
+
+.apm-create-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── Select elements ── */
+.apm-select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--brand-card-border);
+  min-width: 200px;
+  font-size: 0.95rem;
+  background: var(--brand-card-bg);
+  color: var(--brand-text);
+  outline: none;
+}
+
+.apm-select--grow {
+  flex-grow: 1;
+  font-size: 0.9rem;
+}
+
+/* ── Primary button (Create Panel) ── */
+.apm-btn-primary {
+  padding: 8px 20px;
+  background: var(--brand-primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.apm-btn-primary:hover:not(:disabled) {
+  background: var(--brand-primary-hover);
+}
+
+.apm-btn-primary:disabled {
+  background: var(--brand-text-muted);
+  cursor: not-allowed;
+}
+
+/* ── Two-column grid ── */
+.apm-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+}
+
+.apm-section-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--brand-heading);
+}
+
+.apm-no-items {
+  color: var(--brand-text-muted);
+  font-size: 0.9rem;
+}
+
+/* ── Panel list items ── */
+.apm-panel-item {
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--brand-card-border);
+  background: var(--brand-card-bg);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.apm-panel-item--selected {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary-light);
+}
+
+.apm-panel-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--brand-text);
+}
+
+.apm-panel-meta {
+  font-size: 0.8rem;
+  color: var(--brand-text-muted);
+}
+
+.apm-btn-delete {
+  background: none;
+  border: none;
+  color: var(--brand-error);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 2px 4px;
+}
+
+.apm-btn-delete:hover {
+  text-decoration: underline;
+}
+
+/* ── Detail pane ── */
+.apm-detail-pane {
+  background: var(--brand-card-bg);
+  border: 1px solid var(--brand-card-border);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.apm-detail-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--brand-heading);
+}
+
+.apm-detail-subtitle {
+  color: var(--brand-text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+}
+
+.apm-add-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+/* ── Success button (Add teacher) ── */
+.apm-btn-success {
+  padding: 8px 18px;
+  background: var(--brand-success);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+
+.apm-btn-success:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.apm-btn-success:disabled {
+  background: var(--brand-text-muted);
+  cursor: not-allowed;
+}
+
+/* ── Teacher table ── */
+.apm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.apm-table thead tr {
+  background: var(--brand-page-bg);
+}
+
+.apm-table th {
+  text-align: left;
+  padding: 8px 12px;
+  color: var(--brand-text);
+}
+
+.apm-table th:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.apm-table th:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+.apm-table tbody tr {
+  border-bottom: 1px solid var(--brand-page-bg);
+}
+
+.apm-table td {
+  padding: 10px 12px;
+  color: var(--brand-text);
+}
+
+.apm-td-name {
+  font-weight: 500;
+}
+
+.apm-td-email {
+  color: var(--brand-text-muted) !important;
+}
+
+.apm-td-action {
+  text-align: right;
+}
+
+.apm-btn-remove {
+  background: none;
+  border: 1px solid var(--brand-error);
+  color: var(--brand-error);
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.apm-btn-remove:hover:not(:disabled) {
+  background: var(--brand-error);
+  color: #fff;
+}
+
+/* ── Placeholder (no panel selected) ── */
+.apm-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-text-muted);
+  border: 1px dashed var(--brand-card-border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  min-height: 200px;
+}
