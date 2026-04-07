@@ -1,44 +1,28 @@
-:root {
-  --primary-color: #4a63e7;
-  --secondary-color: #f4f7fb;
-  --accent-color: #ffb347;
-  --border-color: #dce3f0;
-  --text-dark: #2c2f4a;
-  --text-light: #6f7b91;
-  --input-bg: #f9fbfd;
-  --table-header-bg: #e9efff;
-  --table-header-color: #3d4c90;
-  --table-row-hover: #f5f8ff;
-}
+/* CoordinatorDashboard.css
+   File-level :root and global body rule removed.
+   All colors use brand tokens from index.css :root. */
 
 * {
   box-sizing: border-box;
 }
 
-body {
-  background-color: var(--secondary-color);
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  margin: 0;
-  padding: 0;
-  color: var(--text-dark);
-}
-
 .coordinator-dashboard {
   padding: 40px 20px;
   min-height: 100vh;
-  background-color: var(--secondary-color);
+  background-color: var(--brand-page-bg);
   text-align: center;
 }
 
 .coordinator-dashboard h2 {
   margin-bottom: 0.25rem;
+  color: var(--brand-heading);
 }
 
 .coordinator-dashboard p {
   margin-top: 0;
   margin-bottom: 2rem;
   font-size: 1rem;
-  color: var(--text-light);
+  color: var(--brand-text-muted);
 }
 
 .extra-rows-input-section {
@@ -52,26 +36,26 @@ body {
 
 .extra-rows-input-section label {
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--brand-heading);
 }
 
 .num-rows-input {
   width: 80px;
   padding: 8px 12px;
   font-size: 1rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--brand-card-border);
   border-radius: 6px;
-  background-color: var(--input-bg);
-  color: var(--text-dark);
+  background-color: var(--brand-card-bg);
+  color: var(--brand-heading);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   text-align: center;
 }
 
 .num-rows-input:focus {
-  border-color: var(--primary-color);
+  border-color: var(--brand-primary);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(74, 99, 231, 0.3);
+  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.3);
 }
 
 .dynamic-table-container {
@@ -83,7 +67,7 @@ table {
   width: 98%;
   margin: auto;
   border-collapse: collapse;
-  background-color: white;
+  background-color: var(--brand-card-bg);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   overflow: hidden;
@@ -93,21 +77,21 @@ table {
 th,
 td {
   padding: 12px 10px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--brand-card-border);
   text-align: center;
   vertical-align: middle;
   font-size: 0.95rem;
 }
 
 th {
-  background-color: var(--table-header-bg);
-  color: var(--table-header-color);
+  background-color: var(--brand-primary-light);
+  color: var(--brand-primary);
   font-weight: 700;
   user-select: none;
 }
 
 .review-header {
-  background-color: var(--primary-color);
+  background-color: var(--brand-primary);
   color: white;
   font-size: 1.2rem;
   font-weight: 700;
@@ -115,17 +99,17 @@ th {
 }
 
 tr:nth-child(even) {
-  background-color: #fafbff;
+  background-color: #f8faff;
 }
 
 tr:hover {
-  background-color: var(--table-row-hover);
+  background-color: var(--brand-primary-light);
 }
 
 .narrow-col {
   width: 40px;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--brand-primary);
   user-select: none;
 }
 
@@ -146,10 +130,10 @@ tr:hover {
   width: 100%;
   padding: 8px 10px;
   font-size: 0.95rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--brand-card-border);
   border-radius: 8px;
-  background-color: var(--input-bg);
-  color: var(--text-dark);
+  background-color: var(--brand-card-bg);
+  color: var(--brand-heading);
   box-sizing: border-box;
   text-align: left;
   font-weight: 600;
@@ -167,10 +151,10 @@ tr:hover {
 .table-cell-input:focus,
 .marks-input:focus,
 .num-rows-input:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(74, 99, 231, 0.35);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.25);
   outline: none;
-  background-color: #fff;
+  background-color: var(--brand-card-bg);
 }
 
 .bold-text {
@@ -178,19 +162,19 @@ tr:hover {
 }
 
 .total-cell {
-  background-color: #f0f2f5;
+  background-color: var(--brand-page-bg);
   text-align: right;
   padding-right: 16px;
   font-weight: 700;
-  color: var(--text-dark);
+  color: var(--brand-heading);
   user-select: none;
 }
 
-/* Optional: subtle hover for inputs */
+/* Subtle hover accent for inputs */
 .table-cell-input:hover,
 .marks-input:hover,
 .num-rows-input:hover {
-  border-color: var(--accent-color);
+  border-color: var(--brand-active);
 }
 
 /* Responsive layout */

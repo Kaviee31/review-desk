@@ -11,13 +11,12 @@ import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { pgCourses, ugCourses, courses } from "../constants/courses";
-import Footer from './Footer';
 import annaUniversityLogo from '../assets/anna-university-logo.png'; 
 
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 
 function HODDashboard() {
-  const [username, setUsername] = useState('HOD');
+  const [_username, setUsername] = useState('HOD');
   const [loadingUser, setLoadingUser] = useState(true);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [students, setStudents] = useState([]);
@@ -529,8 +528,6 @@ function HODDashboard() {
               <div
                 key={program}
                 className="program-card"
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "darkorange")}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "orange")}
                 onClick={() => handleProgramClick(program)}
               >
                 <h3>{program}</h3>
@@ -569,7 +566,7 @@ function HODDashboard() {
                   {panels.map((panel) => (
                     <tr key={panel._id}>
                       <td>{panel.courseName}</td>
-                      <td>{Array.isArray(panel.teachers) && panel.teachers.length > 0 ? panel.teachers.join(', ') : 'No teachers assigned'}</td>
+                      <td>{Array.isArray(panel.teachers) && panel.teachers.length > 0 ? panel.teachers.map((t) => t.name || t.email).join(', ') : 'No teachers assigned'}</td>
                       <td>{panel.createdBy || 'N/A'}</td>
                     </tr>
                   ))}
@@ -646,7 +643,6 @@ function HODDashboard() {
         </div>
       )}
     </div>
-    <Footer /> 
     </div>
   );
 }

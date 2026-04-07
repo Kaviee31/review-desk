@@ -3,6 +3,7 @@ import { useNavigate, Outlet } from "react-router-dom";
 import { LogOut, LayoutDashboard, KeyRound, Users } from "lucide-react";
 import { getAuth } from "firebase/auth";
 import RoleSwitcherDropdown from "../components/RoleSwitcherDropdown";
+import ThemeToggle from "./ThemeToggle";
 import "../styles/CoordinatorLayout.css";
 
 function CoordinatorLayout() {
@@ -37,6 +38,8 @@ function CoordinatorLayout() {
           </button>
 
           <RoleSwitcherDropdown />
+
+          <ThemeToggle />
 
           <button onClick={handleLogout}><LogOut size={18} /> Logout</button>
         </div>

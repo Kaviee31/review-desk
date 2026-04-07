@@ -6,8 +6,7 @@ import { toast } from 'react-toastify'; // For notifications
 import 'react-toastify/dist/ReactToastify.css';
 import axios from "axios";
 import "../styles/CoordinatorDashboard.css"; 
-import Footer from './Footer';
-import { pgCourses, ugCourses, courses } from "../constants/courses";// Assuming this CSS provides styling
+import { courses } from "../constants/courses";// Assuming this CSS provides styling
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function CoordinatorDashboard() {
   const [selectedProgram, setSelectedProgram] = useState(null);
@@ -298,19 +297,6 @@ function CoordinatorDashboard() {
       style={{
         opacity: !assignedCourses.includes(program) ? 0.5 : 1,
         pointerEvents: !assignedCourses.includes(program) ? "none" : "auto",
-        border: "2px solid orange",
-        borderRadius: "8px",
-        transition: "border-color 0.3s ease"
-      }}
-      onMouseEnter={(e) => {
-        if (assignedCourses.includes(program)) {
-          e.currentTarget.style.borderColor = "darkorange";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (assignedCourses.includes(program)) {
-          e.currentTarget.style.borderColor = "orange";
-        }
       }}
     >
       <h3>{program}</h3>
@@ -465,7 +451,6 @@ function CoordinatorDashboard() {
         </div>
       )}
     </div>
-    <Footer />
     </div>
   );
 }

@@ -1,0 +1,48 @@
+/* CompactFooter.css — minimal one-line footer for dashboard pages */
+
+.compact-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 30px;
+  border-top: 1px solid var(--brand-card-border);
+  background-color: var(--brand-card-bg);
+  font-size: 0.82rem;
+  color: var(--brand-text-muted);
+  margin-top: auto;
+}
+
+.compact-footer__text {
+  flex: 1;
+}
+
+.compact-footer__link {
+  color: var(--brand-primary);
+  text-decoration: none;
+}
+
+.compact-footer__link:hover {
+  text-decoration: underline;
+}
+
+.compact-footer__scroll-top {
+  background: none;
+  border: 1px solid var(--brand-card-border);
+  color: var(--brand-text-muted);
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.compact-footer__scroll-top:hover {
+  background-color: var(--brand-primary);
+  color: white;
+  border-color: var(--brand-primary);
+}

@@ -1,7 +1,7 @@
 .container {
   padding: 20px;
   font-family: 'Poppins', 'Arial', sans-serif;
-  background: linear-gradient(to right, #69e3e7, hsl(180, 71%, 55%));
+  background-color: var(--brand-page-bg);
   width: 100vw;
   min-height: 100vh;
   box-sizing: border-box;
@@ -10,19 +10,19 @@
 
 h2 {
   text-align: center;
-  color: #2c3e50;
+  color: var(--brand-heading);
   font-size: 2.5rem;
   margin-bottom: 30px;
-  text-shadow: 1px 1px 2px #aaa;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .table-container {
   max-width: 1100px;
   margin: 0 auto;
   padding: 25px;
-  background: #ffffff;
+  background: var(--brand-card-bg);
   border-radius: 15px;
-  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
 }
 
@@ -34,7 +34,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 25px;
-  background-color: #ffffff;
+  background-color: var(--brand-card-bg);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -43,27 +43,27 @@ th,
 td {
   padding: 12px;
   text-align: center;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--brand-card-border);
 }
 
 th {
-  background-color: #3498db;
+  background-color: var(--brand-primary);
   color: white;
   font-weight: bold;
   font-size: 1rem;
 }
 
 td {
-  background-color: #f9f9f9;
+  background-color: var(--brand-page-bg);
   font-size: 0.95rem;
-  color: black;
+  color: var(--brand-text);
 }
 
 td input {
   width: 70px;
   padding: 6px;
   font-size: 0.9rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--brand-card-border);
   border-radius: 6px;
   text-align: center;
   transition: all 0.3s ease;
@@ -71,13 +71,13 @@ td input {
 
 td input:focus {
   outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 5px #3498db;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 5px rgba(29, 78, 216, 0.3);
 }
 
 button {
   padding: 12px 24px;
-  background: linear-gradient(to right, #4caf50, #81c784);
+  background: var(--brand-success);
   color: #fff;
   font-size: 1rem;
   font-weight: bold;
@@ -86,16 +86,16 @@ button {
   cursor: pointer;
   margin: 10px;
   transition: all 0.3s ease;
-  box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+  box-shadow: 0 5px 15px rgba(22, 163, 74, 0.3);
 }
 
 button:hover {
-  background: linear-gradient(to right, #388e3c, #66bb6a);
-  box-shadow: 0 8px 20px rgba(72, 187, 120, 0.6);
+  background: #15803d;
+  box-shadow: 0 8px 20px rgba(22, 163, 74, 0.4);
 }
 
 button:disabled {
-  background: #bbb;
+  background: var(--brand-text-muted);
   cursor: not-allowed;
 }
 
@@ -124,7 +124,7 @@ button:disabled {
 }
 
 .error-message {
-  color: #e74c3c;
+  color: var(--brand-error);
   font-size: 1.1rem;
   margin-top: 10px;
   text-align: center;
@@ -171,22 +171,20 @@ button:disabled {
   gap: 20px;
   justify-items: center;
   margin-bottom: 40px;
-  
 }
 
 .program-card {
   padding: 30px 20px;
   border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
   cursor: pointer;
   transition: all 0.3s ease;
   width: 100%;
   max-width: 300px;
   text-align: center;
+  background-color: var(--brand-primary);
   color: white;
-  backdrop-filter: blur(4px);
 }
-
 
 .program-card:hover {
   transform: scale(1.07);
@@ -197,20 +195,20 @@ button:disabled {
   font-size: 1.6rem;
   margin-bottom: 10px;
   color: white;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .program-card p {
   font-size: 1rem;
-  color: #f0f0f0;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-} 
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
 .dropdown-container {
   position: relative;
   display: inline-block;
 }
 
-/* The button that opens the dropdown menu */
 .dropdown-button {
   display: inline-flex;
   align-items: center;
@@ -219,17 +217,18 @@ button:disabled {
   font-size: 1rem;
   font-weight: bold;
   color: white;
-  
+  background: var(--brand-primary);
   border: none;
   border-radius: 50px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4);
+  box-shadow: 0 4px 15px rgba(29, 78, 216, 0.3);
 }
 
 .dropdown-button:hover {
+  background: var(--brand-primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 7px 20px rgba(155, 89, 182, 0.5);
+  box-shadow: 0 7px 20px rgba(29, 78, 216, 0.4);
 }
 
 .dropdown-button svg {
@@ -237,46 +236,42 @@ button:disabled {
   transition: transform 0.3s ease;
 }
 
-/* The menu that appears when the button is clicked */
 .dropdown-menu {
   position: absolute;
   right: 0;
-  top: calc(100% + 5px); /* Positioned just below the button */
+  top: calc(100% + 5px);
   min-width: 240px;
-  background-color: #ffffff;
+  background-color: var(--brand-card-bg);
   border-radius: 12px;
   box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1), 0 2px 10px rgba(0, 0, 0, 0.06);
   z-index: 100;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--brand-card-border);
   overflow: hidden;
   padding: 8px 0;
   animation: fadeIn-scaleUp 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
-/* The individual items inside the dropdown menu */
 .dropdown-item {
   display: block;
   padding: 12px 20px;
   font-size: 0.95rem;
-  color: #34495e;
+  color: var(--brand-text);
   text-decoration: none;
   white-space: nowrap;
   transition: background-color 0.2s ease, color 0.2s ease, padding-left 0.2s ease;
 }
 
 .dropdown-item:hover {
-  background-color: #f8f2fc; /* Light purple background on hover */
-  color: #8e44ad; /* Darker purple text on hover */
-  padding-left: 25px; /* Adds a nice indent effect */
+  background-color: var(--brand-primary-light);
+  color: var(--brand-primary);
+  padding-left: 25px;
 }
 
-/* Special style for the bolded 'Total' item */
 .dropdown-item.font-bold {
   font-weight: bold;
-  color: #2c3e50;
+  color: var(--brand-heading);
 }
 
-/* Keyframe animation for the dropdown menu */
 @keyframes fadeIn-scaleUp {
   from {
     opacity: 0;
@@ -288,6 +283,6 @@ button:disabled {
   }
 }
 
-.footer-st{
-  margin-left:-280px;
+.footer-st {
+  margin-top: 32px;
 }

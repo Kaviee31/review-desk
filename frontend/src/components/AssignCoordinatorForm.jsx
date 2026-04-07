@@ -7,7 +7,6 @@ import emailjs from 'emailjs-com';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/AssignCoordinatorForm.css';
-import Footer from './Footer';
 import { courses } from "../constants/courses";
 
 function AssignCoordinatorForm() {
@@ -127,13 +126,13 @@ const usersRef = collection(db, "users");
   };
 
   return (
-    <div className='teacher-dashboard-layout'>
-      <div className="assign-coordinator-container">
+    <div className='acf-page'>
+      <div className="acf-card">
         <h2>Assign Coordinator</h2>
-        <form className="assign-coordinator-form" onSubmit={handleSubmit}>
+        <form className="acf-form" onSubmit={handleSubmit}>
 
           <div className="form-group">
-            <label>Teacher:</label>
+            <label>Teacher</label>
             <select
               value={selectedTeacherId}
               onChange={(e) => setSelectedTeacherId(e.target.value)}
@@ -152,7 +151,7 @@ const usersRef = collection(db, "users");
           </div>
 
           <div className="form-group">
-            <label>Course:</label>
+            <label>Course</label>
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
@@ -165,15 +164,11 @@ const usersRef = collection(db, "users");
             </select>
           </div>
 
-          <button type="submit" disabled={loading || teachersLoading}>
+          <button type="submit" className="acf-submit-btn" disabled={loading || teachersLoading}>
             {loading ? "Assigning..." : "Assign Coordinator"}
           </button>
         </form>
       </div>
-      <div className='footer-st'>
-        <Footer />
-      </div>
-      
     </div>
   );
 }

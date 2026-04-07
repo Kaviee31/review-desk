@@ -78,6 +78,22 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+
+  /* === Brand tokens (light mode) === */
+  --brand-nav:           #2c3e50;
+  --brand-active:        #1abc9c;
+  --brand-page-bg:       #f3f4f6;
+  --brand-card-bg:       #ffffff;
+  --brand-card-border:   #e5e7eb;
+  --brand-primary:       #1d4ed8;
+  --brand-primary-hover: #1e40af;
+  --brand-primary-light: #dbeafe;
+  --brand-heading:       #1e293b;
+  --brand-text:          #374151;
+  --brand-text-muted:    #6b7280;
+  --brand-error:         #dc2626;
+  --brand-success:       #16a34a;
+  --brand-warning:       #f59e0b;
 }
 
 .dark {
@@ -112,14 +128,51 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+
+  /* === Brand tokens (dark mode overrides) === */
+  --brand-page-bg:       #0f172a;
+  --brand-card-bg:       #1e293b;
+  --brand-card-border:   #334155;
+  --brand-primary:       #60a5fa;
+  --brand-primary-hover: #93c5fd;
+  --brand-primary-light: #1e3a8a;
+  --brand-heading:       #f1f5f9;
+  --brand-text:          #cbd5e1;
+  --brand-text-muted:    #64748b;
 }
 
 @layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* ===== ThemeToggle button (shared across all navbar shells) ===== */
+.theme-toggle-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  border-radius: 6px;
+  width: 34px;
+  height: 34px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.theme-toggle-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 

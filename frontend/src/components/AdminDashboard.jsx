@@ -1,14 +1,13 @@
 // src/components/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { db } from '../firebase'; // Import db from your firebase.js config
-import { collection, query, where, getDocs } from 'firebase/firestore'; // Import Firestore functions
-import { toast } from 'react-toastify'; // For notifications
+import { db } from '../firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/AdminDashboard.css';
 import { pgCourses, ugCourses } from "../constants/courses";
 import * as XLSX from "xlsx";
-import Footer from './Footer';
 
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL;
 
@@ -17,45 +16,43 @@ function AdminDashboard() {
     document.title = "Admin Dashboard";
   }, []);
 
-  // --- Component State ---
+  // --- State ---
   const [studentType, setStudentType] = useState('PG');
   const [excelFile, setExcelFile] = useState(null);
-  const [isHovered, setIsHovered] = useState(false);
 
-  // PG Form States
-  const [pgStudentRegNo, setPgStudentRegNo] = useState('');
-  const [pgTeacherEmail, setPgTeacherEmail] = useState('');
+  // PG form
+  const [pgStudentRegNo, setPgStudentRegNo]           = useState('');
+  const [pgTeacherEmail, setPgTeacherEmail]           = useState('');
   const [pgStudentCourseName, setPgStudentCourseName] = useState('');
-  const [pgProjectName, setPgProjectName] = useState('');
-  const [loadingPgEnroll, setLoadingPgEnroll] = useState(false);
+  const [pgProjectName, setPgProjectName]             = useState('');
+  const [loadingPgEnroll, setLoadingPgEnroll]         = useState(false);
 
-  // UG Form States
-  const [ugStudentRegNos, setUgStudentRegNos] = useState(['']);
-  const [ugTeacherEmail, setUgTeacherEmail] = useState('');
+  // UG form
+  const [ugStudentRegNos, setUgStudentRegNos]         = useState(['']);
+  const [ugTeacherEmail, setUgTeacherEmail]           = useState('');
   const [ugStudentCourseName, setUgStudentCourseName] = useState('');
-  const [ugProjectName, setUgProjectName] = useState('');
-  const [loadingUgEnroll, setLoadingUgEnroll] = useState(false);
-  const [loadingBulk, setLoadingBulk] = useState(false);
+  const [ugProjectName, setUgProjectName]             = useState('');
+  const [loadingUgEnroll, setLoadingUgEnroll]         = useState(false);
+  const [loadingBulk, setLoadingBulk]                 = useState(false);
 
+  // --- Helpers ---
   const fetchTeacherName = async (teacherEmailToSearch) => {
     try {
       const usersRef = collection(db, "users");
-      const q = query(usersRef,
+      const q = query(
+        usersRef,
         where("email", "==", teacherEmailToSearch),
         where("userType", "==", "Faculty")
       );
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        return querySnapshot.docs[0].data().username;
-      }
-      return null;
+      const snap = await getDocs(q);
+      return snap.empty ? null : snap.docs[0].data().username;
     } catch (error) {
       console.error("Error fetching teacher name:", error);
       return null;
     }
   };
 
+  // --- PG submit ---
   const handlePgSubmit = async (event) => {
     event.preventDefault();
     setLoadingPgEnroll(true);
@@ -67,8 +64,8 @@ function AdminDashboard() {
       return;
     }
 
-    const fetchedTeacherName = await fetchTeacherName(pgTeacherEmail);
-    if (!fetchedTeacherName) {
+    const teacherName = await fetchTeacherName(pgTeacherEmail);
+    if (!teacherName) {
       toast.error(`No teacher found with email: ${pgTeacherEmail}.`);
       setLoadingPgEnroll(false);
       return;
@@ -76,26 +73,27 @@ function AdminDashboard() {
 
     try {
       const usersRef = collection(db, "users");
-      const q = query(usersRef, where("registerNumber", "==", pgStudentRegNo), where("userType", "==", "Student"));
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
+      const q = query(
+        usersRef,
+        where("registerNumber", "==", pgStudentRegNo),
+        where("userType", "==", "Student")
+      );
+      const snap = await getDocs(q);
+      if (snap.empty) {
         toast.error(`No student found with Register Number: ${pgStudentRegNo}.`);
         setLoadingPgEnroll(false);
         return;
       }
-
-      const studentDoc = querySnapshot.docs[0].data();
+      const studentDoc = snap.docs[0].data();
       await axios.post(`${API_BASE_URL}/enroll`, {
-        studentName: studentDoc.username,
+        studentName:    studentDoc.username,
         registerNumber: pgStudentRegNo,
-        email: studentDoc.email,
-        courseName: pgStudentCourseName,
-        teacherName: fetchedTeacherName,
-        teacherEmail: pgTeacherEmail,
-        projectName: pgProjectName,
+        email:          studentDoc.email,
+        courseName:     pgStudentCourseName,
+        teacherName,
+        teacherEmail:   pgTeacherEmail,
+        projectName:    pgProjectName,
       });
-
       toast.success(`PG Student ${studentDoc.username} enrolled successfully!`);
       setPgStudentRegNo('');
       setPgTeacherEmail('');
@@ -109,48 +107,48 @@ function AdminDashboard() {
     }
   };
 
+  // --- UG submit ---
   const handleUgSubmit = async (event) => {
     event.preventDefault();
     setLoadingUgEnroll(true);
     toast.dismiss();
     const registerNumbersToEnroll = ugStudentRegNos.filter(Boolean);
 
-    if (registerNumbersToEnroll.length === 0 || !ugTeacherEmail || !ugStudentCourseName || !ugProjectName) {
+    if (!registerNumbersToEnroll.length || !ugTeacherEmail || !ugStudentCourseName || !ugProjectName) {
       toast.error("Please fill all required fields for UG enrollment.");
       setLoadingUgEnroll(false);
       return;
     }
 
-    const fetchedTeacherName = await fetchTeacherName(ugTeacherEmail);
-    if (!fetchedTeacherName) {
+    const teacherName = await fetchTeacherName(ugTeacherEmail);
+    if (!teacherName) {
       toast.error(`No teacher found with email: ${ugTeacherEmail}.`);
       setLoadingUgEnroll(false);
       return;
     }
 
     let successCount = 0;
-    let failedRegNos = [];
+    const failedRegNos = [];
 
     for (const regNo of registerNumbersToEnroll) {
       try {
         const usersRef = collection(db, "users");
-        const q = query(usersRef, where("registerNumber", "==", regNo), where("userType", "==", "Student"));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-          failedRegNos.push(regNo);
-          continue;
-        }
-
-        const studentDoc = querySnapshot.docs[0].data();
+        const q = query(
+          usersRef,
+          where("registerNumber", "==", regNo),
+          where("userType", "==", "Student")
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) { failedRegNos.push(regNo); continue; }
+        const studentDoc = snap.docs[0].data();
         await axios.post(`${API_BASE_URL}/enroll`, {
-          studentName: studentDoc.username,
-          registerNumber: regNo,
-          email: studentDoc.email,
-          courseName: ugStudentCourseName,
-          teacherName: fetchedTeacherName,
-          teacherEmail: ugTeacherEmail,
-          projectName: ugProjectName,
+          studentName:          studentDoc.username,
+          registerNumber:       regNo,
+          email:                studentDoc.email,
+          courseName:           ugStudentCourseName,
+          teacherName,
+          teacherEmail:         ugTeacherEmail,
+          projectName:          ugProjectName,
           groupRegisterNumbers: registerNumbersToEnroll,
         });
         successCount++;
@@ -160,7 +158,7 @@ function AdminDashboard() {
       }
     }
 
-    if (successCount > 0) toast.success(`Successfully enrolled ${successCount} UG student(s).`);
+    if (successCount > 0)      toast.success(`Successfully enrolled ${successCount} UG student(s).`);
     if (failedRegNos.length > 0) toast.warn(`Failed to enroll: ${failedRegNos.join(', ')}.`);
 
     setUgStudentRegNos(['']);
@@ -170,41 +168,32 @@ function AdminDashboard() {
     setLoadingUgEnroll(false);
   };
 
+  // --- Excel bulk import ---
   const handleExcelEnroll = async () => {
-    if (!excelFile) {
-      toast.error("Please select an Excel file first.");
-      return;
-    }
+    if (!excelFile) { toast.error("Please select an Excel file first."); return; }
     setLoadingBulk(true);
     try {
-      const data = await excelFile.arrayBuffer();
+      const data     = await excelFile.arrayBuffer();
       const workbook = XLSX.read(data);
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json(sheet);
+      const rows     = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
       let success = 0, failed = 0;
 
       for (const row of rows) {
         try {
           if (!row.TeacherEmail || !row.StudentName || !row.RegisterNumber || !row.Email || !row.CourseName) {
             console.warn("Skipping row due to missing data:", row);
-            failed++;
-            continue;
+            failed++; continue;
           }
-          const fetchedTeacherName = await fetchTeacherName(row.TeacherEmail);
-          if (!fetchedTeacherName) {
-            console.warn(`No teacher found for email: ${row.TeacherEmail}`);
-            failed++;
-            continue;
-          }
+          const teacherName = await fetchTeacherName(row.TeacherEmail);
+          if (!teacherName) { console.warn(`No teacher found for: ${row.TeacherEmail}`); failed++; continue; }
           await axios.post(`${API_BASE_URL}/enroll`, {
-            studentName: row.StudentName,
-            registerNumber: row.RegisterNumber,
-            email: row.Email,
-            courseName: row.CourseName,
-            teacherName: fetchedTeacherName,
-            teacherEmail: row.TeacherEmail,
-            projectName: row.ProjectName || "",
+            studentName:          row.StudentName,
+            registerNumber:       row.RegisterNumber,
+            email:                row.Email,
+            courseName:           row.CourseName,
+            teacherName,
+            teacherEmail:         row.TeacherEmail,
+            projectName:          row.ProjectName || "",
             groupRegisterNumbers: row.GroupRegisterNumbers ? String(row.GroupRegisterNumbers).split(",") : [],
           });
           success++;
@@ -213,7 +202,7 @@ function AdminDashboard() {
           console.error("Enroll failed for:", row.RegisterNumber, err.response?.data || err.message);
         }
       }
-      toast.success(`✅ Imported ${success} students. ❌ Failed: ${failed}`);
+      toast.success(`Imported ${success} students. Failed: ${failed}`);
       setExcelFile(null);
     } catch (err) {
       console.error("Excel upload error:", err);
@@ -223,7 +212,8 @@ function AdminDashboard() {
     }
   };
 
-  const handleAddUgStudentInput = () => setUgStudentRegNos([...ugStudentRegNos, '']);
+  // --- UG reg-number list helpers ---
+  const handleAddUgStudentInput    = () => setUgStudentRegNos([...ugStudentRegNos, '']);
   const handleRemoveUgStudentInput = () => {
     if (ugStudentRegNos.length > 1) {
       setUgStudentRegNos(ugStudentRegNos.slice(0, -1));
@@ -232,111 +222,231 @@ function AdminDashboard() {
     }
   };
   const handleUgRegNoChange = (index, value) => {
-    const newRegNos = [...ugStudentRegNos];
-    newRegNos[index] = value;
-    setUgStudentRegNos(newRegNos);
+    const updated = [...ugStudentRegNos];
+    updated[index] = value;
+    setUgStudentRegNos(updated);
   };
 
+  // ── Render ────────────────────────────────────────────────
   return (
-    <div className='cont'>
-      <div className="admin-sidebar">
-        <h2>Admin Panel</h2>
-        <button onClick={() => setStudentType('UG')} className={studentType === 'UG' ? 'active' : ''}>UG Students</button>
-        <button onClick={() => setStudentType('PG')} className={studentType === 'PG' ? 'active' : ''}>PG Students</button>
+    <>
+      <div className="enroll-page">
+
+      {/* Page heading */}
+      <h1>Enroll Students</h1>
+
+      {/* Tab bar */}
+      <div className="enroll-tabs">
+        <button
+          className={studentType === 'PG' ? 'active' : ''}
+          onClick={() => setStudentType('PG')}
+        >
+          PG Students
+        </button>
+        <button
+          className={studentType === 'UG' ? 'active' : ''}
+          onClick={() => setStudentType('UG')}
+        >
+          UG Students
+        </button>
       </div>
 
-      <div className="main-content-wrapper">
-        <div className="dashboard-content">
-          <h2>Enroll Students</h2>
-          {studentType === 'PG' && (
-            <div>
-              <h3>Assign PG Student to Guide</h3>
-              <form onSubmit={handlePgSubmit}>
-                <label htmlFor="pgStudentRegNo">Student Register Number:</label>
-                <input type="text" id="pgStudentRegNo" value={pgStudentRegNo} onChange={(e) => setPgStudentRegNo(e.target.value)} placeholder="Enter student's register number" required />
-                <label htmlFor="pgProjectName">Project Name:</label>
-                <input type="text" id="pgProjectName" value={pgProjectName} onChange={(e) => setPgProjectName(e.target.value)} placeholder="Enter project name" required />
-                <label htmlFor="pgTeacherEmail">Teacher Email:</label>
-                <input type="email" id="pgTeacherEmail" value={pgTeacherEmail} onChange={(e) => setPgTeacherEmail(e.target.value)} placeholder="Enter teacher's email" required />
-                <label htmlFor="pgStudentCourseName">PG Course Name:</label>
-                <select id="pgStudentCourseName" value={pgStudentCourseName} onChange={(e) => setPgStudentCourseName(e.target.value)} required>
-                  <option value="">Select PG Course</option>
-                  {pgCourses.map(course => (<option key={course} value={course}>{course}</option>))}
-                </select>
-                <button type="submit" disabled={loadingPgEnroll}>{loadingPgEnroll ? 'Enrolling...' : 'Enroll PG Student'}</button>
-              </form>
-            </div>
-          )}
+      {/* Content card */}
+      <div className="enroll-card">
 
-          {studentType === 'UG' && (
-            <div>
-              <h3>Assign UG Students to Guide</h3>
-              <form onSubmit={handleUgSubmit}>
-                <label htmlFor="ugProjectName">Project Name:</label>
-                <input type="text" id="ugProjectName" value={ugProjectName} onChange={(e) => setUgProjectName(e.target.value)} placeholder="Enter project name" required />
-                {ugStudentRegNos.map((regNo, index) => (
-                  <div key={index}>
-                    <label htmlFor={`ugStudentRegNo${index}`}>Student Register Number {index + 1}:</label>
-                    <input type="text" id={`ugStudentRegNo${index}`} value={regNo} onChange={(e) => handleUgRegNoChange(index, e.target.value)} placeholder="Enter student's register number" />
-                  </div>
-                ))}
-                <div className="ug-button-group">
-                  <button type="button" onClick={handleAddUgStudentInput} className="add-student-button">Add Student</button>
-                  <button type="button" onClick={handleRemoveUgStudentInput} className="remove-student-button">Remove</button>
+        {/* ── PG form ── */}
+        {studentType === 'PG' && (
+          <>
+            <h2>Assign PG Student to Guide</h2>
+            <form onSubmit={handlePgSubmit}>
+              <div className="form-grid-2">
+
+                <div className="form-field">
+                  <label htmlFor="pgStudentRegNo">Register Number</label>
+                  <input
+                    type="text"
+                    id="pgStudentRegNo"
+                    value={pgStudentRegNo}
+                    onChange={(e) => setPgStudentRegNo(e.target.value)}
+                    placeholder="e.g. 2023CS001"
+                    required
+                  />
                 </div>
-                <label htmlFor="ugTeacherEmail">Teacher Email:</label>
-                <input type="email" id="ugTeacherEmail" value={ugTeacherEmail} onChange={(e) => setUgTeacherEmail(e.target.value)} placeholder="Enter teacher's email" required />
-                <label htmlFor="ugStudentCourseName">UG Course Name:</label>
-                <select id="ugStudentCourseName" value={ugStudentCourseName} onChange={(e) => setUgStudentCourseName(e.target.value)} required>
-                  <option value="">Select UG Course</option>
-                  {ugCourses.map(course => (<option key={course} value={course}>{course}</option>))}
-                </select>
-                <button type="submit" disabled={loadingUgEnroll}>{loadingUgEnroll ? 'Enrolling...' : 'Enroll UG Students'}</button>
-              </form>
-            </div>
-          )}
-          
-          <div className="excel-upload" style={{ marginTop: "40px", paddingTop: "30px", borderTop: "1px solid rgba(255, 255, 255, 0.2)" }}>
-            <h3 style={{ marginBottom: '20px' }}>Bulk Import from Excel</h3>
-            <h6> ***The Excel sheet's columns for UG Students should be in the order : RegisterNumber , StudentName, Email, CourseName, ProjectName,
-              TeacherEmail, GroupRegisterNumbers
-            </h6>
 
-            
-            <h6> ***The Excel sheet's columns for PG Students should be in the order : RegisterNumber , StudentName, Email, CourseName, ProjectName,
-              TeacherEmail
-            </h6>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255, 255, 255, 0.05)', padding: '15px', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '8px', maxWidth: '550px' }}>
-              <input id="excel-file-upload" type="file" accept=".xlsx, .xls" onChange={(e) => setExcelFile(e.target.files[0])} style={{ display: 'none' }} />
-              <label htmlFor="excel-file-upload" style={{ padding: '8px 16px', borderRadius: '6px', backgroundColor: '#007BFF', color: 'white', cursor: 'pointer', border: 'none', whiteSpace: 'nowrap' }}>
-                Select File
-              </label>
-              <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'black' }}>
-                {excelFile ? excelFile.name : "No file chosen"}
-              </span>
+                <div className="form-field">
+                  <label htmlFor="pgProjectName">Project Name</label>
+                  <input
+                    type="text"
+                    id="pgProjectName"
+                    value={pgProjectName}
+                    onChange={(e) => setPgProjectName(e.target.value)}
+                    placeholder="Enter project title"
+                    required
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label htmlFor="pgTeacherEmail">Guide Email</label>
+                  <input
+                    type="email"
+                    id="pgTeacherEmail"
+                    value={pgTeacherEmail}
+                    onChange={(e) => setPgTeacherEmail(e.target.value)}
+                    placeholder="guide@annauniv.edu"
+                    required
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label htmlFor="pgStudentCourseName">PG Course</label>
+                  <select
+                    id="pgStudentCourseName"
+                    value={pgStudentCourseName}
+                    onChange={(e) => setPgStudentCourseName(e.target.value)}
+                    required
+                  >
+                    <option value="">Select PG Course</option>
+                    {pgCourses.map((course) => (
+                      <option key={course} value={course}>{course}</option>
+                    ))}
+                  </select>
+                </div>
+
+              </div>
+
               <button
-                onClick={handleExcelEnroll}
-                disabled={loadingBulk}
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-                style={{
-                  padding: '8px 16px', borderRadius: '6px', border: 'none',
-                  backgroundColor: loadingBulk ? '#6c757d' : isHovered ? '#218838' : '#28a745',
-                  color: 'white', cursor: loadingBulk ? 'not-allowed' : 'pointer', transition: 'background-color 0.2s'
-                }}
+                type="submit"
+                className="enroll-submit-btn"
+                disabled={loadingPgEnroll}
               >
-                {loadingBulk ? 'Importing...' : 'Enroll'}
+                {loadingPgEnroll ? 'Enrolling…' : 'Enroll PG Student'}
               </button>
-            </div>
+            </form>
+          </>
+        )}
+
+        {/* ── UG form ── */}
+        {studentType === 'UG' && (
+          <>
+            <h2>Assign UG Students to Guide</h2>
+            <form onSubmit={handleUgSubmit}>
+              <div className="form-grid-2">
+
+                <div className="form-field form-grid-full">
+                  <label htmlFor="ugProjectName">Project Name</label>
+                  <input
+                    type="text"
+                    id="ugProjectName"
+                    value={ugProjectName}
+                    onChange={(e) => setUgProjectName(e.target.value)}
+                    placeholder="Enter project title"
+                    required
+                  />
+                </div>
+
+                {/* Dynamic register number inputs */}
+                <div className="ug-reg-list form-grid-full">
+                  {ugStudentRegNos.map((regNo, index) => (
+                    <div key={index}>
+                      <label htmlFor={`ugStudentRegNo${index}`}>
+                        Student Register Number {ugStudentRegNos.length > 1 ? index + 1 : ''}
+                      </label>
+                      <input
+                        type="text"
+                        id={`ugStudentRegNo${index}`}
+                        value={regNo}
+                        onChange={(e) => handleUgRegNoChange(index, e.target.value)}
+                        placeholder="e.g. 2023UG042"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="ug-button-group">
+                  <button type="button" onClick={handleAddUgStudentInput}>+ Add Student</button>
+                  <button type="button" onClick={handleRemoveUgStudentInput}>− Remove</button>
+                </div>
+
+                <div className="form-field">
+                  <label htmlFor="ugTeacherEmail">Guide Email</label>
+                  <input
+                    type="email"
+                    id="ugTeacherEmail"
+                    value={ugTeacherEmail}
+                    onChange={(e) => setUgTeacherEmail(e.target.value)}
+                    placeholder="guide@annauniv.edu"
+                    required
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label htmlFor="ugStudentCourseName">UG Course</label>
+                  <select
+                    id="ugStudentCourseName"
+                    value={ugStudentCourseName}
+                    onChange={(e) => setUgStudentCourseName(e.target.value)}
+                    required
+                  >
+                    <option value="">Select UG Course</option>
+                    {ugCourses.map((course) => (
+                      <option key={course} value={course}>{course}</option>
+                    ))}
+                  </select>
+                </div>
+
+              </div>
+
+              <button
+                type="submit"
+                className="enroll-submit-btn"
+                disabled={loadingUgEnroll}
+              >
+                {loadingUgEnroll ? 'Enrolling…' : 'Enroll UG Students'}
+              </button>
+            </form>
+          </>
+        )}
+
+        {/* ── Excel bulk import ── */}
+        <div className="excel-section">
+          <h2>Bulk Import from Excel</h2>
+          <p className="excel-hint">
+            UG columns (in order): RegisterNumber, StudentName, Email, CourseName,
+            ProjectName, TeacherEmail, GroupRegisterNumbers
+          </p>
+          <p className="excel-hint">
+            PG columns (in order): RegisterNumber, StudentName, Email, CourseName,
+            ProjectName, TeacherEmail
+          </p>
+
+          <div className="excel-row">
+            <input
+              id="excel-file-upload"
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={(e) => setExcelFile(e.target.files[0])}
+            />
+            <label htmlFor="excel-file-upload" className="excel-select-label">
+              Select File
+            </label>
+            <span className="excel-filename">
+              {excelFile ? excelFile.name : 'No file chosen'}
+            </span>
+            <button
+              className="excel-enroll-btn"
+              onClick={handleExcelEnroll}
+              disabled={loadingBulk}
+            >
+              {loadingBulk ? 'Importing…' : 'Enroll'}
+            </button>
           </div>
-          
         </div>
-        <div className='footer-st'>
-          <Footer />
-        </div>
-        
-      </div>
-    </div>
+
+      </div>{/* /enroll-card */}
+
+    </div>{/* /enroll-page */}
+
+    </>
   );
 }
 

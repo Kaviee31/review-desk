@@ -1,266 +1,316 @@
-:root {
-  --primary-blue: #007bff;
-  --light-blue: #00c3ff;
-  --text-light: #f0f0f0;
-}
+/* AdminDashboard.css
+   Rendered inside AdminLayout (top navbar + admin-body padding already provided).
+   No sidebar, no layout shell — content only.
+   ============================================================ */
 
-/* Main container */
-.cont {
-  display: flex;
-  min-height: 100vh;
-  background: url("https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=2070") no-repeat center center/cover;
-  position: relative;
-  box-sizing: border-box;
-  color: var(--text-light);
-  font-family: 'Inter', sans-serif;
-}
-
-/* Background overlay */
-.cont::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  backdrop-filter: blur(10px) brightness(0.8);
-  z-index: 1;
-}
-
-/* Sidebar */
-.admin-sidebar {
-  flex: 0 0 250px;
-  background: rgba(10, 20, 30, 0.4);
-  backdrop-filter: blur(15px);
-  padding: 30px 20px;
+/* ── Page wrapper ─────────────────────────────────────────── */
+.enroll-page {
+  max-width: 860px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  z-index: 2;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  height: 100vh;
-  box-sizing: border-box;
-  position: fixed;
-  top: 0;
-  left: 0;
+  gap: 0;
 }
 
-.admin-sidebar h2 {
-  font-size: 26px;
-  margin-bottom: 40px;
-  text-shadow: 0 0 8px rgba(0, 195, 255, 0.7);
-}
-
-.admin-sidebar button {
-  width: 100%;
-  padding: 14px 15px;
-  margin-bottom: 15px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-light);
-}
-
-.admin-sidebar button.active {
-  background: linear-gradient(135deg, var(--light-blue), var(--primary-blue));
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 8px 20px rgba(0, 195, 255, 0.5);
-  border-color: rgba(0, 195, 255, 0.8);
-}
-
-.admin-sidebar button:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-/* Main content wrapper (respects sidebar) */
-.main-content-wrapper {
-      /* push content to right of sidebar */
-  padding: 40px;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  width: calc(100% - 250px);
-  box-sizing: border-box;
-  z-index: 2;
-}
-
-/* Form container */
-.dashboard-content {
-  flex-grow: 1; /* Pushes footer down */
-  width: 100%;
-  max-width: 900px;            /* keep it neat */
-  background: rgba(10, 20, 30, 0.4);
-  backdrop-filter: blur(15px);
-  padding: 40px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  margin: auto; /* Center the content box */
-}
-
-.dashboard-content h2,
-.dashboard-content h3 {
-  text-align: center;
-  color: var(--text-light);
+.enroll-page h1 {
+  font-size: 1.6rem;
   font-weight: 700;
-  margin-top: 0;
-  margin-bottom: 30px;
+  color: var(--brand-heading);
+  margin: 0 0 20px 0;
 }
 
-.dashboard-content label {
-  display: block;
-  text-align: left;
-  margin: 15px 0 8px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.dashboard-content input,
-.dashboard-content select,
-.dashboard-content textarea {
-  width: 100%;
-  padding: 14px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-light);
+/* ── Tab bar ──────────────────────────────────────────────── */
+.enroll-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--brand-card-bg);
+  border: 1px solid var(--brand-card-border);
   border-radius: 10px;
-  font-size: 16px;
-  transition: all 0.3s ease;
+  padding: 4px;
+  width: fit-content;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.enroll-tabs button {
+  padding: 9px 22px;
+  border: none;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease;
+  background: transparent;
+  color: var(--brand-text-muted);
+  white-space: nowrap;
+}
+
+.enroll-tabs button.active {
+  background-color: var(--brand-primary);
+  color: #ffffff;
+  box-shadow: 0 1px 6px rgba(37, 99, 235, 0.3);
+}
+
+.enroll-tabs button:hover:not(.active) {
+  background-color: var(--brand-page-bg);
+  color: var(--brand-text);
+}
+
+/* ── Content card ─────────────────────────────────────────── */
+.enroll-card {
+  background: var(--brand-card-bg);
+  border: 1px solid var(--brand-card-border);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 32px 36px;
+}
+
+.enroll-card h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--brand-heading);
+  margin: 0 0 20px 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* ── Form grid ────────────────────────────────────────────── */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 24px;
+}
+
+.form-grid-full {
+  grid-column: 1 / -1;
+}
+
+/* ── Form field (label + input pair) ─────────────────────── */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.form-field label {
+  display: block;
+  margin: 12px 0 5px;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--brand-text);
+  letter-spacing: 0.01em;
+}
+
+.form-field input,
+.form-field select {
+  width: 100%;
+  padding: 9px 13px;
+  border: 1px solid var(--brand-card-border);
+  background: var(--brand-card-bg);
+  color: var(--brand-heading);
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
 }
 
-.dashboard-content input::placeholder,
-.dashboard-content textarea::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+.form-field input::placeholder {
+  color: #9ca3af;
 }
 
-.dashboard-content input:focus,
-.dashboard-content select:focus,
-.dashboard-content textarea:focus {
+.form-field input:focus,
+.form-field select:focus {
   outline: none;
-  border-color: var(--light-blue);
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 15px rgba(0, 195, 255, 0.5);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
 }
 
-.dashboard-content select option {
-  background: #1a2634;
-  color: var(--text-light);
+.form-field select option {
+  color: var(--brand-heading);
+  background: #fff;
 }
 
-/* Submit button */
-.dashboard-content button[type="submit"] {
-  margin-top: 20px;
-  padding: 15px;
+/* ── UG dynamic reg number list ──────────────────────────── */
+.ug-reg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  grid-column: 1 / -1;
+}
+
+.ug-reg-list label {
+  margin: 12px 0 5px;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--brand-text);
+}
+
+.ug-reg-list input {
   width: 100%;
-  background: linear-gradient(135deg, var(--light-blue), var(--primary-blue));
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  box-shadow: 0 6px 15px rgba(0, 150, 255, 0.4);
+  padding: 9px 13px;
+  border: 1px solid var(--brand-card-border);
+  background: var(--brand-card-bg);
+  color: var(--brand-heading);
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+  margin-bottom: 6px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.dashboard-content button[type="submit"]:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 150, 255, 0.6);
+.ug-reg-list input:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
 }
 
-/* UG Add/Remove buttons */
+/* ── Add / Remove buttons ─────────────────────────────────── */
 .ug-button-group {
   display: flex;
-  gap: 15px;
-  margin-top: 15px;
+  gap: 10px;
+  margin: 8px 0 4px;
+  grid-column: 1 / -1;
 }
 
 .ug-button-group button {
-  flex: 1;
-  padding: 10px;
-  font-size: 14px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: var(--text-light);
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  background-color: var(--brand-page-bg);
+  border: 1px solid var(--brand-card-border);
+  border-radius: 7px;
+  color: var(--brand-text);
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s ease;
 }
 
 .ug-button-group button:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background-color: #e5e7eb;
 }
 
-/* Excel upload section */
-.excel-upload-section {
-  margin-top: 40px;
-  padding-top: 30px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.excel-input-label {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 10px;
-  text-align: center;
+/* ── Submit button ────────────────────────────────────────── */
+.enroll-submit-btn {
+  margin-top: 22px;
+  padding: 11px;
+  width: 100%;
+  background-color: var(--brand-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  font-size: 15px;
+  transition: background-color 0.2s ease;
 }
 
-.excel-input-label:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--light-blue);
-  color: var(--text-light);
+.enroll-submit-btn:hover:not(:disabled) {
+  background-color: var(--brand-primary-hover);
 }
 
-.excel-input-label input[type="file"] {
+.enroll-submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Excel upload section ─────────────────────────────────── */
+.excel-section {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.excel-section h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--brand-heading);
+  margin: 0 0 6px 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.excel-hint {
+  font-size: 12px;
+  color: var(--brand-text-muted);
+  font-style: italic;
+  margin: 2px 0;
+  line-height: 1.5;
+}
+
+.excel-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f9fafb;
+  padding: 12px 14px;
+  border: 1px solid var(--brand-card-border);
+  border-radius: 8px;
+  max-width: 560px;
+  margin-top: 14px;
+}
+
+.excel-row input[type="file"] {
   display: none;
 }
 
-.file-name-display {
-  text-align: center;
-  margin-top: 15px;
-  color: var(--light-blue);
-  font-style: italic;
-  font-size: 14px;
-}
-
-.excel-upload-section .excel-button {
-  display: block;
-  width: auto;
-  margin: 20px auto 0;
-  padding: 12px 40px;
-  background: #28a745;
-  border: none;
-  border-radius: 10px;
+.excel-select-label {
+  padding: 7px 15px;
+  border-radius: 6px;
+  background-color: var(--brand-primary);
   color: white;
-  font-weight: bold;
   cursor: pointer;
-  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
 }
 
-.excel-upload-section .excel-button:disabled {
-  background-color: #555;
+.excel-select-label:hover {
+  background-color: var(--brand-primary-hover);
+}
+
+.excel-filename {
+  flex: 1;
+  font-size: 13px;
+  color: var(--brand-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.excel-enroll-btn {
+  padding: 7px 16px;
+  border-radius: 6px;
+  border: none;
+  background-color: var(--brand-success);
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.excel-enroll-btn:hover:not(:disabled) {
+  background-color: #15803d;
+}
+
+.excel-enroll-btn:disabled {
+  background-color: #9ca3af;
   cursor: not-allowed;
-  opacity: 0.6;
 }
 
-.excel-upload-section .excel-button:hover:not(:disabled) {
-  background-color: #218838;
-  transform: translateY(-2px);
-}
+/* ── Responsive: single column on small screens ───────────── */
+@media (max-width: 600px) {
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
 
+  .form-grid-full {
+    grid-column: 1;
+  }
 
-.footer-st{
-   margin-left: -280px;     
+  .enroll-card {
+    padding: 20px 18px;
+  }
 }

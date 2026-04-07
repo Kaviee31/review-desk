@@ -7,8 +7,6 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/TeacherDashboard.css';
 import { courses } from "../constants/courses";
-import Footer from './Footer'; 
-import '../styles/Footer.css';
 
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function TeacherDashboard() {
@@ -27,7 +25,7 @@ function TeacherDashboard() {
     }
   }, []);
 
-  const handleLogout = async () => {
+  const _handleLogout = async () => {
     const auth = getAuth();
     await auth.signOut();
     navigate('/');
@@ -108,19 +106,17 @@ function TeacherDashboard() {
   };
 
   return (
-    <div className="teacher-dashboard-layout">
-    <div className="containers">
-      <div className="dashboard-content">
-        <h2>📣 Send Announcement to Students</h2>
+    <div className="td-page">
+      <div className="td-card">
+        <h2>Send Announcement to Students</h2>
 
         {/* Program Filter Dropdown */}
         <select
           value={programFilter}
           onChange={(e) => setProgramFilter(e.target.value)}
-          className="program-dropdown"
-          style={{ color: programFilter === "" ? "black" : "initial" }}
+          className="td-select"
         >
-          <option value="">🎓 All Programs</option>
+          <option value="">All Programs</option>
           {allPrograms.map(program => (
             <option key={program} value={program}>
               {program}
@@ -128,44 +124,41 @@ function TeacherDashboard() {
           ))}
         </select>
 
-
         <form onSubmit={handleAnnouncementSubmit}>
           <textarea
             placeholder="Type your announcement..."
             value={announcement}
             onChange={(e) => setAnnouncement(e.target.value)}
             required
-            className="announcement-textarea"
+            className="td-textarea"
           />
 
-          <div className="button-group">
+          <div className="td-button-group">
             <button
               type="button"
-              className="send-button"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
               onClick={() => sendAnnouncement('email')}
             >
-              📧 Send Email Only
+              Send Email Only
             </button>
 
             <button
               type="button"
-              className="send-button"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
               onClick={() => sendAnnouncement('telegram')}
             >
-              📲 Send Telegram Only
+              Send Telegram Only
             </button>
 
-            <button type="submit" className="send-button">
-              📢 Send Email + Telegram
+            <button
+              type="submit"
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+            >
+              Send Email + Telegram
             </button>
           </div>
         </form>
       </div>
-    </div>
-    <div className='footer-st'>
-      <Footer />
-    </div>
-    
     </div>
   );
 }

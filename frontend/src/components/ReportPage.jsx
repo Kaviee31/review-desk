@@ -3,7 +3,6 @@ import axios from 'axios';
 import emailjs from '@emailjs/browser';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Footer from './Footer';
 import '../styles/ReportPage.css';
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 
@@ -190,27 +189,26 @@ function ReportPage() {
     };
 
     return (
-        <div className='teacher-dashboard-content'>
-        <div className='cont'>
-            <div className="dashboard-content">
+        <div className='rp-page'>
+            <div className="max-w-2xl mx-auto">
                 <h2 className="text-2xl font-bold mb-4 text-gray-700">Manage Review Deadlines</h2>
 
                 {!selectedProgram ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                    <div className="programs-grid">
                         {allPrograms.map((program) => (
-                            <button
+                            <div
                                 key={program}
+                                className="program-card"
                                 onClick={() => setSelectedProgram(program)}
-                                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105"
                             >
-                                {program}
-                            </button>
+                                <h3>{program}</h3>
+                            </div>
                         ))}
                     </div>
                 ) : (
                     <>
                         <h3 className="text-xl font-semibold mb-4 text-gray-600">
-                             <span className="text-purple-700">{selectedProgram}</span>
+                             <span className="text-blue-700">{selectedProgram}</span>
                         </h3>
                         
                         {/* Section for Deadlines */}
@@ -275,8 +273,6 @@ function ReportPage() {
                     </>
                 )}
             </div>
-        </div>
-        <Footer />
         </div>
     );
 }

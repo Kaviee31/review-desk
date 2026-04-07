@@ -1,10 +1,4 @@
-/* Reset and base styling */
-body {
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f4f6f9;
-  color: #2c3e50;
-}
+/* StudentDashboard.css — no global body rule; all colors via brand tokens */
 
 /* Main container for student dashboard */
 .contain {
@@ -15,35 +9,36 @@ body {
   padding: 40px 20px;
 }
 
-/* Reusable box styling */
+/* Reusable box styling — white card */
 .box {
-  width: auto; /* allow expansion if needed */
-  min-width: 800px; /* keep it at least this wide */
-  background-color: #eedfaf;
+  width: auto;
+  min-width: 800px;
+  background-color: var(--brand-card-bg);
+  border: 1px solid var(--brand-card-border);
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
   box-sizing: border-box;
 }
 
 /* Profile card */
 .profile-card h2 {
   margin-bottom: 5px;
-  color: #2c3e50;
+  color: var(--brand-heading);
 }
 
 .profile-card p {
   margin: 0;
-  color: #555;
+  color: var(--brand-text-muted);
 }
 
 /* Announcement section */
 .announcement-section {
-  background-color: #cfc385;
+  background-color: var(--brand-primary-light);
   padding: 20px;
-  border-left: 5px solid #f1c40f;
+  border-left: 5px solid var(--brand-primary);
   border-radius: 10px;
-  color: #333;
+  color: var(--brand-text);
   display: none;
   margin-bottom: 20px;
 }
@@ -59,7 +54,7 @@ body {
 
 .announcement-item {
   font-weight: 500;
-  color: #555;
+  color: var(--brand-text-muted);
   margin: 6px 0;
 }
 
@@ -79,12 +74,12 @@ body {
   white-space: normal;
   padding: 10px;
   text-align: center;
-  border-bottom: 1px solid #dbbebe;
+  border-bottom: 1px solid var(--brand-card-border);
 }
 
 .review-upload-section th:last-child,
 .review-upload-section td:last-child {
-  white-space: nowrap; /* Keep deadline tidy */
+  white-space: nowrap;
 }
 
 .review-upload-section input[type="file"] {
@@ -99,7 +94,7 @@ body {
 /* On very small screens, stack file input & button vertically */
 @media (max-width: 768px) {
   .box {
-    min-width: auto; /* shrink on small screens */
+    min-width: auto;
     width: 100%;
   }
   .review-upload-section td {
@@ -121,7 +116,7 @@ body {
   .profile-upload-wrapper {
     display: flex;
     gap: 20px;
-    align-items: stretch; /* Ensure equal height */
+    align-items: stretch;
   }
   .profile-section,
   .review-upload-section {

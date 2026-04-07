@@ -14,7 +14,7 @@ export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function StudentCourses() {
   const [courses, setCourses] = useState([]);
   const [registerNumber, setRegisterNumber] = useState("");
-  const [studentName, setStudentName] = useState(""); // kept if needed later
+  const [_studentName, setStudentName] = useState(""); // kept if needed later
   const [selectedTeacherEmail, setSelectedTeacherEmail] = useState(null);
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
   const [reviewComments, setReviewComments] = useState({});

@@ -26,7 +26,7 @@ function ForgotPassword() {
   };
 
   return (
-    <div className="teacher=dashboard-layout">
+    <div className="teacher-dashboard-layout">
     <div className="forgot-password-page">
       <form className="forgot-password-form" onSubmit={handleReset}>
         <div>

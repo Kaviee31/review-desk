@@ -1,42 +1,42 @@
-/* Main footer container styling */
+/* Footer.css — all colors via brand tokens */
+
+/* Main footer container */
 .footer-container {
-  background-color: #f8f9fa; /* Light grey background */
-  color: #333;
+  background-color: var(--brand-page-bg);
+  color: var(--brand-text);
   padding: 40px 20px 20px;
-  border-top: 1px solid #dee2e6;
+  border-top: 1px solid var(--brand-card-border);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   position: relative;
-  width:100%;
+  width: 100%;
   align-self: stretch;
-  
 }
 
-/* Flex container for the three main columns */
+/* Flex container for three main columns */
 .footer-main-content {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   max-width: 1200px;
-  
   gap: 20px;
 }
 
-/* Common styling for each column */
+/* Common column styling */
 .footer-column {
   flex: 1;
-  min-width: 280px; /* Ensures columns don't get too squished before wrapping */
+  min-width: 280px;
   padding: 0 15px;
 }
 
-/* Styling for the titles of each section */
+/* Section titles */
 .footer-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #0056b3; /* Blue color for titles */
+  color: var(--brand-primary);
   margin-bottom: 20px;
 }
 
-/* Contact Info Section */
+/* Contact Info */
 .contact-info .contact-list {
   list-style: none;
   padding: 0;
@@ -70,20 +70,20 @@
   align-items: center;
   width: 36px;
   height: 36px;
-  background-color: #e9ecef;
-  color: #495057;
-  border: 1px solid #ced4da;
+  background-color: var(--brand-page-bg);
+  color: var(--brand-text-muted);
+  border: 1px solid var(--brand-card-border);
   border-radius: 4px;
   text-decoration: none;
   transition: background-color 0.3s, color 0.3s;
 }
 
 .social-icon:hover {
-  background-color: #0056b3;
+  background-color: var(--brand-primary);
   color: #fff;
 }
 
-/* Useful Links Section */
+/* Useful Links */
 .useful-links ul {
   list-style: none;
   padding: 0;
@@ -97,35 +97,34 @@
   position: relative;
 }
 
-/* Custom bullet for links */
 .useful-links li::before {
   content: '▷';
   position: absolute;
   left: 0;
-  color: #0056b3;
+  color: var(--brand-primary);
   font-weight: bold;
 }
 
 .useful-links a {
-  color: #333;
+  color: var(--brand-text);
   text-decoration: none;
 }
 
 .useful-links a:hover {
-  color: #0056b3;
+  color: var(--brand-primary);
   text-decoration: underline;
 }
 
 /* Map Section */
 .map-container {
-  border: 1px solid #ccc;
+  border: 1px solid var(--brand-card-border);
   border-radius: 5px;
-  overflow: hidden; /* Ensures the iframe corners are rounded */
-  width:600px;
-  height:200px;
+  overflow: hidden;
+  width: 600px;
+  height: 200px;
 }
 
-/* Bottom bar of the footer */
+/* Footer bottom bar */
 .footer-bottom {
   display: flex;
   justify-content: space-between;
@@ -133,15 +132,14 @@
   max-width: 1200px;
   margin: 0 auto;
   padding-top: 20px;
-  border-top: 1px solid #dee2e6;
+  border-top: 1px solid var(--brand-card-border);
   font-size: 0.85rem;
-  color: #6c757d;
-  
+  color: var(--brand-text-muted);
 }
 
-.copyright-text, .credits-text {
+.copyright-text,
+.credits-text {
   margin: 5px 15px;
-  
 }
 
 /* Scroll to top button */
@@ -149,7 +147,7 @@
   position: absolute;
   bottom: 20px;
   right: 20px;
-  background-color: #0b74e4e3;
+  background-color: var(--brand-primary);
   color: white;
   border: none;
   border-radius: 5px;
@@ -164,5 +162,5 @@
 }
 
 .scroll-to-top:hover {
-  background-color: #004494;
+  background-color: var(--brand-primary-hover);
 }

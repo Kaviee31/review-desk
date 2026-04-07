@@ -1,4 +1,7 @@
-/* src/styles/CoordinatorLayout.css */
+/* ============================================================
+   CoordinatorLayout.css — Standard navbar + body shell
+   All colors via brand tokens defined in index.css :root
+   ============================================================ */
 
 .coordinator-layout {
   display: flex;
@@ -10,41 +13,65 @@
   box-sizing: border-box;
 }
 
+/* Navbar */
 .coordinator-navbar {
-  background-color: #34495e;
+  background-color: var(--brand-nav);
   color: white;
-  padding: 15px 30px;
+  padding: 12px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   width: 100%;
-  overflow-x: auto;
+  box-sizing: border-box;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   white-space: nowrap;
+  overflow-x: auto;
+}
+
+/* Logo area */
+.navbar-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.navbar-image {
+  height: 50px;
+  width: 50px;
+}
+
+.navbar-logo-container {
+  display: flex;
+  flex-direction: column;
 }
 
 .navbar-logo {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: bold;
+  font-family: 'Times New Roman', Times, serif;
 }
 
+/* Nav links */
 .navbar-links {
   display: flex;
-  gap: 15px;
   flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
 }
 
 .navbar-links button {
   background: transparent;
-  border: 1px solid white;
+  border: 1px solid rgba(255, 255, 255, 0.6);
   color: white;
-  font-size: 16px;
+  font-size: 14px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  padding: 8px 12px;
+  padding: 7px 14px;
   border-radius: 6px;
-  transition: background 0.3s ease;
+  transition: background 0.2s ease;
   white-space: nowrap;
 }
 
@@ -52,41 +79,46 @@
   background-color: rgba(255, 255, 255, 0.15);
 }
 
+.navbar-links button.active,
 .navbar-links .active {
-  background-color: #1abc9c;
-  border-color: #1abc9c;
+  background-color: var(--brand-active);
+  border-color: var(--brand-active);
+  color: white;
 }
 
+/* Role switcher */
+.role-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.role-switcher label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+}
+
+.role-switcher select {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+}
+
+.role-switcher select option {
+  background: var(--brand-nav);
+  color: white;
+}
+
+/* Body */
 .coordinator-body {
   flex: 1;
   padding: 30px;
-  background-color: #f9f9f9;
+  background-color: var(--brand-page-bg);
   box-sizing: border-box;
-}
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-.navbar-header {
-  display: flex;
-  align-items: center;
-  gap: 15px; /* Adds space between the image and the text */
-}
-
-.navbar-image {
-  height: 50px;
-  width: 50px;
-   /* Optional: gives the image rounded corners */
-}
-
-.navbar-logo-container {
-  display: flex;
-  flex-direction: column; /* This stacks the two text lines */
-}
-.navbar-logo {
-  font-size: 22px;
-  font-weight: bold;
-  font-family: 'Times New Roman', Times, serif;
 }

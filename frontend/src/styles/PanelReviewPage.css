@@ -1,0 +1,455 @@
+/* ── Page container ── */
+.prp-container {
+  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.prp-title {
+  margin-bottom: 24px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--brand-heading);
+}
+
+/* ── Empty / loading states ── */
+.prp-empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--brand-text-muted);
+  border: 1px dashed var(--brand-card-border);
+  border-radius: 10px;
+}
+
+.prp-loading {
+  color: var(--brand-text-muted);
+}
+
+/* ── Panel selector row ── */
+.prp-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.prp-panel-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--brand-text);
+  white-space: nowrap;
+}
+
+.prp-panel-select {
+  padding: 8px 14px;
+  border: 1px solid var(--brand-card-border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--brand-primary);
+  background: var(--brand-primary-light);
+  cursor: pointer;
+  outline: none;
+  min-width: 180px;
+}
+
+/* ── Search + page-size row ── */
+.prp-search-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.prp-search-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.prp-search-icon {
+  color: var(--brand-text-muted);
+  font-size: 1rem;
+}
+
+.prp-search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--brand-card-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  outline: none;
+  background: var(--brand-card-bg);
+  color: var(--brand-text);
+}
+
+.prp-page-size {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--brand-text-muted);
+}
+
+.prp-page-size-select {
+  padding: 6px 10px;
+  border: 1px solid var(--brand-card-border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  background: var(--brand-card-bg);
+  color: var(--brand-text);
+}
+
+/* ── Student table wrapper ── */
+.prp-table-wrapper {
+  border: 1px solid var(--brand-card-border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.prp-table-scroll {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.prp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.prp-thead-row {
+  background: var(--brand-page-bg);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.prp-th {
+  padding: 12px 20px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--brand-text);
+  border-bottom: 1px solid var(--brand-card-border);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.prp-td-empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--brand-text-muted);
+}
+
+/* ── Student rows ── */
+.prp-tr {
+  background: var(--brand-card-bg);
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--brand-card-border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.prp-tr--alt {
+  background: var(--brand-page-bg);
+}
+
+.prp-tr--selected {
+  background: var(--brand-primary-light) !important;
+  border-left-color: var(--brand-primary) !important;
+}
+
+.prp-tr:not(.prp-tr--selected):hover {
+  background: var(--brand-primary-light) !important;
+}
+
+.prp-td-register {
+  padding: 12px 20px;
+  font-weight: 500;
+  color: var(--brand-text);
+  white-space: nowrap;
+}
+
+.prp-tr--selected .prp-td-register {
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+
+.prp-td-name {
+  padding: 12px 20px;
+  color: var(--brand-text);
+}
+
+.prp-tr--selected .prp-td-name {
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+
+/* ── Pagination ── */
+.prp-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--brand-text-muted);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.prp-page-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.prp-page-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--brand-card-border);
+  background: var(--brand-card-bg);
+  color: var(--brand-text);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.prp-page-btn:disabled {
+  background: var(--brand-page-bg);
+  color: var(--brand-text-muted);
+  cursor: not-allowed;
+}
+
+.prp-page-btn--active {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: #fff;
+  font-weight: 600;
+  min-width: 32px;
+  padding: 5px 10px;
+}
+
+/* ── Marks entry section ── */
+.prp-marks-section {
+  margin-top: 28px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #f0f9ff;
+  padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+
+.dark .prp-marks-section {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary-light);
+}
+
+.prp-marks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.prp-marks-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.dark .prp-marks-title {
+  color: var(--brand-primary);
+}
+
+.prp-marks-register {
+  font-size: 0.8rem;
+  color: var(--brand-primary);
+}
+
+.prp-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--brand-text-muted);
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.prp-close-btn:hover {
+  background: var(--brand-card-border);
+}
+
+.prp-loading-marks,
+.prp-no-criteria {
+  font-size: 0.9rem;
+  color: var(--brand-text-muted);
+}
+
+/* ── Marks table ── */
+.prp-marks-table-scroll {
+  overflow-x: auto;
+}
+
+.prp-marks-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  background: var(--brand-card-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.prp-marks-thead-row {
+  background: var(--brand-primary-light);
+}
+
+.prp-marks-th {
+  padding: 10px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #1e40af;
+  border-bottom: 1px solid #bfdbfe;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dark .prp-marks-th {
+  color: var(--brand-primary);
+  border-bottom-color: var(--brand-card-border);
+}
+
+.prp-marks-th--center {
+  width: 80px;
+  text-align: center;
+}
+
+.prp-marks-th--wide {
+  width: 110px;
+  text-align: center;
+}
+
+.prp-marks-tr {
+  border-bottom: 1px solid var(--brand-card-border);
+  background: var(--brand-card-bg);
+}
+
+.prp-marks-tr--alt {
+  background: var(--brand-page-bg);
+}
+
+.prp-marks-td {
+  padding: 10px 16px;
+  color: var(--brand-text);
+  vertical-align: middle;
+}
+
+.prp-marks-td--center {
+  text-align: center;
+}
+
+.prp-marks-td--right {
+  text-align: right;
+}
+
+.prp-marks-input {
+  width: 72px;
+  padding: 5px 8px;
+  border: 1px solid var(--brand-card-border);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.875rem;
+  background: var(--brand-card-bg);
+  color: var(--brand-text);
+  outline: none;
+}
+
+/* ── Totals footer row ── */
+.prp-tfoot-row {
+  background: #f0fdf4;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.dark .prp-tfoot-row {
+  background: var(--brand-card-bg);
+}
+
+/* ── Panel averages ── */
+.prp-averages {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.prp-avg-badge {
+  padding: 7px 14px;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #166534;
+  font-weight: 600;
+}
+
+.dark .prp-avg-badge {
+  background: var(--brand-card-bg);
+  border-color: var(--brand-success);
+  color: var(--brand-success);
+}
+
+/* ── Actions ── */
+.prp-actions {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+}
+
+.prp-btn-save {
+  padding: 9px 22px;
+  border-radius: 8px;
+  border: none;
+  background: var(--brand-success);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  transition: background 0.15s;
+}
+
+.prp-btn-save:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.prp-btn-save:disabled {
+  background: var(--brand-text-muted);
+  cursor: not-allowed;
+}
+
+.prp-btn-cancel {
+  padding: 9px 22px;
+  border-radius: 8px;
+  border: 1px solid var(--brand-card-border);
+  background: var(--brand-card-bg);
+  color: var(--brand-text);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.prp-btn-cancel:hover {
+  background: var(--brand-page-bg);
+}

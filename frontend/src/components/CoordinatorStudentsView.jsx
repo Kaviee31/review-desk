@@ -4,8 +4,7 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { toast } from 'react-toastify';
-import { pgCourses, ugCourses, courses } from "../constants/courses";
-import Footer from './Footer';
+import { pgCourses, ugCourses } from "../constants/courses";
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function CoordinatorStudentsView() {
   const [coordinatorUid, setCoordinatorUid] = useState(null);
@@ -159,7 +158,7 @@ function CoordinatorStudentsView() {
         try {
           const response = await axios.get(`${API_BASE_URL}/get-latest-review/${student.registerNumber}/${reviewType}`);
           files[`${student.registerNumber}_${reviewType}`] = response.data;
-        } catch (error) {
+        } catch {
           files[`${student.registerNumber}_${reviewType}`] = { pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null };
         }
       }
@@ -379,7 +378,7 @@ function CoordinatorStudentsView() {
     );
   };
 
-  const renderProjectReviewCell = (project, reviewType, deadline) => {
+  const _renderProjectReviewCell = (project, reviewType, deadline) => {
     const firstMemberRegNo = project.projectMembers?.[0]?.registerNumber || project.groupRegisterNumbers?.[0];
     if (!firstMemberRegNo) {
       return <td className="py-3 px-6 text-center"><span className="text-gray-500 text-xs">No Members</span></td>;
@@ -397,8 +396,8 @@ function CoordinatorStudentsView() {
   }
 
   return (
-    <div className="teacher-dashboard-layout">
-    <div className="flex flex-col items-center justify-start min-h-screen p-4 bg-gray-100 font-inter">
+    <>
+      <div className="flex flex-col items-center justify-start min-h-screen font-inter">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">
         Coordinator Student View
       </h1>
@@ -412,14 +411,7 @@ function CoordinatorStudentsView() {
                 <button
                   key={program}
                   onClick={() => setSelectedProgram(program)}
-                  className={`font-semibold py-4 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-75
-                    ${pgPrograms.includes(program) ?
-                      (program === "MCA(R)" ? "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500" :
-                        program === "MCA(SS)" ? "bg-green-600 hover:bg-green-700 focus:ring-green-500" :
-                          program === "MTECH(IT)" ? "bg-purple-600 hover:bg-purple-700 focus:ring-purple-500" :
-                            "bg-red-600 hover:bg-red-700 focus:ring-red-500") :
-                      (ugPrograms.includes(program) ? "bg-orange-500 hover:bg-orange-600 focus:ring-orange-400" : "")
-                    } text-white`}
+                  className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-75"
                 >
                   {program}
                 </button>
@@ -661,8 +653,7 @@ function CoordinatorStudentsView() {
         </div>
       )}
     </div>
-    <Footer />
-    </div>
+    </>
   );
 }
 

@@ -4,6 +4,7 @@ import { LogOut, Users, LayoutDashboard, ClipboardList } from "lucide-react";
 import { getAuth } from "firebase/auth";
 import axios from "axios";
 import RoleSwitcherDropdown from "./RoleSwitcherDropdown";
+import ThemeToggle from "./ThemeToggle";
 import { API_BASE_URL } from "./TeacherDashboard";
 import "../styles/TeacherLayout.css";
 
@@ -53,6 +54,8 @@ function TeacherLayout() {
           )}
 
           <RoleSwitcherDropdown />  {/* ✅ The dropdown inserted here */}
+
+          <ThemeToggle />
 
           <button onClick={handleLogout}><LogOut size={18} /> Logout</button>
         </div>

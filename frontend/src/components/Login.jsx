@@ -68,12 +68,11 @@ function Login() {
   const handleRoleSelect = (role) => {
     localStorage.setItem("currentRole", role);
     // Lines 60-61: Get all roles and pass them to the helper function.
-    const availableRoles = JSON.parse(localStorage.getItem("availableRoles")) || [];
     redirectToDashboard(navigate, role);
   };
 
 return (
-  <div className="teacher-dashboard-layout">
+  <div className="login-layout">
     <ParitalFooter />
     <div className="login-page">
       

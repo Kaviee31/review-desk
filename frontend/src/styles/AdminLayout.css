@@ -1,4 +1,7 @@
-/* src/styles/AdminLayout.css */
+/* ============================================================
+   AdminLayout.css — Standard navbar + body shell
+   All colors via brand tokens defined in index.css :root
+   ============================================================ */
 
 .admin-layout {
   display: flex;
@@ -9,107 +12,96 @@
   padding: 0;
   box-sizing: border-box;
 }
+
+/* Navbar */
 .admin-navbar {
-  background-color: #2c3e50;
+  background-color: var(--brand-nav);
   color: white;
-  padding: 15px 30px;
+  padding: 12px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   width: 100%;
-  overflow-x: auto; /* Handle overflow */
-  white-space: nowrap; /* Prevent button wrap */
+  box-sizing: border-box;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
+
+/* Logo area */
+.navbar-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.navbar-image {
+  height: 50px;
+  width: 50px;
+}
+
+.navbar-logo-container {
+  display: flex;
+  flex-direction: column;
+}
+
 .navbar-logo {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: bold;
   font-family: 'Times New Roman', Times, serif;
 }
 
-
+/* Nav links */
 .navbar-links {
   display: flex;
-  gap: 15px;
-  flex-wrap: nowrap; /* Avoid wrapping */
-  margin-top: 0; /* Reset */
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
 }
 
 .navbar-links button {
   background: transparent;
-  border: 1px solid white;
+  border: 1px solid rgba(255, 255, 255, 0.6);
   color: white;
-  font-size: 16px;
+  font-size: 14px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  padding: 8px 12px;
+  padding: 7px 14px;
   border-radius: 6px;
-  transition: background 0.3s ease;
-  white-space: nowrap; 
+  transition: background 0.2s ease;
+  white-space: nowrap;
 }
 
 .navbar-links button:hover {
   background-color: rgba(255, 255, 255, 0.15);
 }
 
+.navbar-links button.active,
 .navbar-links .active {
-  background-color: #1abc9c;
-  border-color: #1abc9c;
-}
-
-.admin-body {
-  flex: 1;
-  padding: 30px;
-  background-color: transparent;
-  box-sizing: border-box;
-}
-.navbar-header {
-  display: flex;
-  align-items: center;
-  gap: 15px; /* Adds space between the image and the text */
-}
-
-.navbar-image {
-  height: 50px;
-  width: 50px;
-   /* Optional: gives the image rounded corners */
-}
-
-.navbar-logo-container {
-  display: flex;
-  flex-direction: column; /* This stacks the two text lines */
-}
-
-/* Add or update these styles in your CSS file */
-
-.admin-navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 60px 10px 40px; 
-  background-color: #34495e; /* Matching the dark blue-gray from the image */
+  background-color: var(--brand-active);
+  border-color: var(--brand-active);
   color: white;
-  width: 100%;
 }
 
-.navbar-header {
+/* Contact + social (PartialFooter / public navbar) */
+.navbar-right {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 16px;
 }
 
 .navbar-contact-details {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 5px;
+  gap: 4px;
 }
 
 .contact-link {
   color: white;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 13px;
   font-family: sans-serif;
 }
 
@@ -119,17 +111,54 @@
 
 .social-media-icons {
   display: flex;
-  gap: 18px;
-  margin-top: 5px;
+  gap: 16px;
+  margin-top: 4px;
 }
 
 .social-media-icons a {
   color: white;
-  font-size: 16px;
+  font-size: 15px;
   transition: transform 0.2s ease;
 }
 
 .social-media-icons a:hover {
   transform: scale(1.2);
-  color: #bdc3c7; /* A light gray for hover effect */
+  color: #bdc3c7;
+}
+
+/* Role switcher */
+.role-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.role-switcher label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+}
+
+.role-switcher select {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+}
+
+.role-switcher select option {
+  background: var(--brand-nav);
+  color: white;
+}
+
+/* Body */
+.admin-body {
+  flex: 1;
+  padding: 30px;
+  background-color: var(--brand-page-bg);
+  box-sizing: border-box;
 }

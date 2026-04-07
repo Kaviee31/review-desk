@@ -1,4 +1,8 @@
-/* Layout wrapper */
+/* ============================================================
+   HODLayout.css — Standard navbar + body shell
+   All colors via brand tokens defined in index.css :root
+   ============================================================ */
+
 .hod-layout {
   display: flex;
   flex-direction: column;
@@ -9,25 +13,25 @@
   box-sizing: border-box;
 }
 
-/* Navbar styling */
+/* Navbar */
 .hod-navbar {
-  background: linear-gradient(to right, #2c3e50, #34495e);
+  background-color: var(--brand-nav);
   color: white;
-  padding: 15px 30px;
+  padding: 12px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   width: 100%;
   box-sizing: border-box;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
-/* Header section with logo and text */
+/* Logo area */
 .navbar-header {
   display: flex;
   align-items: center;
-  gap: 15px; /* Adds space between the image and the text */
+  gap: 15px;
 }
 
 .navbar-image {
@@ -37,89 +41,88 @@
 
 .navbar-logo-container {
   display: flex;
-  flex-direction: column; /* This stacks the two text lines */
+  flex-direction: column;
 }
 
 .navbar-logo {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: bold;
   font-family: 'Times New Roman', Times, serif;
 }
 
-/* Links and actions section */
+/* Nav links */
 .navbar-links {
   display: flex;
-  align-items: center; /* Vertically align items */
   flex-wrap: wrap;
-  gap: 15px;
-  margin-top: 10px;
+  align-items: center;
+  gap: 10px;
 }
 
 .navbar-links button {
   background: transparent;
-  border: 1px solid white;
+  border: 1px solid rgba(255, 255, 255, 0.6);
   color: white;
-  font-size: 16px;
+  font-size: 14px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  padding: 10px 16px;
-  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
-  border-radius: 8px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  transition: background 0.2s ease, transform 0.15s ease;
+  white-space: nowrap;
 }
 
 .navbar-links button:hover {
   background-color: rgba(255, 255, 255, 0.15);
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
 
 .navbar-links button.active {
-  background: linear-gradient(to right, #00c3ff, #007bff);
-  border-color: #00c3ff;
+  background-color: var(--brand-active);
+  border-color: var(--brand-active);
   color: white;
 }
 
-/* Main content area */
+/* Role switcher */
+.role-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.role-switcher label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.role-switcher select {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.role-switcher select:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.role-switcher select option {
+  background-color: var(--brand-nav);
+  color: white;
+}
+
+/* Body */
 .hod-body {
   flex: 1;
   width: 100%;
   padding: 30px;
   box-sizing: border-box;
-  background: #fffdd0;
-}
-
-/* --- ✨ NEW Styles for Role Switcher Dropdown --- */
-.role-switcher {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.role-switcher label {
-  font-size: 16px;
-  color: #f0f0f0; /* Slightly off-white for better readability */
-}
-
-.role-switcher select {
-  background-color: transparent;
-  color: white;
-  border: 1px solid white;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  -webkit-appearance: none; /* Removes default browser styling */
-  appearance: none;
-}
-
-.role-switcher select:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-/* Style for the options within the dropdown */
-.role-switcher select option {
-  background-color: #34495e; /* Dark background for dropdown options */
-  color: white;
+  background-color: var(--brand-page-bg);
 }

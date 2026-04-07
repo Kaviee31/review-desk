@@ -5,6 +5,7 @@ import { LogOut, BarChart2, LayoutDashboard, UserPlus, Users } from "lucide-reac
 import { getAuth } from "firebase/auth";
 import "../styles/AdminLayout.css";
 import RoleSwitcherDropdown from "./RoleSwitcherDropdown";
+import ThemeToggle from "./ThemeToggle";
 
 // Assuming you'll define your routes in a higher-level component like App.jsx
 // For now, the button will navigate to '/admin/assign-coordinator'
@@ -63,6 +64,8 @@ function AdminLayout() {
           </button>
 
           <RoleSwitcherDropdown /> 
+
+          <ThemeToggle />
 
           <button onClick={handleLogout}>
             <LogOut size={18} /> Logout

@@ -6,7 +6,6 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import axios from "axios";
 import "../styles/StudentDashboard.css";
-import Footer from './Footer';
 export const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL
 function StudentDashboard() {
   useEffect(() => {
@@ -341,7 +340,6 @@ function StudentDashboard() {
 
 
   return (
-    <div className="teacher-dashboard-layout">
     <>
       <div className="contain">
         <div className="box">
@@ -503,8 +501,6 @@ function StudentDashboard() {
 
       <Outlet />
     </>
-    <Footer />
-    </div>
   );
 }
 

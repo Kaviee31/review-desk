@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { LogOut, LayoutDashboard } from "lucide-react";
 import { getAuth } from "firebase/auth";
 import RoleSwitcherDropdown from "./RoleSwitcherDropdown"; // Adjust this path if your component is in a different folder
+import ThemeToggle from "./ThemeToggle";
 import "../styles/HODLayout.css";
 
 function HODLayout() {
@@ -48,6 +49,8 @@ function HODLayout() {
           </button>
 
           <RoleSwitcherDropdown />
+
+          <ThemeToggle />
 
           <button onClick={handleLogout}>
             <LogOut size={18} /> Logout

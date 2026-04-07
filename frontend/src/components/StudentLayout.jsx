@@ -2,6 +2,7 @@ import React from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { LogOut, BookOpenCheck, User2 } from "lucide-react";
 import { auth } from "../firebase";
+import ThemeToggle from "./ThemeToggle";
 import "../styles/StudentLayout.css";
 
 function StudentLayout() {
@@ -48,6 +49,7 @@ function StudentLayout() {
 >
   🔔 Telegram Updates
 </button>
+          <ThemeToggle />
           <button onClick={handleLogout}>
             <LogOut size={18} /> Logout
           </button>

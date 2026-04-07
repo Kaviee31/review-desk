@@ -6,7 +6,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import ChatWindow from "./ChatWindow";
 import * as XLSX from "xlsx";
-import { collection, query, orderBy, limit, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, orderBy, limit, where, getDocs } from "firebase/firestore";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../styles/EnrolledStudents.css';
@@ -28,7 +28,7 @@ function EnrolledStudents() {
   const [teacherUid, setTeacherUid] = useState(null);
   const [selectedStudentRegisterNumber, setSelectedStudentRegisterNumber] = useState(null);
   const [unseenMessagesStatus, setUnseenMessagesStatus] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [_loading, _setLoading] = useState(true);
   const [marksLockStatus, setMarksLockStatus] = useState('Unlocked');
   const [showPdfDropdown, setShowPdfDropdown] = useState(false);
   const [showExcelDropdown, setShowExcelDropdown] = useState(false);
@@ -36,8 +36,8 @@ function EnrolledStudents() {
   // Modified to store objects with pdfPath, pptPath, otherPath, and uploadedAt
   const [latestReviewFiles, setLatestReviewFiles] = useState({});
   const [studentCounts, setStudentCounts] = useState({});
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [zerothReviews, setZerothReviews] = useState({});
+  const [_selectedStudent, _setSelectedStudent] = useState(null);
+  const [_zerothReviews, _setZerothReviews] = useState({});
   // States for the student review marks modal
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [currentStudentForReview, setCurrentStudentForReview] = useState(null); // The student object whose reviews are being viewed
@@ -102,7 +102,7 @@ const fetchLockStatus = useCallback(async (courseName) => {
         await axios.post(`${API_BASE_URL}/marks-lock/lock`, { courseName: selectedProgram });
         toast.success(`Marks for ${selectedProgram} have been locked!`);
         setMarksLockStatus('Locked'); // Update UI immediately
-      } catch (error) {
+      } catch {
         toast.error("Failed to lock marks.");
       }
     }
@@ -366,7 +366,7 @@ const addPdfHeader = (doc, title) => {
           // The backend now returns an object with pdfPath, pptPath, otherPath, and uploadedAt
           const response = await axios.get(`${API_BASE_URL}/get-latest-review/${student.registerNumber}/${reviewType}`);
           files[`${student.registerNumber}_${reviewType}`] = response.data; // Store the object directly
-        } catch (error) {
+        } catch {
           // console.error(`Error fetching ${reviewType} review for ${student.registerNumber}:`, error); // Suppress frequent errors
           files[`${student.registerNumber}_${reviewType}`] = { pdfPath: null, pptPath: null, otherPath: null, uploadedAt: null }; // Ensure empty object
         }
@@ -408,7 +408,7 @@ const addPdfHeader = (doc, title) => {
   };
 
   // This handles changes in the main table's Assessment fields directly (for PG programs only)
-  const handleMarkChange = (index, field, value) => {
+  const _handleMarkChange = (index, field, value) => {
     const updatedStudents = [...students];
     const numericValue = Number(value);
     updatedStudents[index][field] = isNaN(numericValue) ? 0 : numericValue;
@@ -421,7 +421,7 @@ const addPdfHeader = (doc, title) => {
   };
 
   // NEW: Handler for VIVA mark changes
-  const handleVivaMarkChange = (field, value) => {
+  const _handleVivaMarkChange = (field, value) => {
     const numericValue = Number(value);
     setVivaMarks(prev => ({
       ...prev,
@@ -1072,7 +1072,7 @@ const handleDownloadStudentReviewPDF = () => {
   };
 
   // Helper to format deadline dates
-  const formatDate = (dateString) => {
+  const _formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -1108,23 +1108,13 @@ const handleDownloadStudentReviewPDF = () => {
             {allPrograms.map((program) => (
               <div
                 key={program}
-                className="program-card vibrant"
+                className="program-card"
                 onClick={() => setSelectedProgram(program)}
-                style={{ border: '2px solid orange', borderRadius: '16px' }}
               >
-                <h3 style={{
-                  color: 'black',
-                  fontWeight: 'bold',
-                  fontSize: '1.6rem',
-                  textShadow: '1px 1px 3px rgba(0,0,0,0.4)'
-                }}>
+                <h3 style={{ fontWeight: 'bold', fontSize: '1.6rem' }}>
                   {program}
                 </h3>
-                <p style={{
-                  color: 'black',
-                  fontSize: '1rem',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-                }}>
+                <p style={{ fontSize: '1rem' }}>
                   {studentCounts[program] ?? 0} Student{(studentCounts[program] ?? 0) === 1 ? "" : "s"}
                 </p>
               </div>
@@ -1161,7 +1151,7 @@ const handleDownloadStudentReviewPDF = () => {
                     </thead>
                     <tbody className="text-gray-600 text-sm font-light">
                       {students.length > 0 ? (
-                        students.map((student, index) => (
+                        students.map((student) => (
                           <tr key={student.registerNumber} className="border-b border-gray-200 hover:bg-gray-100">
                             <td className="py-3 px-6 text-left whitespace-nowrap">
                               <span
@@ -1505,7 +1495,7 @@ const handleDownloadStudentReviewPDF = () => {
                     </thead>
                     <tbody className="text-gray-600 text-sm font-light">
                       {ugProjects.length > 0 ? (
-                        ugProjects.map((project, index) => (
+                        ugProjects.map((project) => (
                           <tr key={project.projectName} className="border-b border-gray-200 hover:bg-gray-100">
                             <td className="py-3 px-6 text-left whitespace-nowrap">
                               <span
@@ -1978,7 +1968,7 @@ const handleDownloadStudentReviewPDF = () => {
                   <div style={{ overflowX: "auto", marginTop: "12px" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem", background: "#fff", borderRadius: "8px", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
                       <thead>
-                        <tr style={{ background: "#e0e7ff" }}>
+                        <tr style={{ background: "#dbeafe" }}>
                           <th style={esThStyle}>Review Item (R1)</th>
                           <th style={{ ...esThStyle, width: "80px", textAlign: "center" }}>R1 Max</th>
                           <th style={{ ...esThStyle, width: "110px", textAlign: "center" }}>R1 Awarded</th>
@@ -2099,7 +2089,7 @@ const handleDownloadStudentReviewPDF = () => {
                   padding: "9px 22px",
                   borderRadius: "8px",
                   border: "none",
-                  background: "#7c3aed",
+                  background: "#2563eb",
                   color: "#fff",
                   fontWeight: "600",
                   fontSize: "0.875rem",
@@ -2126,8 +2116,8 @@ const esThStyle = {
   padding: "10px 16px",
   textAlign: "left",
   fontWeight: "600",
-  color: "#3730a3",
-  borderBottom: "1px solid #c7d2fe",
+  color: "#1e40af",
+  borderBottom: "1px solid #bfdbfe",
   fontSize: "0.75rem",
   textTransform: "uppercase",
   letterSpacing: "0.04em",

@@ -3,6 +3,7 @@ import axios from "axios";
 import { getAuth } from "firebase/auth";
 import { toast } from "react-toastify";
 import { API_BASE_URL } from "./TeacherDashboard";
+import "../styles/PanelReviewPage.css";
 
 function PanelReviewPage() {
   const [panels, setPanels] = useState([]);
@@ -37,7 +38,7 @@ function PanelReviewPage() {
         }
       })
       .catch(() => toast.error("Failed to load your panels."));
-  }, [teacherEmail]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [teacherEmail]);
 
   const selectPanel = async (panel) => {
     setSelectedPanel(panel);
@@ -190,50 +191,23 @@ function PanelReviewPage() {
   const rounds = enabledRounds(coordCriteria);
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1100px", margin: "0 auto" }}>
-      <h2 style={{ marginBottom: "24px", fontSize: "1.5rem", fontWeight: "700" }}>
-        Panel Review
-      </h2>
+    <div className="prp-container">
+      <h2 className="prp-title">Panel Review</h2>
 
       {panels.length === 0 ? (
-        <div
-          style={{
-            padding: "40px",
-            textAlign: "center",
-            color: "#6b7280",
-            border: "1px dashed #d1d5db",
-            borderRadius: "10px",
-          }}
-        >
-          You are not assigned to any panel yet.
-        </div>
+        <div className="prp-empty">You are not assigned to any panel yet.</div>
       ) : (
         <>
           {/* Panel dropdown — always visible */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
-            <label
-              style={{ fontSize: "0.875rem", fontWeight: "600", color: "#374151", whiteSpace: "nowrap" }}
-            >
-              Panel:
-            </label>
+          <div className="prp-panel-row">
+            <label className="prp-panel-label">Panel:</label>
             <select
               value={selectedPanel?._id || ""}
               onChange={(e) => {
                 const panel = panels.find((p) => p._id === e.target.value);
                 if (panel) selectPanel(panel);
               }}
-              style={{
-                padding: "8px 14px",
-                border: "1px solid #d1d5db",
-                borderRadius: "8px",
-                fontSize: "0.9rem",
-                fontWeight: "600",
-                color: "#1d4ed8",
-                background: "#eff6ff",
-                cursor: "pointer",
-                outline: "none",
-                minWidth: "180px",
-              }}
+              className="prp-panel-select"
             >
               {panels.map((panel) => (
                 <option key={panel._id} value={panel._id}>
@@ -244,51 +218,27 @@ function PanelReviewPage() {
           </div>
 
           {loadingStudents ? (
-            <p style={{ color: "#6b7280" }}>Loading students...</p>
+            <p className="prp-loading">Loading students...</p>
           ) : (
             <>
               {/* ── Search + page-size row ── */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "12px",
-                  marginBottom: "10px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1, minWidth: "200px" }}>
-                  <span style={{ color: "#9ca3af", fontSize: "1rem" }}>🔍</span>
+              <div className="prp-search-row">
+                <div className="prp-search-inner">
+                  <span className="prp-search-icon">🔍</span>
                   <input
                     type="text"
                     placeholder="Search by register number or name..."
                     value={searchQuery}
                     onChange={handleSearchChange}
-                    style={{
-                      flex: 1,
-                      padding: "8px 12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "8px",
-                      fontSize: "0.875rem",
-                      outline: "none",
-                      background: "#fff",
-                    }}
+                    className="prp-search-input"
                   />
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.85rem", color: "#6b7280" }}>
+                <div className="prp-page-size">
                   <span>Show:</span>
                   <select
                     value={pageSize}
                     onChange={handlePageSizeChange}
-                    style={{
-                      padding: "6px 10px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "6px",
-                      fontSize: "0.85rem",
-                      cursor: "pointer",
-                      background: "#fff",
-                    }}
+                    className="prp-page-size-select"
                   >
                     <option value={5}>5</option>
                     <option value={7}>7</option>
@@ -298,64 +248,25 @@ function PanelReviewPage() {
               </div>
 
               {/* ── Student table — fixed height + internal scroll ── */}
-              <div
-                style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "10px",
-                  overflow: "hidden",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-                }}
-              >
-                <div style={{ maxHeight: "350px", overflowY: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
+              <div className="prp-table-wrapper">
+                <div className="prp-table-scroll">
+                  <table className="prp-table">
                     <thead>
-                      <tr style={{ background: "#f3f4f6", position: "sticky", top: 0, zIndex: 1 }}>
-                        <th
-                          style={{
-                            padding: "12px 20px",
-                            textAlign: "left",
-                            fontWeight: "600",
-                            color: "#374151",
-                            borderBottom: "1px solid #e5e7eb",
-                            textTransform: "uppercase",
-                            fontSize: "0.75rem",
-                            letterSpacing: "0.05em",
-                          }}
-                        >
-                          Register Number
-                        </th>
-                        <th
-                          style={{
-                            padding: "12px 20px",
-                            textAlign: "left",
-                            fontWeight: "600",
-                            color: "#374151",
-                            borderBottom: "1px solid #e5e7eb",
-                            textTransform: "uppercase",
-                            fontSize: "0.75rem",
-                            letterSpacing: "0.05em",
-                          }}
-                        >
-                          Student Name
-                        </th>
+                      <tr className="prp-thead-row">
+                        <th className="prp-th">Register Number</th>
+                        <th className="prp-th">Student Name</th>
                       </tr>
                     </thead>
                     <tbody>
                       {students.length === 0 ? (
                         <tr>
-                          <td
-                            colSpan={2}
-                            style={{ padding: "32px", textAlign: "center", color: "#9ca3af" }}
-                          >
+                          <td colSpan={2} className="prp-td-empty">
                             No students enrolled.
                           </td>
                         </tr>
                       ) : filteredStudents.length === 0 ? (
                         <tr>
-                          <td
-                            colSpan={2}
-                            style={{ padding: "32px", textAlign: "center", color: "#9ca3af" }}
-                          >
+                          <td colSpan={2} className="prp-td-empty">
                             No students match &ldquo;{searchQuery}&rdquo;.
                           </td>
                         </tr>
@@ -367,48 +278,12 @@ function PanelReviewPage() {
                             <tr
                               key={s.registerNumber}
                               onClick={() => handleSelectStudent(s)}
-                              style={{
-                                background: isSelected
-                                  ? "#eff6ff"
-                                  : i % 2 === 0
-                                  ? "#fff"
-                                  : "#f9fafb",
-                                borderLeft: isSelected
-                                  ? "3px solid #2563eb"
-                                  : "3px solid transparent",
-                                borderBottom: "1px solid #e5e7eb",
-                                cursor: "pointer",
-                                transition: "background 0.15s",
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!isSelected)
-                                  e.currentTarget.style.background = "#f0f9ff";
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!isSelected)
-                                  e.currentTarget.style.background =
-                                    i % 2 === 0 ? "#fff" : "#f9fafb";
-                              }}
+                              className={`prp-tr${isSelected ? " prp-tr--selected" : i % 2 !== 0 ? " prp-tr--alt" : ""}`}
                             >
-                              <td
-                                style={{
-                                  padding: "12px 20px",
-                                  fontWeight: "500",
-                                  color: isSelected ? "#1d4ed8" : "#111827",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
+                              <td className="prp-td-register">
                                 {s.registerNumber}
                               </td>
-                              <td
-                                style={{
-                                  padding: "12px 20px",
-                                  color: isSelected ? "#1d4ed8" : "#374151",
-                                  fontWeight: isSelected ? "600" : "400",
-                                }}
-                              >
-                                {s.studentName}
-                              </td>
+                              <td className="prp-td-name">{s.studentName}</td>
                             </tr>
                           );
                         })
@@ -420,18 +295,7 @@ function PanelReviewPage() {
 
               {/* ── Pagination controls ── */}
               {filteredStudents.length > 0 && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginTop: "12px",
-                    fontSize: "0.85rem",
-                    color: "#6b7280",
-                    flexWrap: "wrap",
-                    gap: "8px",
-                  }}
-                >
+                <div className="prp-pagination">
                   <span>
                     Showing{" "}
                     {Math.min((currentPage - 1) * pageSize + 1, filteredStudents.length)}–
@@ -439,19 +303,11 @@ function PanelReviewPage() {
                     {filteredStudents.length} students
                   </span>
 
-                  <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                  <div className="prp-page-buttons">
                     <button
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      style={{
-                        padding: "5px 12px",
-                        borderRadius: "6px",
-                        border: "1px solid #d1d5db",
-                        background: currentPage === 1 ? "#f3f4f6" : "#fff",
-                        color: currentPage === 1 ? "#9ca3af" : "#374151",
-                        cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                        fontSize: "0.85rem",
-                      }}
+                      className="prp-page-btn"
                     >
                       ← Prev
                     </button>
@@ -460,17 +316,7 @@ function PanelReviewPage() {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        style={{
-                          padding: "5px 10px",
-                          borderRadius: "6px",
-                          border: `1px solid ${currentPage === page ? "#2563eb" : "#d1d5db"}`,
-                          background: currentPage === page ? "#2563eb" : "#fff",
-                          color: currentPage === page ? "#fff" : "#374151",
-                          cursor: "pointer",
-                          fontWeight: currentPage === page ? "600" : "400",
-                          fontSize: "0.85rem",
-                          minWidth: "32px",
-                        }}
+                        className={`prp-page-btn${currentPage === page ? " prp-page-btn--active" : ""}`}
                       >
                         {page}
                       </button>
@@ -479,15 +325,7 @@ function PanelReviewPage() {
                     <button
                       onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      style={{
-                        padding: "5px 12px",
-                        borderRadius: "6px",
-                        border: "1px solid #d1d5db",
-                        background: currentPage === totalPages ? "#f3f4f6" : "#fff",
-                        color: currentPage === totalPages ? "#9ca3af" : "#374151",
-                        cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                        fontSize: "0.85rem",
-                      }}
+                      className="prp-page-btn"
                     >
                       Next →
                     </button>
@@ -497,101 +335,58 @@ function PanelReviewPage() {
 
               {/* ── Marks entry section — below the table ── */}
               {expandedStudent && (
-                <div
-                  ref={marksRef}
-                  style={{
-                    marginTop: "28px",
-                    border: "1px solid #bfdbfe",
-                    borderRadius: "10px",
-                    background: "#f0f9ff",
-                    padding: "20px 24px",
-                    boxShadow: "0 2px 8px rgba(37,99,235,0.08)",
-                  }}
-                >
+                <div ref={marksRef} className="prp-marks-section">
                   {/* Header */}
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "16px",
-                    }}
-                  >
+                  <div className="prp-marks-header">
                     <div>
-                      <h3
-                        style={{
-                          margin: 0,
-                          fontSize: "1rem",
-                          fontWeight: "700",
-                          color: "#1e3a8a",
-                        }}
-                      >
+                      <h3 className="prp-marks-title">
                         Marks for {expandedStudent.studentName}
                       </h3>
-                      <span style={{ fontSize: "0.8rem", color: "#3b82f6" }}>
+                      <span className="prp-marks-register">
                         {expandedStudent.registerNumber}
                       </span>
                     </div>
                     <button
                       onClick={handleCloseMarks}
                       title="Close"
-                      style={{
-                        background: "none",
-                        border: "none",
-                        fontSize: "1.4rem",
-                        cursor: "pointer",
-                        color: "#6b7280",
-                        lineHeight: 1,
-                        padding: "4px 8px",
-                        borderRadius: "6px",
-                      }}
+                      className="prp-close-btn"
                     >
                       ×
                     </button>
                   </div>
 
                   {loadingMarks ? (
-                    <p style={{ color: "#6b7280", fontSize: "0.9rem" }}>Loading marks...</p>
+                    <p className="prp-loading-marks">Loading marks...</p>
                   ) : rounds.length === 0 ? (
-                    <p style={{ color: "#9ca3af", fontSize: "0.9rem" }}>
+                    <p className="prp-no-criteria">
                       No review criteria set by coordinator yet.
                     </p>
                   ) : (
                     <>
                       {/* Marks table */}
-                      <div style={{ overflowX: "auto" }}>
-                        <table
-                          style={{
-                            width: "100%",
-                            borderCollapse: "collapse",
-                            fontSize: "0.875rem",
-                            background: "#fff",
-                            borderRadius: "8px",
-                            overflow: "hidden",
-                            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-                          }}
-                        >
+                      <div className="prp-marks-table-scroll">
+                        <table className="prp-marks-table">
                           <thead>
-                            <tr style={{ background: "#e0e7ff" }}>
+                            <tr className="prp-marks-thead-row">
                               {rounds.includes(1) && (
                                 <>
-                                  <th style={thStyle}>Review Item (R1)</th>
-                                  <th style={{ ...thStyle, width: "80px", textAlign: "center" }}>R1 Max</th>
-                                  <th style={{ ...thStyle, width: "110px", textAlign: "center" }}>R1 Awarded</th>
+                                  <th className="prp-marks-th">Review Item (R1)</th>
+                                  <th className="prp-marks-th prp-marks-th--center">R1 Max</th>
+                                  <th className="prp-marks-th prp-marks-th--wide">R1 Awarded</th>
                                 </>
                               )}
                               {rounds.includes(2) && (
                                 <>
-                                  <th style={thStyle}>Review Item (R2)</th>
-                                  <th style={{ ...thStyle, width: "80px", textAlign: "center" }}>R2 Max</th>
-                                  <th style={{ ...thStyle, width: "110px", textAlign: "center" }}>R2 Awarded</th>
+                                  <th className="prp-marks-th">Review Item (R2)</th>
+                                  <th className="prp-marks-th prp-marks-th--center">R2 Max</th>
+                                  <th className="prp-marks-th prp-marks-th--wide">R2 Awarded</th>
                                 </>
                               )}
                               {rounds.includes(3) && (
                                 <>
-                                  <th style={thStyle}>Review Item (R3)</th>
-                                  <th style={{ ...thStyle, width: "80px", textAlign: "center" }}>R3 Max</th>
-                                  <th style={{ ...thStyle, width: "110px", textAlign: "center" }}>R3 Awarded</th>
+                                  <th className="prp-marks-th">Review Item (R3)</th>
+                                  <th className="prp-marks-th prp-marks-th--center">R3 Max</th>
+                                  <th className="prp-marks-th prp-marks-th--wide">R3 Awarded</th>
                                 </>
                               )}
                             </tr>
@@ -601,16 +396,13 @@ function PanelReviewPage() {
                             {coordCriteria.map((item, idx) => (
                               <tr
                                 key={idx}
-                                style={{
-                                  borderBottom: "1px solid #e5e7eb",
-                                  background: idx % 2 === 0 ? "#fff" : "#f9fafb",
-                                }}
+                                className={`prp-marks-tr${idx % 2 !== 0 ? " prp-marks-tr--alt" : ""}`}
                               >
                                 {rounds.includes(1) && (
                                   <>
-                                    <td style={tdStyle}>{item.r1_desc}</td>
-                                    <td style={{ ...tdStyle, textAlign: "center" }}>{item.r1_mark}</td>
-                                    <td style={{ ...tdStyle, textAlign: "center" }}>
+                                    <td className="prp-marks-td">{item.r1_desc}</td>
+                                    <td className="prp-marks-td prp-marks-td--center">{item.r1_mark}</td>
+                                    <td className="prp-marks-td prp-marks-td--center">
                                       <input
                                         type="number"
                                         min={0}
@@ -619,16 +411,16 @@ function PanelReviewPage() {
                                         onChange={(e) =>
                                           handleMarkChange(idx, "r1_mark", e.target.value)
                                         }
-                                        style={inputStyle}
+                                        className="prp-marks-input"
                                       />
                                     </td>
                                   </>
                                 )}
                                 {rounds.includes(2) && (
                                   <>
-                                    <td style={tdStyle}>{item.r2_desc}</td>
-                                    <td style={{ ...tdStyle, textAlign: "center" }}>{item.r2_mark}</td>
-                                    <td style={{ ...tdStyle, textAlign: "center" }}>
+                                    <td className="prp-marks-td">{item.r2_desc}</td>
+                                    <td className="prp-marks-td prp-marks-td--center">{item.r2_mark}</td>
+                                    <td className="prp-marks-td prp-marks-td--center">
                                       <input
                                         type="number"
                                         min={0}
@@ -637,16 +429,16 @@ function PanelReviewPage() {
                                         onChange={(e) =>
                                           handleMarkChange(idx, "r2_mark", e.target.value)
                                         }
-                                        style={inputStyle}
+                                        className="prp-marks-input"
                                       />
                                     </td>
                                   </>
                                 )}
                                 {rounds.includes(3) && (
                                   <>
-                                    <td style={tdStyle}>{item.r3_desc}</td>
-                                    <td style={{ ...tdStyle, textAlign: "center" }}>{item.r3_mark}</td>
-                                    <td style={{ ...tdStyle, textAlign: "center" }}>
+                                    <td className="prp-marks-td">{item.r3_desc}</td>
+                                    <td className="prp-marks-td prp-marks-td--center">{item.r3_mark}</td>
+                                    <td className="prp-marks-td prp-marks-td--center">
                                       <input
                                         type="number"
                                         min={0}
@@ -655,7 +447,7 @@ function PanelReviewPage() {
                                         onChange={(e) =>
                                           handleMarkChange(idx, "r3_mark", e.target.value)
                                         }
-                                        style={inputStyle}
+                                        className="prp-marks-input"
                                       />
                                     </td>
                                   </>
@@ -666,33 +458,33 @@ function PanelReviewPage() {
 
                           {/* Totals footer */}
                           <tfoot>
-                            <tr style={{ background: "#f0fdf4", fontWeight: "700", fontSize: "0.85rem" }}>
+                            <tr className="prp-tfoot-row">
                               {rounds.includes(1) && (
                                 <>
-                                  <td style={{ ...tdStyle, textAlign: "right" }} colSpan={2}>
+                                  <td className="prp-marks-td prp-marks-td--right" colSpan={2}>
                                     Total Awarded (R1):
                                   </td>
-                                  <td style={{ ...tdStyle, textAlign: "center" }}>
+                                  <td className="prp-marks-td prp-marks-td--center">
                                     {totalFor("r1_mark")}
                                   </td>
                                 </>
                               )}
                               {rounds.includes(2) && (
                                 <>
-                                  <td style={{ ...tdStyle, textAlign: "right" }} colSpan={2}>
+                                  <td className="prp-marks-td prp-marks-td--right" colSpan={2}>
                                     Total Awarded (R2):
                                   </td>
-                                  <td style={{ ...tdStyle, textAlign: "center" }}>
+                                  <td className="prp-marks-td prp-marks-td--center">
                                     {totalFor("r2_mark")}
                                   </td>
                                 </>
                               )}
                               {rounds.includes(3) && (
                                 <>
-                                  <td style={{ ...tdStyle, textAlign: "right" }} colSpan={2}>
+                                  <td className="prp-marks-td prp-marks-td--right" colSpan={2}>
                                     Total Awarded (R3):
                                   </td>
-                                  <td style={{ ...tdStyle, textAlign: "center" }}>
+                                  <td className="prp-marks-td prp-marks-td--center">
                                     {totalFor("r3_mark")}
                                   </td>
                                 </>
@@ -704,29 +496,11 @@ function PanelReviewPage() {
 
                       {/* Panel averages */}
                       {rounds.some((r) => getAggregateForRound(r) !== null) && (
-                        <div
-                          style={{
-                            marginTop: "14px",
-                            display: "flex",
-                            gap: "10px",
-                            flexWrap: "wrap",
-                          }}
-                        >
+                        <div className="prp-averages">
                           {rounds.map((r) => {
                             const agg = getAggregateForRound(r);
                             return agg !== null ? (
-                              <div
-                                key={r}
-                                style={{
-                                  padding: "7px 14px",
-                                  background: "#dcfce7",
-                                  border: "1px solid #86efac",
-                                  borderRadius: "8px",
-                                  fontSize: "0.8rem",
-                                  color: "#166534",
-                                  fontWeight: "600",
-                                }}
-                              >
+                              <div key={r} className="prp-avg-badge">
                                 Panel avg R{r}: {agg} marks &nbsp;·&nbsp;{" "}
                                 {existingMarks.filter((m) => m.reviewNumber === r).length}{" "}
                                 submission(s)
@@ -737,38 +511,17 @@ function PanelReviewPage() {
                       )}
 
                       {/* Actions */}
-                      <div style={{ marginTop: "18px", display: "flex", gap: "10px" }}>
+                      <div className="prp-actions">
                         <button
                           onClick={handleSave}
                           disabled={saving}
-                          style={{
-                            padding: "9px 22px",
-                            borderRadius: "8px",
-                            border: "none",
-                            background: saving ? "#9ca3af" : "#16a34a",
-                            color: "#fff",
-                            fontWeight: "600",
-                            fontSize: "0.875rem",
-                            cursor: saving ? "not-allowed" : "pointer",
-                            boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
-                            transition: "background 0.15s",
-                          }}
+                          className="prp-btn-save"
                         >
                           {saving ? "Saving..." : "Save Marks"}
                         </button>
                         <button
                           onClick={handleCloseMarks}
-                          style={{
-                            padding: "9px 22px",
-                            borderRadius: "8px",
-                            border: "1px solid #d1d5db",
-                            background: "#fff",
-                            color: "#374151",
-                            fontWeight: "600",
-                            fontSize: "0.875rem",
-                            cursor: "pointer",
-                            transition: "background 0.15s",
-                          }}
+                          className="prp-btn-cancel"
                         >
                           Cancel
                         </button>
@@ -784,34 +537,5 @@ function PanelReviewPage() {
     </div>
   );
 }
-
-// Shared style objects to avoid repetition
-const thStyle = {
-  padding: "10px 16px",
-  textAlign: "left",
-  fontWeight: "600",
-  color: "#3730a3",
-  borderBottom: "1px solid #c7d2fe",
-  fontSize: "0.75rem",
-  textTransform: "uppercase",
-  letterSpacing: "0.04em",
-};
-
-const tdStyle = {
-  padding: "10px 16px",
-  color: "#374151",
-  verticalAlign: "middle",
-};
-
-const inputStyle = {
-  width: "72px",
-  padding: "5px 8px",
-  border: "1px solid #d1d5db",
-  borderRadius: "6px",
-  textAlign: "center",
-  fontSize: "0.875rem",
-  background: "#fff",
-  outline: "none",
-};
 
 export default PanelReviewPage;

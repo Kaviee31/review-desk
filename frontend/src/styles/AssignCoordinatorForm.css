@@ -1,130 +1,104 @@
-:root {
-  --primary-color: #4a63e7;
-  --secondary-color: #f4f7fb;
-  --text-light: #ffffff;
-  --text-dark: #333333;
-  --border-color: rgba(255, 255, 255, 0.3);
-  --input-bg: rgba(255, 255, 255, 0.15);
-}
+/* AssignCoordinatorForm — light card layout inside AdminLayout */
 
-body {
-  background: linear-gradient(135deg, #232526, #414345);
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  margin: 0;
-  color: var(--text-light);
-}
-
-
-.teacher-dashboard-layout {
+/* Page wrapper: center the card on the light gray admin body */
+.acf-page {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  min-height: 100vh;
-  padding: 20px;
-  box-sizing: border-box;
+  padding: 32px 16px 0;
 }
 
-
-.assign-coordinator-container {
+/* White card */
+.acf-card {
   width: 100%;
-  max-width: 500px;
-  padding: 40px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
+  max-width: 520px;
+  background: var(--brand-card-bg);
+  border: 1px solid var(--brand-card-border);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 32px;
+}
+
+.acf-card h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--brand-heading);
+  margin-bottom: 24px;
   text-align: center;
-  color: var(--text-light);
-  margin-bottom: 50px;
 }
 
-/* --- From here, all styles are scoped to the container --- */
-
-.assign-coordinator-container h2 {
-  font-size: 28px;
-  font-weight: bold;
-  margin-bottom: 30px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+/* Form field wrapper */
+.acf-form .form-group {
+  margin-bottom: 18px;
 }
 
-.assign-coordinator-container .assign-coordinator-form label {
+.acf-form label {
   display: block;
-  text-align: left;
-  margin: 15px 0 8px;
-  font-weight: 600;
-  color: var(--text-light);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--brand-text);
+  margin-bottom: 6px;
 }
 
-.assign-coordinator-container .assign-coordinator-form input,
-.assign-coordinator-container .assign-coordinator-form select {
+/* Inputs and selects */
+.acf-form input,
+.acf-form select {
   width: 100%;
-  padding: 15px 20px;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  background: var(--input-bg);
-  color: var(--text-light);
-  font-size: 16px;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
+  padding: 10px 14px;
+  border: 1px solid var(--brand-card-border);
+  border-radius: 8px;
+  font-size: 15px;
+  color: var(--brand-heading);
+  background: var(--brand-card-bg);
   box-sizing: border-box;
-}
-
-.assign-coordinator-container .assign-coordinator-form input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.assign-coordinator-container .assign-coordinator-form input:focus,
-.assign-coordinator-container .assign-coordinator-form select:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 15px rgba(74, 99, 231, 0.8);
-  background: rgba(255, 255, 255, 0.25);
-  outline: none;
-}
-
-.assign-coordinator-container .assign-coordinator-form select {
+  transition: border-color 0.2s, box-shadow 0.2s;
   appearance: none;
   -webkit-appearance: none;
-  -moz-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+.acf-form select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 15px center;
-  background-size: 20px;
+  background-position: right 12px center;
+  background-size: 18px;
+  padding-right: 36px;
 }
 
-.assign-coordinator-container .assign-coordinator-form select option {
-  background: var(--secondary-color);
-  color: var(--text-dark);
-  padding: 8px 12px;
-}
-
-.assign-coordinator-container .assign-coordinator-form select option:hover {
-  background: var(--primary-color);
-  color: var(--text-light);
-}
-
-.assign-coordinator-container .assign-coordinator-form button {
-  margin-top: 30px;
-  width: 100%;
-  padding: 16px;
-  background: var(--primary-color);
-  border: none;
-  border-radius: 12px;
-  font-size: 18px;
-  font-weight: bold;
-  color: white;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(74, 99, 231, 0.4);
-  transition: all 0.3s ease;
-}
-
-.assign-coordinator-container .assign-coordinator-form button:hover,
-.assign-coordinator-container .assign-coordinator-form button:focus {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(74, 99, 231, 0.6);
+.acf-form input:focus,
+.acf-form select:focus {
   outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
 }
-.footer-st{
-  margin-left: -280px;
+
+.acf-form input:disabled,
+.acf-form select:disabled {
+  background: var(--brand-page-bg);
+  color: var(--brand-text-muted);
+  cursor: not-allowed;
 }
+
+/* Submit button — uses Tailwind in JSX; this is the CSS-only fallback */
+.acf-form .acf-submit-btn {
+  margin-top: 24px;
+  width: 100%;
+  padding: 11px;
+  background: var(--brand-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.acf-form .acf-submit-btn:hover:not(:disabled) {
+  background: var(--brand-primary-hover);
+}
+
+.acf-form .acf-submit-btn:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+}
+

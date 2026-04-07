@@ -1,35 +1,31 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
-body {
-  font-family: 'Poppins', sans-serif;
-  margin: 0;
-  background: linear-gradient(to right, #f3e7fe, #e3d1ff);
-  min-height: 100vh;
-}
-
-.teacher-dashboard-layout {
+.login-layout {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* NEW RULE ADDED:
-  This specifically targets the header component on the login page.
-  It overrides any conflicting styles (like 'display: flex' or 'min-height')
-  that might be coming from other CSS files (like AdminLayout.css).
-*/
-.teacher-dashboard-layout .admin-layout {
-  display: block; /* Resets the display property */
-  min-height: 0;  /* Removes any minimum height that could cause a gap */
-  padding: 0;     /* Removes any padding that could add to the gap */
+/* Targets the header component on the login page — resets any layout
+   overrides coming from AdminLayout.css so there's no stray gap. */
+.login-layout .admin-layout {
+  display: block;
+  min-height: 0;
+  padding: 0;
+}
+
+/* Hide the empty admin-body div PartialFooter renders — it has padding
+   that creates a visible strip below the navbar on the login screen. */
+.login-layout .admin-body {
+  display: none;
 }
 
 .login-page {
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  flex-grow: 1; /* This makes it fill the space between header and footer */
+  flex-grow: 1;
   padding: 2rem;
   box-sizing: border-box;
 }
@@ -38,7 +34,7 @@ body {
   width: 100%;
   text-align: center;
   font-size: 2.5rem;
-  color: #6a1b9a;
+  color: var(--brand-primary);
   margin-bottom: 1rem;
 }
 
@@ -59,7 +55,7 @@ body {
 .login-right {
   flex: 1;
   max-width: 380px;
-  background: white;
+  background: var(--brand-card-bg);
   padding: 3rem 2rem;
   border-radius: 20px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -67,7 +63,7 @@ body {
 
 .login-form h2 {
   margin-bottom: 1.5rem;
-  color: #6a1b9a;
+  color: var(--brand-primary);
   font-size: 2rem;
   text-align: center;
 }
@@ -77,31 +73,33 @@ body {
   margin: 1rem 0 0.3rem;
   font-weight: 600;
   font-size: 0.95rem;
-  color: #333;
+  color: var(--brand-text);
 }
 
 .login-form input {
-  width: 90%;
+  width: 100%;
+  box-sizing: border-box;
   padding: 0.8rem 1rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--brand-card-border);
   border-radius: 12px;
-  background-color: #e0d3f8;
+  background-color: var(--brand-primary-light);
   font-size: 1rem;
-  color: #333;
+  color: var(--brand-text);
   transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
 .login-form input:focus {
   outline: none;
-  border: 1.5px solid #6a1b9a;
-  box-shadow: 0 0 0 2px rgba(106, 27, 154, 0.2);
+  border: 1.5px solid var(--brand-primary);
+  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.2);
 }
 
 .login-form button {
   width: 100%;
+  box-sizing: border-box;
   padding: 0.9rem;
   margin-top: 1.5rem;
-  background: #6a1b9a;
+  background: var(--brand-primary);
   color: white;
   font-size: 1rem;
   border: none;
@@ -111,7 +109,7 @@ body {
 }
 
 .login-form button:hover {
-  background: #4a0072;
+  background: var(--brand-primary-hover);
 }
 
 .login-form p {
@@ -121,7 +119,7 @@ body {
 }
 
 .login-form a {
-  color: #6a1b9a;
+  color: var(--brand-primary);
   text-decoration: none;
   font-weight: 500;
 }
@@ -134,7 +132,7 @@ body {
   .login-page {
     padding: 1rem;
   }
-  
+
   .login-content {
     flex-direction: column;
   }
@@ -147,8 +145,8 @@ body {
     width: 90%;
   }
 }
-/* Add these styles to your existing Login.css file or create a new one */
 
+/* ===== CAPTCHA ===== */
 .captcha-container {
   margin-top: 15px;
   width: 100%;
@@ -164,10 +162,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #f0f0f0;
+  background-color: var(--brand-page-bg);
   border-radius: 5px;
   padding: 5px 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--brand-card-border);
   margin-bottom: 10px;
 }
 
@@ -177,8 +175,8 @@ body {
   font-weight: bold;
   letter-spacing: 5px;
   text-decoration: none;
-  color: #333;
-  user-select: none; /* Prevents text selection */
+  color: var(--brand-heading);
+  user-select: none;
 }
 
 .refresh-captcha-btn {
@@ -186,19 +184,19 @@ body {
   border: none;
   cursor: pointer;
   font-size: 16px;
-  color: #555;
+  color: var(--brand-text-muted);
   transition: transform 0.3s;
   padding: 5px;
 }
 
-.refresh-captcha-btn:clicked {
+.refresh-captcha-btn:active {
   transform: rotate(180deg);
 }
 
 .captcha-container input {
   width: 100%;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--brand-card-border);
   border-radius: 5px;
   box-sizing: border-box;
 }

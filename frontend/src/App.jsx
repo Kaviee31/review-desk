@@ -44,7 +44,7 @@ function App() {
   useEffect(() => {
     const auth = getAuth();
     
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, () => {
     
       setLoading(false);
     });
